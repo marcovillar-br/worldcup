@@ -10,6 +10,47 @@ cada coisa*, veja `AGENTS.md`.
 
 ---
 
+## Visão geral do fluxo
+
+Do dado bruto ao palpite pronto para copiar no app. Cada caixa é um módulo de `src/worldcup/`;
+as seções entre parênteses detalham a etapa.
+
+```mermaid
+flowchart TD
+    subgraph entrada["Dados de entrada"]
+        H["martj42/international_results<br/>results.csv + shootouts.csv"]
+        E["data/editions/&lt;ano&gt;/<br/>tournament.toml · groups.csv<br/>fixtures.csv · scoring.toml"]
+    end
+
+    H -->|"fetch_data.py<br/>(§2)"| HIST["data/historical_results.csv<br/>jogos normalizados"]
+    E -->|"edition.py — Pydantic v2"| ED["Edition validada"]
+
+    HIST --> FIT["model.py · DixonColesModel.fit<br/>verossimilhança ponderada (§3)"]
+    REAL["resultados reais já disputados<br/>(peso alto no treino)"] -.-> FIT
+    FIT --> MAT["score_matrix(home, away, neutral)<br/>matriz P(i,j) de placares"]
+
+    MAT --> SIM["format_engine.py · Monte Carlo<br/>standings + chaveamento (§7)"]
+    ED --> SIM
+    SIM --> BR["bracket determinístico<br/>+ P(título) por seleção"]
+
+    MAT --> SC["scoring.py · best_prediction<br/>argmax E[pontos] (§4–5)"]
+    MAT --> KO["knockout.py · predict_knockout<br/>90' · prorrogação · pênaltis (§6)"]
+    ED -->|"scoring.toml"| SC
+
+    SC --> PIPE["pipeline.py · run()<br/>orquestra as 104 linhas"]
+    KO --> PIPE
+    BR --> PIPE
+    PIPE --> OUT["out/palpites-&lt;ano&gt;.{csv,md}<br/>72 grupo + 32 mata-mata"]
+
+    OUT -.->|"sync-results / record<br/>realimentação (§8)"| REAL
+```
+
+**Realimentação (linha tracejada):** durante a Copa, `sync-results` baixa os placares reais e os
+reinjeta no treino (peso alto) e no chaveamento (fixa o que já foi decidido); só os jogos que faltam
+são repalpitados. Ver §8.
+
+---
+
 ## 1. Objetivo e premissas
 
 Gerar, para cada jogo de uma Copa, o palpite que **maximiza os pontos esperados** no bolão do app

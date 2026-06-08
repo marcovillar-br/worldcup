@@ -46,6 +46,9 @@ Os palpites ficam em `out/palpites-<edição>.md` (tabela pronta para copiar) e 
 - `src/worldcup/` — código (modelo, pontuação, simulação, CLI).
 - `data/editions/<ano>/` — spec do formato + jogos + pontuação de cada edição (orientado a dados).
 - `data/historical_results.csv` — base histórica compartilhada, baixada pelo `fetch-data`.
+- `docs/SPEC.md` — **especificação técnica e metodologia** (matemática do modelo, fórmula de
+  pontuação, simulação, validação) com derivações e exemplos numéricos.
+- `AGENTS.md` (+ symlink `CLAUDE.md`) — guia para quem desenvolve/mantém o projeto.
 
 ## Ajustar a pontuação do seu grupo
 

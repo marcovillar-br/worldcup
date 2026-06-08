@@ -5,6 +5,8 @@ em resultados históricos de seleções; gera o palpite de cada jogo maximizando
 esperados** do bolão. Calibrado para o **Sistema I** do app *Bolão de Futebol 2026*
 (base 1–13 por probabilidade + bônus cumulativos; **zebra vale mais**).
 
+**Metodologia (matemática, derivações, exemplos numéricos): [`docs/SPEC.md`](docs/SPEC.md).**
+
 ## Princípio central: agnóstico à edição
 
 Nada específico de um ano fica no código. Cada edição é descrita por **dados** em

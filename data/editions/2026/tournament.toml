@@ -1,0 +1,22 @@
+# Especificação declarativa do formato da edição (lida e validada por edition.py).
+# Tudo que é específico de 2026 vive aqui — o código é agnóstico à edição.
+
+name = "Copa do Mundo FIFA 2026"
+edition = 2026
+
+# Seleções anfitriãs: ganham vantagem de mando quando jogam em casa (neutral = false).
+hosts = ["United States", "Canada", "Mexico"]
+
+[group_stage]
+num_groups = 12
+group_size = 4
+advance_per_group = 2   # quantos primeiros de cada grupo avançam direto
+best_thirds = 8         # quantos melhores terceiros também avançam
+
+# Critérios de desempate da fase de grupos, aplicados nesta ordem.
+# Suportados pelo motor: points, goal_difference, goals_for, random (sorteio determinístico).
+# (head-to-head e fair-play oficiais são simplificados para "random" — ver README.)
+tiebreakers = ["points", "goal_difference", "goals_for", "random"]
+
+# Ordem das fases do mata-mata (rótulos usados em fixtures.csv e nos pesos de pontuação).
+knockout_stages = ["R32", "R16", "QF", "SF", "3rd_place", "final"]

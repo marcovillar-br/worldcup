@@ -1,0 +1,43 @@
+# Configuração de pontuação do bolão (escolha do admin do grupo).
+# Default deste grupo: Sistema I (probabilístico) + peso "Equilíbrio gradual".
+# Edite para casar com o seu grupo se for diferente.
+
+# Sistema de pontos: "sistema_i" | "simplificado" | "so_vencedor"
+system = "sistema_i"
+
+# Nível de risco da estratégia. 0.5 = fiel (maximiza pontos esperados pela fórmula real do app).
+# >0.5 = mais agressivo (arrisca mais zebras — útil para diferenciar e subir no ranking quando
+# está atrás); <0.5 = conservador (tende ao placar mais provável). Default fiel = 0.5.
+risk = 0.5
+
+# Peso por fase (Equilíbrio gradual): grupos 1x, eliminatórias 2x, final 4x.
+# Não muda o placar ótimo de um jogo isolado, mas indica onde arriscar mais decide o ranking.
+[phase_weights]
+group = 1.0
+R32 = 2.0
+R16 = 2.0
+QF = 2.0
+SF = 2.0
+"3rd_place" = 2.0
+final = 4.0
+
+# Parâmetros do Sistema I ("O mais justo e equilibrado"), valores oficiais do app.
+# Pontos base variam com a probabilidade do resultado (1 a 13); os bônus são cumulativos.
+[sistema_i]
+base_min = 1.0       # pontos base mínimos (favorito óbvio)
+base_max = 13.0      # pontos base máximos (zebra acertada)
+exact = 5.0          # +5 placar exato
+winner_goals = 3.0   # +3 acertar os gols do vencedor ("Placar Vencedor")
+goal_diff = 2.0      # +2 acertar a diferença de gols (saldo)
+loser_goals = 1.0    # +1 acertar os gols do perdedor
+goleada = 1.0        # +1 acertar uma goleada (margem >= 3)
+extra_time = 3.0     # +3 acertar a prorrogação (mata-mata)
+penalties = 3.0      # +3 acertar os pênaltis (mata-mata)
+max_goals = 6        # placar máximo considerado na otimização (0..6 gols por lado)
+
+# Parâmetros do sistema simplificado (pontos fixos), caso o seu grupo use este.
+[simplificado]
+winner = 10.0        # acertou o vencedor/empate
+exact = 18.0         # cravou o placar
+diff_bonus = 3.0     # acertou o saldo (sem cravar)
+max_goals = 6

@@ -116,7 +116,7 @@ h2 { font-size: 1.15rem; margin: 2rem 0 .6rem; padding-bottom: .3rem;
               gap: .6rem; font-size: .9rem; }
 .champ .name { font-weight: 600; }
 .champ .track { background: var(--line); border-radius: 999px; height: .8rem; overflow: hidden; }
-.champ .fill { background: linear-gradient(90deg,#1d4ed8,#3b82f6); height: 100%; }
+.champ .fill { display: block; background: linear-gradient(90deg,#1d4ed8,#3b82f6); height: 100%; }
 .champ .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
 .pick { text-align: center; padding: .5rem .75rem; background: #eff6ff;
         border: 1px solid #bfdbfe; border-radius: 8px; margin: .75rem 0 0; font-size: .9rem; }

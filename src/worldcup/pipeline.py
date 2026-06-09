@@ -23,6 +23,23 @@ from .teams import display
 CURRENT_EDITION_BOOST = 6.0
 
 
+def _pct_round(*probs: float) -> list[int]:
+    """Arredonda probabilidades (0..1) para inteiros que somam exatamente 100.
+
+    Método do maior resto (Hamilton): evita que mandante/empate/visitante somem 99 ou 101
+    por arredondamentos independentes.
+    """
+    total = sum(probs) or 1.0
+    scaled = [p / total * 100 for p in probs]  # normaliza (matriz truncada pode não somar 1)
+    floors = [int(x) for x in scaled]
+    remainder = 100 - sum(floors)
+    # distribui as unidades que faltam para as maiores partes fracionárias
+    order = sorted(range(len(scaled)), key=lambda i: scaled[i] - floors[i], reverse=True)
+    for i in order[:remainder]:
+        floors[i] += 1
+    return floors
+
+
 def build_training_frame(edition: Edition, historical: pd.DataFrame) -> pd.DataFrame:
     """Histórico + jogos já disputados da edição (com peso alto) para o ajuste do modelo."""
     rows = []
@@ -113,11 +130,12 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
             mat = model.score_matrix(home, away, f.neutral)
             if f.is_group:
                 p = scorer.best_prediction(mat)
+                ph, pd_, pa = _pct_round(p.p_home, p.p_draw, p.p_away)
                 row.update(
                     palpite=p.scoreline,
-                    P_mandante=f"{p.p_home*100:.0f}%",
-                    P_empate=f"{p.p_draw*100:.0f}%",
-                    P_visitante=f"{p.p_away*100:.0f}%",
+                    P_mandante=f"{ph}%",
+                    P_empate=f"{pd_}%",
+                    P_visitante=f"{pa}%",
                     ousado="⚡" if p.is_upset else "",
                     mais_provavel=p.modal_scoreline,
                 )

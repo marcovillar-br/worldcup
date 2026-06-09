@@ -59,7 +59,8 @@ Opções úteis:
 - Depois liste os palpites da **próxima rodada/fase ainda não disputada** numa tabela enxuta:
   - Fase de grupos: mandante, palpite (placar), visitante, probabilidades e ⚡ se for ousado.
   - Mata-mata: confronto, palpite dos 90', prorrogação, pênaltis e quem avança.
-- Aponte o arquivo `out/palpites-2026.md` (tabela completa, pronta para copiar para o app).
+- Aponte o arquivo `out/palpites-2026.md` (tabela completa, pronta para copiar para o app) e o
+  `out/palpites-2026.html` (visualização no navegador; Ctrl+P para imprimir/salvar em PDF).
 - Lembre que cada palpite no app fecha **5 minutos antes do jogo**.
 
 ## Notas

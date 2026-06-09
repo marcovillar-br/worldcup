@@ -39,7 +39,9 @@ dataset público, atualizado poucas horas após cada jogo), preenche a fase de g
 (resolvendo o chaveamento pelos resultados reais, com vencedor nos pênaltis via `shootouts`) e já
 roda o `predict`. Use `record` para um ajuste pontual ou se quiser corrigir algo à mão.
 
-Os palpites ficam em `out/palpites-<edição>.md` (tabela pronta para copiar) e `.csv`.
+Os palpites ficam em `out/palpites-<edição>.md` (tabela pronta para copiar), `.csv` e
+`.html` — este último é autocontido (abre no navegador, com barras de probabilidade e destaque
+de zebra) e **otimizado para impressão** (Ctrl+P → salvar em PDF, com quebra de página por fase).
 
 ## Estrutura
 

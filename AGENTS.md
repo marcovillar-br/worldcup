@@ -17,7 +17,7 @@ Nada específico de um ano fica no código. Cada edição é descrita por **dado
 ```bash
 uv sync                                      # ambiente a partir do uv.lock
 uv run worldcup fetch-data                   # baixa/normaliza a base histórica
-uv run worldcup predict --edition 2026       # gera out/palpites-<ano>.{csv,md}
+uv run worldcup predict --edition 2026       # gera out/palpites-<ano>.{csv,md,html}
 uv run worldcup sync-results --edition 2026  # baixa resultados reais da internet, preenche e repalpita
 uv run worldcup record --edition 2026 --match <id> --home X --away Y [--ko-winner <Team>]
 uv run worldcup backtest --edition 2022      # valida o modelo numa Copa passada
@@ -38,7 +38,8 @@ uv run ruff check .  # lint (line-length 120)
 - `format_engine.py` — simulação genérica: standings, Monte Carlo, chaveamento determinístico.
 - `sync.py` — resolve o bracket só com resultados reais e preenche `fixtures.csv`.
 - `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites.
-- `cli.py` — argparse; entrypoint `worldcup`.
+- `cli.py` — argparse; entrypoint `worldcup`. `render_markdown`/`render_html` + `save_outputs`
+  (CSV/MD/HTML); HTML é autocontido e print-friendly (gerado do `PredictionRun`, não do CSV).
 
 ## Modelo de dados de uma edição (`data/editions/2026/`)
 

@@ -40,7 +40,7 @@ flowchart TD
     SC --> PIPE["pipeline.py · run()<br/>orquestra as 104 linhas"]
     KO --> PIPE
     BR --> PIPE
-    PIPE --> OUT["out/palpites-&lt;ano&gt;.{csv,md}<br/>72 grupo + 32 mata-mata"]
+    PIPE --> OUT["out/palpites-&lt;ano&gt;.{csv,md,html}<br/>72 grupo + 32 mata-mata"]
 
     OUT -.->|"sync-results / record<br/>realimentação (§8)"| REAL
 ```

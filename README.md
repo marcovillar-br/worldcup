@@ -75,3 +75,7 @@ para subir no ranking, gere com `--risk 0.7` ou `--risk 1.0`.
 - **Melhores terceiros**: a alocação aos slots usa casamento por restrição de grupos (Annex C da
   FIFA aproximado). Depois da fase de grupos, com os resultados reais registrados, confira os 8
   confrontos dos 32-avos.
+
+## Licença
+
+[MIT](LICENSE).

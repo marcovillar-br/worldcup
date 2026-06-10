@@ -7,12 +7,19 @@ seleção canonizados, em `data/historical_results.csv`.
 
 from __future__ import annotations
 
+import time
+import urllib.error
 import urllib.request
+from io import StringIO
 from pathlib import Path
 
 import pandas as pd
 
 from .teams import canonical
+
+
+class NetworkError(Exception):
+    """Falha ao baixar dados da fonte pública (sem conexão, timeout ou fonte fora do ar)."""
 
 DEFAULT_URL = (
     "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
@@ -31,24 +38,32 @@ HISTORICAL_CSV = DATA_DIR / "historical_results.csv"
 COLUMNS = ["date", "home_team", "away_team", "home_score", "away_score", "tournament", "neutral"]
 
 
+def _download_text(url: str, timeout: int, retries: int = 1) -> str:
+    """Baixa o texto de uma URL, com 1 retry, traduzindo falha de rede em `NetworkError`."""
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 worldcup"})
+    last_err: Exception | None = None
+    for attempt in range(retries + 1):
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 (URL fixa confiável)
+                return resp.read().decode("utf-8")
+        except (urllib.error.URLError, TimeoutError) as err:
+            last_err = err
+            if attempt < retries:
+                time.sleep(1)
+    raise NetworkError(
+        f"Não foi possível baixar {url} ({last_err}). "
+        "Verifique sua conexão e tente novamente em instantes."
+    ) from last_err
+
+
 def download_raw(url: str = DEFAULT_URL, timeout: int = 60) -> pd.DataFrame:
     """Baixa o CSV bruto da fonte e retorna como DataFrame (inclui jogos futuros)."""
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 worldcup"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 (URL fixa confiável)
-        raw = resp.read().decode("utf-8")
-    from io import StringIO
-
-    return pd.read_csv(StringIO(raw))
+    return pd.read_csv(StringIO(_download_text(url, timeout)))
 
 
 def download_shootouts(url: str = SHOOTOUTS_URL, timeout: int = 60) -> pd.DataFrame:
     """Baixa o CSV de disputas de pênaltis (date, home_team, away_team, winner)."""
-    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 worldcup"})
-    with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 (URL fixa confiável)
-        raw = resp.read().decode("utf-8")
-    from io import StringIO
-
-    return pd.read_csv(StringIO(raw))
+    return pd.read_csv(StringIO(_download_text(url, timeout)))
 
 
 def normalize(df: pd.DataFrame, cutoff: str = DEFAULT_CUTOFF, played_only: bool = True) -> pd.DataFrame:

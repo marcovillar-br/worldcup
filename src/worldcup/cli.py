@@ -17,7 +17,7 @@ import sys
 from pathlib import Path
 
 from .edition import EDITIONS_DIR, load_edition
-from .fetch_data import DEFAULT_CUTOFF, fetch
+from .fetch_data import DEFAULT_CUTOFF, NetworkError, fetch
 from .pipeline import PredictionRun, run
 
 OUT_DIR = Path(__file__).resolve().parent.parent.parent / "out"
@@ -386,7 +386,11 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    return args.func(args)
+    try:
+        return args.func(args)
+    except NetworkError as err:
+        print(f"🌐 {err}", file=sys.stderr)
+        return 1
 
 
 if __name__ == "__main__":

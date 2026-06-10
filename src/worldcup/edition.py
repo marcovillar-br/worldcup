@@ -95,6 +95,10 @@ class Edition(BaseModel):
     def teams(self) -> list[str]:
         return [t for ts in self.groups.values() for t in ts]
 
+    @property
+    def hosts(self) -> list[str]:
+        return self.spec.hosts
+
     def team_group(self, team: str) -> str | None:
         for g, ts in self.groups.items():
             if team in ts:

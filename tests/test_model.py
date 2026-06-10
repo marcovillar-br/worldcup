@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 from worldcup.model import DixonColesModel, tournament_weight
@@ -48,6 +49,19 @@ def test_home_advantage_increases_win_prob():
     p_neutral, *_ = outcome_probs_from_matrix(m.score_matrix("B", "C", neutral=True))
     p_home, *_ = outcome_probs_from_matrix(m.score_matrix("B", "C", neutral=False))
     assert p_home >= p_neutral
+
+
+def test_host_away_gives_mando_to_visitor():
+    # anfitrião listado como visitante (ex.: Suíça x Canadá em Vancouver): o mando segue o
+    # visitante. Dar mando a C como visitante == jogo normal de C em casa, espelhado.
+    m = DixonColesModel().fit(_synthetic_matches())
+    mat_host_away = m.score_matrix("B", "C", neutral=False, host_away=True)
+    mat_mirror = m.score_matrix("C", "B", neutral=False).T
+    assert np.allclose(mat_host_away, mat_mirror)
+    # e o mando do visitante aumenta a chance dele vs. campo neutro
+    _, _, pa_neutral = outcome_probs_from_matrix(m.score_matrix("B", "C", neutral=True))
+    _, _, pa_host_away = outcome_probs_from_matrix(mat_host_away)
+    assert pa_host_away >= pa_neutral
 
 
 def test_unknown_team_falls_back_to_average():

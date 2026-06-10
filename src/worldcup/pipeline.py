@@ -88,7 +88,7 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
     train = build_training_frame(edition, historical)
     model = DixonColesModel(FitConfig()).fit(train)
     scorer = Scorer(edition.scoring)
-    cache = MatrixCache(model)
+    cache = MatrixCache(model, edition.hosts)
 
     sim = monte_carlo(edition, model, cache, n_sims=n_sims, seed=seed)
     bracket = {rm.fixture.match_id: rm for rm in deterministic_bracket(edition, sim, cache)}
@@ -127,7 +127,7 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
             row["palpite"] = f"{f.home_goals}x{f.away_goals}"
 
         if home and away and not f.played:
-            mat = model.score_matrix(home, away, f.neutral)
+            mat = cache.matrix(home, away, f.neutral)
             if f.is_group:
                 p = scorer.best_prediction(mat)
                 ph, pd_, pa = _pct_round(p.p_home, p.p_draw, p.p_away)

@@ -146,18 +146,24 @@ class DixonColesModel:
             return 0.0, 0.0
         return float(self.attack[i]), float(self.defense[i])
 
-    def expected_goals(self, home: str, away: str, neutral: bool = True) -> tuple[float, float]:
+    def expected_goals(
+        self, home: str, away: str, neutral: bool = True, host_away: bool = False
+    ) -> tuple[float, float]:
         ah, dh = self._strength(home)
         aa, da = self._strength(away)
         adv = 0.0 if neutral else self.home_adv
-        lam = float(np.exp(np.clip(self.base + ah - da + adv, -3, np.log(self.config.max_xg))))
-        mu = float(np.exp(np.clip(self.base + aa - dh, -3, np.log(self.config.max_xg))))
+        # mando vai para o mandante, salvo `host_away`: o visitante (anfitrião) joga em casa.
+        home_adv, away_adv = (0.0, adv) if host_away else (adv, 0.0)
+        lam = float(np.exp(np.clip(self.base + ah - da + home_adv, -3, np.log(self.config.max_xg))))
+        mu = float(np.exp(np.clip(self.base + aa - dh + away_adv, -3, np.log(self.config.max_xg))))
         return lam, mu
 
-    def score_matrix(self, home: str, away: str, neutral: bool = True, max_goals: int | None = None) -> np.ndarray:
+    def score_matrix(
+        self, home: str, away: str, neutral: bool = True, max_goals: int | None = None, host_away: bool = False
+    ) -> np.ndarray:
         """Matriz P[i, j] = probabilidade de placar i (mandante) x j (visitante)."""
         mg = max_goals or self.config.max_goals
-        lam, mu = self.expected_goals(home, away, neutral)
+        lam, mu = self.expected_goals(home, away, neutral, host_away)
         gh = poisson.pmf(np.arange(mg + 1), lam)
         ga = poisson.pmf(np.arange(mg + 1), mu)
         mat = np.outer(gh, ga)
@@ -169,9 +175,11 @@ class DixonColesModel:
         mat = np.clip(mat, 0, None)
         return mat / mat.sum()
 
-    def outcome_probs(self, home: str, away: str, neutral: bool = True) -> tuple[float, float, float]:
+    def outcome_probs(
+        self, home: str, away: str, neutral: bool = True, host_away: bool = False
+    ) -> tuple[float, float, float]:
         """(P(vitória mandante), P(empate), P(vitória visitante))."""
-        m = self.score_matrix(home, away, neutral)
+        m = self.score_matrix(home, away, neutral, host_away=host_away)
         p_home = float(np.tril(m, -1).sum())
         p_draw = float(np.trace(m))
         p_away = float(np.triu(m, 1).sum())

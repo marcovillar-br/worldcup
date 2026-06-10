@@ -11,6 +11,7 @@ Resultados reais já conhecidos (`fixtures.csv` preenchido) são respeitados em 
 from __future__ import annotations
 
 from collections import Counter, defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 
 import numpy as np
@@ -23,15 +24,21 @@ from .scoring import outcome_probs_from_matrix
 class MatrixCache:
     """Memoiza matrizes de placar do modelo e permite amostrar placares."""
 
-    def __init__(self, model: DixonColesModel) -> None:
+    def __init__(self, model: DixonColesModel, hosts: Iterable[str] = ()) -> None:
         self.model = model
+        self.hosts = frozenset(hosts)
         self._cache: dict[tuple[str, str, bool], np.ndarray] = {}
         self._cdf: dict[tuple[str, str, bool], tuple[np.ndarray, int]] = {}
+
+    def _host_away(self, home: str, away: str, neutral: bool) -> bool:
+        """Jogo não-neutro em que o anfitrião é o visitante oficial (joga em casa mesmo assim)."""
+        return not neutral and away in self.hosts and home not in self.hosts
 
     def matrix(self, home: str, away: str, neutral: bool) -> np.ndarray:
         key = (home, away, neutral)
         if key not in self._cache:
-            self._cache[key] = self.model.score_matrix(home, away, neutral)
+            host_away = self._host_away(home, away, neutral)
+            self._cache[key] = self.model.score_matrix(home, away, neutral, host_away=host_away)
         return self._cache[key]
 
     def sample(self, home: str, away: str, neutral: bool, rng: np.random.Generator) -> tuple[int, int]:

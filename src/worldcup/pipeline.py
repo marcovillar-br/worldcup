@@ -98,6 +98,8 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
 
     rows: list[dict] = []
     for f in sorted(edition.fixtures, key=lambda x: x.match_id):
+        home: str | None
+        away: str | None
         if f.is_group:
             home, away = f.home, f.away
         else:

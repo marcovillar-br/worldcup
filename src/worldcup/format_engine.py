@@ -143,8 +143,9 @@ def _played_group_results(edition: Edition) -> dict[str, dict[tuple[str, str], t
     """Placares reais já registrados, por grupo."""
     out: dict[str, dict[tuple[str, str], tuple[int, int]]] = defaultdict(dict)
     for f in edition.group_fixtures():
-        if f.played:
-            out[f.group][(f.home, f.away)] = (f.home_goals, f.away_goals)
+        if f.home_goals is None or f.away_goals is None or f.group is None:
+            continue
+        out[f.group][(f.home, f.away)] = (f.home_goals, f.away_goals)
     return out
 
 
@@ -164,16 +165,16 @@ def monte_carlo(
     third_slots = [(f.match_id, f.third_groups) for f in ko if f.away == "3rd"]
     played = _played_group_results(edition)
 
-    champ = Counter()
-    advanced = Counter()
+    champ: Counter[str] = Counter()
+    advanced: Counter[str] = Counter()
     rank_counts: dict[str, dict[str, Counter]] = {g: defaultdict(Counter) for g in edition.groups}
-    third_q = Counter()
+    third_q: Counter[str] = Counter()
 
     for _ in range(n_sims):
         # 1) fase de grupos
         results_by_group: dict[str, dict] = {g: dict(played.get(g, {})) for g in edition.groups}
         for f in group_games:
-            if f.played:
+            if f.played or f.group is None:
                 continue
             results_by_group[f.group][(f.home, f.away)] = cache.sample(f.home, f.away, f.neutral, rng)
 
@@ -241,11 +242,14 @@ def _simulate_knockout(ko, winners, runners, third_team, cache, rng) -> str | No
         home, away = _resolve_pair(f, winners, runners, third_team, ko_winner, ko_loser)
         if home is None or away is None:
             continue
-        if f.played:
-            hg, ag = f.home_goals, f.away_goals
-            w, loser = (home, away) if hg > ag else (away, home) if ag > hg else (f.ko_outcome or home, None)
-            if hg == ag and f.ko_outcome:
-                w = f.ko_outcome
+        hg, ag = f.home_goals, f.away_goals
+        if hg is not None and ag is not None:  # resultado real
+            if hg > ag:
+                w, loser = home, away
+            elif ag > hg:
+                w, loser = away, home
+            else:  # empate -> vencedor real do confronto (pênaltis)
+                w = f.ko_outcome or home
                 loser = away if w == home else home
         else:
             hg, ag = cache.sample(home, away, f.neutral, rng)
@@ -268,8 +272,8 @@ def _simulate_knockout(ko, winners, runners, third_team, cache, rng) -> str | No
 @dataclass
 class ResolvedMatch:
     fixture: Fixture
-    home: str
-    away: str
+    home: str | None  # None enquanto o slot não resolve (ex.: mata-mata ainda sem times)
+    away: str | None
 
 
 def deterministic_bracket(
@@ -303,7 +307,7 @@ def deterministic_bracket(
         home, away = _resolve_pair(f, winners, runners, third_team, ko_winner, ko_loser)
         resolved.append(ResolvedMatch(fixture=f, home=home, away=away))
         # determina o avanço previsto (resultado real tem prioridade)
-        if f.played:
+        if f.home_goals is not None and f.away_goals is not None:  # resultado real
             if f.home_goals > f.away_goals:
                 w, loser = home, away
             elif f.away_goals > f.home_goals:
@@ -319,6 +323,8 @@ def deterministic_bracket(
             w, loser = (home, away) if p_adv_home >= 0.5 else (away, home)
         else:
             w = loser = None
-        ko_winner[f.match_id] = w
-        ko_loser[f.match_id] = loser
+        if w is not None:
+            ko_winner[f.match_id] = w
+        if loser is not None:
+            ko_loser[f.match_id] = loser
     return resolved

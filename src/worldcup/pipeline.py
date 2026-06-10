@@ -8,16 +8,19 @@ grupos; 3 camadas para o mata-mata). Retorna linhas prontas para CSV e a tabela 
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
-from .edition import Edition
 from .fetch_data import load_historical
 from .format_engine import MatrixCache, deterministic_bracket, monte_carlo
 from .knockout import predict_knockout
 from .model import DixonColesModel, FitConfig
 from .scoring import Scorer
 from .teams import display
+
+if TYPE_CHECKING:
+    from .edition import Edition
 
 # Peso extra dado aos jogos já disputados da própria Copa (realimentação).
 CURRENT_EDITION_BOOST = 6.0
@@ -48,8 +51,8 @@ def build_training_frame(edition: Edition, historical: pd.DataFrame) -> pd.DataF
             rows.append(
                 {
                     "date": pd.Timestamp(f.date),
-                    "home_team": f.home if f.is_group else (f.home),
-                    "away_team": f.away if f.is_group else (f.away),
+                    "home_team": f.home,
+                    "away_team": f.away,
                     "home_score": f.home_goals,
                     "away_score": f.away_goals,
                     "tournament": "FIFA World Cup",

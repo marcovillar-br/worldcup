@@ -142,7 +142,7 @@ def sync_results(year: int = 2026, base_dir: Path = EDITIONS_DIR) -> dict[str, i
     scores, shootouts = _edition_results(year)
 
     path = base_dir / str(year) / "fixtures.csv"
-    with open(path, newline="") as fh:
+    with path.open(newline="") as fh:
         rows = list(csv.DictReader(fh))
 
     bracket = _resolve_real_bracket(edition, scores, shootouts)
@@ -176,10 +176,11 @@ def sync_results(year: int = 2026, base_dir: Path = EDITIONS_DIR) -> dict[str, i
 def write_fixtures_atomic(path: Path, rows: list[dict]) -> None:
     """Reescreve o fixtures.csv (spec versionada) de forma atômica.
 
-    Grava num temporário no mesmo diretório e faz `os.replace` (rename atômico): uma falha no
-    meio da escrita nunca deixa o arquivo original truncado/corrompido.
+    Grava num temporário no mesmo diretório e faz um rename atômico (`Path.replace`): uma falha
+    no meio da escrita nunca deixa o arquivo original truncado/corrompido.
     """
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".fixtures-", suffix=".csv.tmp")
+    tmp_path = Path(tmp)
     try:
         with os.fdopen(fd, "w", newline="") as fh:
             w = csv.DictWriter(fh, fieldnames=rows[0].keys())
@@ -187,8 +188,8 @@ def write_fixtures_atomic(path: Path, rows: list[dict]) -> None:
             w.writerows(rows)
             fh.flush()
             os.fsync(fh.fileno())
-        os.replace(tmp, path)
+        tmp_path.replace(path)
     except BaseException:
         with suppress(OSError):
-            os.unlink(tmp)
+            tmp_path.unlink()
         raise

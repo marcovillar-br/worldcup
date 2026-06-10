@@ -41,7 +41,7 @@ def _download_text(url: str, timeout: int, retries: int = 1) -> str:
     last_err: Exception | None = None
     for attempt in range(retries + 1):
         try:
-            with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 (URL fixa confiável)
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
                 return resp.read().decode("utf-8")
         except (urllib.error.URLError, TimeoutError) as err:
             last_err = err

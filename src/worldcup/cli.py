@@ -275,7 +275,7 @@ def save_outputs(run: PredictionRun, year: int) -> tuple[Path, Path, Path]:
     csv_path = OUT_DIR / f"palpites-{year}.csv"
     md_path = OUT_DIR / f"palpites-{year}.md"
     html_path = OUT_DIR / f"palpites-{year}.html"
-    with open(csv_path, "w", newline="") as fh:
+    with csv_path.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
         w.writeheader()
         w.writerows(run.rows)
@@ -332,7 +332,7 @@ def cmd_predict(args: argparse.Namespace) -> int:
 
 def cmd_record(args: argparse.Namespace) -> int:
     path = EDITIONS_DIR / str(args.edition) / "fixtures.csv"
-    with open(path, newline="") as fh:
+    with path.open(newline="") as fh:
         rows = list(csv.DictReader(fh))
     found = False
     for r in rows:

@@ -27,7 +27,7 @@ def test_winner_on_penalties_uses_shootouts():
     assert _winner("Argentina", "France", 3, 3, {}) is None
 
 
-def testwrite_fixtures_atomic_roundtrip(tmp_path):
+def test_write_fixtures_atomic_roundtrip(tmp_path):
     path = tmp_path / "fixtures.csv"
     rows = [{"match_id": "1", "home": "Brazil"}, {"match_id": "2", "home": "France"}]
     write_fixtures_atomic(path, rows)
@@ -37,13 +37,13 @@ def testwrite_fixtures_atomic_roundtrip(tmp_path):
     assert [p.name for p in path.parent.iterdir() if p.name.startswith(".fixtures-")] == []
 
 
-def testwrite_fixtures_atomic_preserves_original_on_failure(tmp_path):
+def test_write_fixtures_atomic_preserves_original_on_failure(tmp_path):
     path = tmp_path / "fixtures.csv"
     original = "match_id,home\n1,Brazil\n"
     path.write_text(original)
     # 2ª linha tem coluna extra -> DictWriter levanta no meio da escrita (após o header já no temp)
     bad_rows = [{"match_id": "1"}, {"match_id": "2", "EXTRA": "x"}]
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="fields not in fieldnames"):
         write_fixtures_atomic(path, bad_rows)
     # o original (spec versionada) fica intacto e o temporário é removido
     assert path.read_text() == original

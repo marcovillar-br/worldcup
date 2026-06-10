@@ -139,13 +139,13 @@ class Edition(BaseModel):
 
 
 def _read_toml(path: Path) -> dict:
-    with open(path, "rb") as fh:
+    with path.open("rb") as fh:
         return tomllib.load(fh)
 
 
 def _load_groups(path: Path) -> dict[str, list[str]]:
     groups: dict[str, list[str]] = {}
-    with open(path, newline="") as fh:
+    with path.open(newline="") as fh:
         for row in csv.DictReader(fh):
             groups.setdefault(row["group"], []).append(row["team"])
     return groups
@@ -158,7 +158,7 @@ def _parse_int(value: str) -> int | None:
 
 def _load_fixtures(path: Path) -> list[Fixture]:
     fixtures: list[Fixture] = []
-    with open(path, newline="") as fh:
+    with path.open(newline="") as fh:
         for row in csv.DictReader(fh):
             tg = (row.get("third_groups") or "").strip()
             fixtures.append(

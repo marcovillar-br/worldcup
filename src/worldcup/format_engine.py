@@ -11,14 +11,18 @@ Resultados reais já conhecidos (`fixtures.csv` preenchido) são respeitados em 
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from collections.abc import Iterable
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .edition import Edition, Fixture
-from .model import DixonColesModel
 from .scoring import outcome_probs_from_matrix
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from .edition import Edition, Fixture
+    from .model import DixonColesModel
 
 
 class MatrixCache:
@@ -191,7 +195,7 @@ def monte_carlo(
         for _, s in qual_thirds:
             third_q[s.team] += 1
         third_assign = _assign_thirds(third_slots, [g for g, _ in qual_thirds])
-        third_team = {mid: dict((g, s.team) for g, s in qual_thirds)[g] for mid, g in third_assign.items()}
+        third_team = {mid: {g: s.team for g, s in qual_thirds}[g] for mid, g in third_assign.items()}
 
         # 2) mata-mata
         champ_team = _simulate_knockout(ko, winners, runners, third_team, cache, rng)

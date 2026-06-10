@@ -12,10 +12,12 @@ O **nível de risco** (`risk`) controla o quanto inclinar para zebras de valor.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from .edition import ScoringConfig
+if TYPE_CHECKING:
+    from .edition import ScoringConfig
 
 
 def outcome_probs_from_matrix(matrix: np.ndarray) -> tuple[float, float, float]:

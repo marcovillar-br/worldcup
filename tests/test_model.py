@@ -76,7 +76,8 @@ def test_host_away_gives_mando_to_visitor():
 def test_unknown_team_falls_back_to_average():
     m = DixonColesModel().fit(_synthetic_matches())
     lam, mu = m.expected_goals("A", "__desconhecido__", neutral=True)
-    assert lam > 0 and mu > 0  # não quebra com time fora do treino
+    assert lam > 0  # não quebra com time fora do treino
+    assert mu > 0
 
 
 def test_tournament_weight_ordering():

@@ -34,7 +34,9 @@ line-length = 120
 src = ["src", "tests"]
 
 [tool.ruff.lint]
-select = ["E", "F", "I", "UP", "B", "SIM"]
+select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF", "PIE", "PT", "PTH", "RET", "TC"]
+# Caracteres "ambíguos" são tipografia proposital no texto PT (× para placares, – em Dixon–Coles).
+ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]

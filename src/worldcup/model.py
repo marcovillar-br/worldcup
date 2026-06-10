@@ -194,5 +194,4 @@ def _tau(x: np.ndarray, y: np.ndarray, lam: np.ndarray, mu: np.ndarray, rho: flo
     t = np.where(m00, 1 - lam * mu * rho, t)
     t = np.where(m01, 1 + lam * rho, t)
     t = np.where(m10, 1 + mu * rho, t)
-    t = np.where(m11, 1 - rho, t)
-    return t
+    return np.where(m11, 1 - rho, t)

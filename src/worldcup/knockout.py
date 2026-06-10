@@ -13,10 +13,12 @@ o modelo aponta como classificado (`advancer`) e a probabilidade de avanço.
 from __future__ import annotations
 
 from dataclasses import dataclass
-
-import numpy as np
+from typing import TYPE_CHECKING
 
 from .scoring import Scorer, outcome_probs_from_matrix
+
+if TYPE_CHECKING:
+    import numpy as np
 
 # Limiar para palpitar que um lado vence a prorrogação (senão, palpita "vai pros pênaltis").
 _ET_DECISIVE_THRESHOLD = 0.58

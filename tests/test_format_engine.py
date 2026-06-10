@@ -93,8 +93,10 @@ def test_synthetic_edition_runs_end_to_end():
 
     bracket = deterministic_bracket(edition, sim, cache)
     assert len(bracket) == 7  # 4 QF + 2 SF + 1 final
-    final = [b for b in bracket if b.fixture.stage == "final"][0]
-    assert final.home and final.away and final.home != final.away
+    final = next(b for b in bracket if b.fixture.stage == "final")
+    assert final.home
+    assert final.away
+    assert final.home != final.away
 
 
 def test_edition_2026_structure():

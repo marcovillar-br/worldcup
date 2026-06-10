@@ -46,11 +46,11 @@ def tournament_weight(name: str) -> float:
 
 @dataclass
 class FitConfig:
-    halflife_years: float = 2.5   # meia-vida do decaimento temporal
-    ridge: float = 0.05           # força do prior (shrinkage à média)
-    max_goals: int = 10           # alcance da matriz de placares
-    max_xg: float = 6.0           # teto de gols esperados por time (estabilidade numérica)
-    min_matches: int = 10         # ignora seleções com menos jogos no período (ruído não-FIFA)
+    halflife_years: float = 2.5  # meia-vida do decaimento temporal
+    ridge: float = 0.05  # força do prior (shrinkage à média)
+    max_goals: int = 10  # alcance da matriz de placares
+    max_xg: float = 6.0  # teto de gols esperados por time (estabilidade numérica)
+    min_matches: int = 10  # ignora seleções com menos jogos no período (ruído não-FIFA)
 
 
 class DixonColesModel:
@@ -83,9 +83,7 @@ class DixonColesModel:
         # mantém só seleções que disputam competições oficiais (eliminatórias/continentais/Copa).
         # Isso remove microsseleções e times não-FIFA (CONIFA, ilhas) que jogam circuitos isolados
         # e poluiriam a estimativa de força.
-        is_major = df["tournament"].map(
-            lambda n: tournament_weight(n) >= 0.75 or "qualif" in n.lower()
-        )
+        is_major = df["tournament"].map(lambda n: tournament_weight(n) >= 0.75 or "qualif" in n.lower())
         competitive = set(df.loc[is_major, "home_team"]) | set(df.loc[is_major, "away_team"])
         counts = pd.concat([df["home_team"], df["away_team"]]).value_counts()
         keep = competitive & set(counts[counts >= self.config.min_matches].index)

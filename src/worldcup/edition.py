@@ -72,9 +72,7 @@ class ScoringConfig(BaseModel):
     @model_validator(mode="after")
     def _check_system(self) -> ScoringConfig:
         if self.system not in VALID_SYSTEMS:
-            raise ValueError(
-                f"system inválido: {self.system!r}. Use um de {sorted(VALID_SYSTEMS)}."
-            )
+            raise ValueError(f"system inválido: {self.system!r}. Use um de {sorted(VALID_SYSTEMS)}.")
         return self
 
     def weight(self, stage: str) -> float:
@@ -83,7 +81,7 @@ class ScoringConfig(BaseModel):
 
 class Edition(BaseModel):
     spec: TournamentSpec
-    groups: dict[str, list[str]]            # grupo -> seleções
+    groups: dict[str, list[str]]  # grupo -> seleções
     fixtures: list[Fixture]
     scoring: ScoringConfig
     directory: Path
@@ -116,9 +114,7 @@ class Edition(BaseModel):
     def _validate(self) -> Edition:
         gs = self.spec.group_stage
         if len(self.groups) != gs.num_groups:
-            raise ValueError(
-                f"esperados {gs.num_groups} grupos, encontrados {len(self.groups)}"
-            )
+            raise ValueError(f"esperados {gs.num_groups} grupos, encontrados {len(self.groups)}")
         for g, ts in self.groups.items():
             if len(ts) != gs.group_size:
                 raise ValueError(f"grupo {g} tem {len(ts)} times (esperado {gs.group_size})")
@@ -135,9 +131,7 @@ class Edition(BaseModel):
         ko = self.knockout_fixtures()
         third_slots = sum(1 for f in ko if "3rd" in (f.home, f.away))
         if third_slots != gs.best_thirds:
-            raise ValueError(
-                f"esperados {gs.best_thirds} slots de terceiro no mata-mata, achei {third_slots}"
-            )
+            raise ValueError(f"esperados {gs.best_thirds} slots de terceiro no mata-mata, achei {third_slots}")
         for f in ko:
             if f.stage not in gs.knockout_stages:
                 raise ValueError(f"jogo {f.match_id}: fase '{f.stage}' fora de knockout_stages")
@@ -195,6 +189,4 @@ def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
     scoring = ScoringConfig(**_read_toml(directory / "scoring.toml"))
     groups = _load_groups(directory / "groups.csv")
     fixtures = _load_fixtures(directory / "fixtures.csv")
-    return Edition(
-        spec=spec, groups=groups, fixtures=fixtures, scoring=scoring, directory=directory
-    )
+    return Edition(spec=spec, groups=groups, fixtures=fixtures, scoring=scoring, directory=directory)

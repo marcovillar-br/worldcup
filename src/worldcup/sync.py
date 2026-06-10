@@ -92,8 +92,9 @@ def _resolve_real_bracket(edition: Edition, scores, shootouts) -> dict[int, tupl
     if all_groups_complete and spec.best_thirds:
         from .format_engine import _assign_thirds
 
-        ranked = sorted(thirds_by_group.items(),
-                        key=lambda kv: (-kv[1].points, -kv[1].gd, -kv[1].gf))[: spec.best_thirds]
+        ranked = sorted(thirds_by_group.items(), key=lambda kv: (-kv[1].points, -kv[1].gd, -kv[1].gf))[
+            : spec.best_thirds
+        ]
         ko = edition.knockout_fixtures()
         slots = [(f.match_id, f.third_groups) for f in ko if f.away == "3rd"]
         assign = _assign_thirds(slots, [g for g, _ in ranked])
@@ -169,8 +170,7 @@ def sync_results(year: int = 2026, base_dir: Path = EDITIONS_DIR) -> dict[str, i
 
     write_fixtures_atomic(path, rows)
 
-    return {"group": filled_group, "knockout": filled_ko,
-            "total_played_in_source": len(scores)}
+    return {"group": filled_group, "knockout": filled_ko, "total_played_in_source": len(scores)}
 
 
 def write_fixtures_atomic(path: Path, rows: list[dict]) -> None:

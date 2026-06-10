@@ -39,8 +39,8 @@ class Prediction:
     p_home: float
     p_draw: float
     p_away: float
-    is_upset: bool          # palpite contraria o favorito do modelo (aposta ousada)
-    modal_home: int         # placar mais provável (referência)
+    is_upset: bool  # palpite contraria o favorito do modelo (aposta ousada)
+    modal_home: int  # placar mais provável (referência)
     modal_away: int
 
     @property

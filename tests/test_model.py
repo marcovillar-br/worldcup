@@ -14,17 +14,26 @@ def _synthetic_matches() -> pd.DataFrame:
     rows = []
     base = pd.Timestamp("2024-01-01")
     scripted = [
-        ("A", "B", 2, 0), ("A", "C", 3, 0), ("B", "C", 2, 1),
-        ("B", "A", 0, 2), ("C", "A", 0, 3), ("C", "B", 1, 2),
+        ("A", "B", 2, 0),
+        ("A", "C", 3, 0),
+        ("B", "C", 2, 1),
+        ("B", "A", 0, 2),
+        ("C", "A", 0, 3),
+        ("C", "B", 1, 2),
     ]
     for k in range(12):
         for i, (h, a, hs, as_) in enumerate(scripted):
-            rows.append({
-                "date": base + pd.Timedelta(days=k * 30 + i),
-                "home_team": h, "away_team": a,
-                "home_score": hs, "away_score": as_,
-                "tournament": "FIFA World Cup qualification", "neutral": False,
-            })
+            rows.append(
+                {
+                    "date": base + pd.Timedelta(days=k * 30 + i),
+                    "home_team": h,
+                    "away_team": a,
+                    "home_score": hs,
+                    "away_score": as_,
+                    "tournament": "FIFA World Cup qualification",
+                    "neutral": False,
+                }
+            )
     return pd.DataFrame(rows)
 
 

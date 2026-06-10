@@ -21,12 +21,9 @@ from .teams import canonical
 class NetworkError(Exception):
     """Falha ao baixar dados da fonte pública (sem conexão, timeout ou fonte fora do ar)."""
 
-DEFAULT_URL = (
-    "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
-)
-SHOOTOUTS_URL = (
-    "https://raw.githubusercontent.com/martj42/international_results/master/shootouts.csv"
-)
+
+DEFAULT_URL = "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
+SHOOTOUTS_URL = "https://raw.githubusercontent.com/martj42/international_results/master/shootouts.csv"
 DEFAULT_CUTOFF = "2006-01-01"
 
 # Diretórios padrão do projeto (data/ ao lado da raiz do repositório).
@@ -51,8 +48,7 @@ def _download_text(url: str, timeout: int, retries: int = 1) -> str:
             if attempt < retries:
                 time.sleep(1)
     raise NetworkError(
-        f"Não foi possível baixar {url} ({last_err}). "
-        "Verifique sua conexão e tente novamente em instantes."
+        f"Não foi possível baixar {url} ({last_err}). Verifique sua conexão e tente novamente em instantes."
     ) from last_err
 
 
@@ -99,9 +95,7 @@ def fetch(
 def load_historical(path: Path = HISTORICAL_CSV) -> pd.DataFrame:
     """Carrega a base histórica salva (erro claro se ainda não foi baixada)."""
     if not path.exists():
-        raise FileNotFoundError(
-            f"Base histórica não encontrada em {path}. Rode `uv run worldcup fetch-data` primeiro."
-        )
+        raise FileNotFoundError(f"Base histórica não encontrada em {path}. Rode `uv run worldcup fetch-data` primeiro.")
     df = pd.read_csv(path)
     df["date"] = pd.to_datetime(df["date"])
     return df

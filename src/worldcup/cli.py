@@ -43,7 +43,7 @@ def render_markdown(run: PredictionRun) -> str:
         from .teams import display
 
         out += ["## 🏆 Probabilidade de título (Monte Carlo)", ""]
-        out += [f"- **{display(t)}** — {p*100:.1f}%" for t, p in champ]
+        out += [f"- **{display(t)}** — {p * 100:.1f}%" for t, p in champ]
         out += ["", f"_Palpite de campeão sugerido: **{display(champ[0][0])}**._", ""]
 
     by_stage: dict[str, list[dict]] = {}
@@ -56,8 +56,10 @@ def render_markdown(run: PredictionRun) -> str:
             continue
         out += [f"## {label}", ""]
         if stage == "group":
-            out += ["| Jogo | Data | Grupo | Mandante | Palpite | Visitante | Probabilidades | Ousado | + provável |",
-                    "|---|---|---|---|---|---|---|---|---|"]
+            out += [
+                "| Jogo | Data | Grupo | Mandante | Palpite | Visitante | Probabilidades | Ousado | + provável |",
+                "|---|---|---|---|---|---|---|---|---|",
+            ]
             for r in rows:
                 probs = f"{r['P_mandante']}/{r['P_empate']}/{r['P_visitante']}"
                 out.append(
@@ -66,8 +68,10 @@ def render_markdown(run: PredictionRun) -> str:
                     f"{r['mais_provavel']} |"
                 )
         else:
-            out += ["| Jogo | Data | Confronto | Palpite (90') | Prorrogação | Pênaltis | Avança |",
-                    "|---|---|---|---|---|---|---|"]
+            out += [
+                "| Jogo | Data | Confronto | Palpite (90') | Prorrogação | Pênaltis | Avança |",
+                "|---|---|---|---|---|---|---|",
+            ]
             for r in rows:
                 out.append(
                     f"| {r['jogo']} | {r['data']} | {r['mandante']} x {r['visitante']} | "
@@ -76,9 +80,11 @@ def render_markdown(run: PredictionRun) -> str:
                 )
         out.append("")
 
-    out += ["---",
-            "_Sistema I (probabilístico): o placar de cada jogo maximiza os pontos esperados. "
-            "⚡ marca palpites ousados (contra o favorito). Ajuste o risco em `scoring.toml`._"]
+    out += [
+        "---",
+        "_Sistema I (probabilístico): o placar de cada jogo maximiza os pontos esperados. "
+        "⚡ marca palpites ousados (contra o favorito). Ajuste o risco em `scoring.toml`._",
+    ]
     return "\n".join(out)
 
 
@@ -172,7 +178,7 @@ def render_html(run: PredictionRun) -> str:
             parts.append(
                 f'<div class="row"><span class="name">{_esc(display(team))}</span>'
                 f'<span class="track"><span class="fill" style="width:{width:.1f}%"></span></span>'
-                f'<span class="val">{p*100:.1f}%</span></div>'
+                f'<span class="val">{p * 100:.1f}%</span></div>'
             )
         parts.append("</div>")
         parts.append(f'<p class="pick">Palpite de campeão sugerido: <b>{_esc(display(champ[0][0]))}</b></p>')
@@ -199,8 +205,11 @@ def render_html(run: PredictionRun) -> str:
                 cls = "final" if final else ("upset" if upset else "")
                 ph, pd_, pa = _pct(r["P_mandante"]), _pct(r["P_empate"]), _pct(r["P_visitante"])
                 score = r["placar_real"] if final else r["palpite"]
-                tag = ('<span class="tag fin">final</span>' if final
-                       else ('<span class="bolt tag">⚡ zebra</span>' if upset else ""))
+                tag = (
+                    '<span class="tag fin">final</span>'
+                    if final
+                    else ('<span class="bolt tag">⚡ zebra</span>' if upset else "")
+                )
                 parts.append(
                     f"<tr class='{cls}'><td class='num'>{_esc(r['jogo'])}</td><td>{_esc(r['data'])}</td>"
                     f"<td class='num'>{_esc(r['grupo'])}</td><td>{_esc(r['mandante'])}</td>"
@@ -241,9 +250,23 @@ def render_html(run: PredictionRun) -> str:
 
 
 CSV_COLUMNS = [
-    "jogo", "data", "fase", "grupo", "mandante", "palpite", "visitante",
-    "P_mandante", "P_empate", "P_visitante", "ousado", "mais_provavel",
-    "prorrogacao", "penaltis", "avanca", "status", "placar_real",
+    "jogo",
+    "data",
+    "fase",
+    "grupo",
+    "mandante",
+    "palpite",
+    "visitante",
+    "P_mandante",
+    "P_empate",
+    "P_visitante",
+    "ousado",
+    "mais_provavel",
+    "prorrogacao",
+    "penaltis",
+    "avanca",
+    "status",
+    "placar_real",
 ]
 
 
@@ -267,19 +290,23 @@ def print_console_summary(run: PredictionRun) -> None:
     champ = sorted(run.champion_prob.items(), key=lambda x: -x[1])[:5]
     print("\n🏆 Candidatos a campeão:")
     for t, p in champ:
-        print(f"   {display(t):16s} {p*100:4.1f}%")
+        print(f"   {display(t):16s} {p * 100:4.1f}%")
 
     upcoming = [r for r in run.rows if r["status"] == "PREVISTO"]
     print(f"\n📋 Próximos jogos a palpitar (mostrando até 12 de {len(upcoming)}):")
     for r in upcoming[:12]:
         if r["fase"] == "group":
-            print(f"   J{r['jogo']:>3} {r['data']} [{r['grupo']}] "
-                  f"{r['mandante']:>16} {r['palpite']:>4} {r['visitante']:<16} "
-                  f"({r['P_mandante']}/{r['P_empate']}/{r['P_visitante']}) {r['ousado']}")
+            print(
+                f"   J{r['jogo']:>3} {r['data']} [{r['grupo']}] "
+                f"{r['mandante']:>16} {r['palpite']:>4} {r['visitante']:<16} "
+                f"({r['P_mandante']}/{r['P_empate']}/{r['P_visitante']}) {r['ousado']}"
+            )
         else:
-            print(f"   J{r['jogo']:>3} {r['data']} [{r['fase']:>9}] "
-                  f"{r['mandante']:>16} {r['palpite']:>4} {r['visitante']:<16} "
-                  f"-> avança {r['avanca']}")
+            print(
+                f"   J{r['jogo']:>3} {r['data']} [{r['fase']:>9}] "
+                f"{r['mandante']:>16} {r['palpite']:>4} {r['visitante']:<16} "
+                f"-> avança {r['avanca']}"
+            )
 
 
 # ----------------------------------------------------------------- subcomandos
@@ -297,8 +324,9 @@ def cmd_predict(args: argparse.Namespace) -> int:
     pred = run(edition, n_sims=args.sims, seed=args.seed)
     csv_path, md_path, html_path = save_outputs(pred, args.edition)
     print_console_summary(pred)
-    print(f"\n💾 CSV: {csv_path}\n💾 Markdown (pronto p/ copiar): {md_path}"
-          f"\n💾 HTML (visualizar/imprimir): {html_path}")
+    print(
+        f"\n💾 CSV: {csv_path}\n💾 Markdown (pronto p/ copiar): {md_path}\n💾 HTML (visualizar/imprimir): {html_path}"
+    )
     return 0
 
 
@@ -320,8 +348,10 @@ def cmd_record(args: argparse.Namespace) -> int:
     from .sync import write_fixtures_atomic
 
     write_fixtures_atomic(path, rows)
-    print(f"✅ Jogo {args.match} registrado: {args.home}x{args.away}. "
-          f"Rode `worldcup predict --edition {args.edition}` para repalpitar.")
+    print(
+        f"✅ Jogo {args.match} registrado: {args.home}x{args.away}. "
+        f"Rode `worldcup predict --edition {args.edition}` para repalpitar."
+    )
     return 0
 
 
@@ -330,8 +360,10 @@ def cmd_sync_results(args: argparse.Namespace) -> int:
 
     print("🌐 Baixando resultados reais da fonte pública...")
     counts = sync_results(args.edition)
-    print(f"✅ Sincronizado: {counts['group']} jogos de grupo + {counts['knockout']} de mata-mata "
-          f"preenchidos ({counts['total_played_in_source']} jogos da Copa já disputados na fonte).")
+    print(
+        f"✅ Sincronizado: {counts['group']} jogos de grupo + {counts['knockout']} de mata-mata "
+        f"preenchidos ({counts['total_played_in_source']} jogos da Copa já disputados na fonte)."
+    )
     if args.no_predict:
         print(f"Rode `worldcup predict --edition {args.edition}` para repalpitar.")
         return 0

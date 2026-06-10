@@ -144,7 +144,7 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
                 et, pen = _ko_layer_text(kp, display(home), display(away))
                 row.update(
                     palpite=kp.scoreline,
-                    P_mandante=f"{kp.p_advance_home*100:.0f}%",  # P(mandante avança)
+                    P_mandante=f"{kp.p_advance_home * 100:.0f}%",  # P(mandante avança)
                     prorrogacao=et,
                     penaltis=pen,
                     avanca=display(kp.advancer),

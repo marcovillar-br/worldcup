@@ -84,6 +84,8 @@ def _print_report(r: BacktestResult) -> None:
     print(f"{'risco':>6} | {'pts totais':>10} | {'média/jogo':>10} | {'% resultado':>11} | {'% placar exato':>14}")
     print("-" * 64)
     for risk, s in r.by_risk.items():
-        print(f"{risk:>6.1f} | {s['total']:>10.1f} | {s['avg']:>10.2f} | "
-              f"{s['result_pct']:>10.1f}% | {s['exact_pct']:>13.1f}%")
+        print(
+            f"{risk:>6.1f} | {s['total']:>10.1f} | {s['avg']:>10.2f} | "
+            f"{s['result_pct']:>10.1f}% | {s['exact_pct']:>13.1f}%"
+        )
     print("\n(% resultado = acertou vencedor/empate; % placar exato = cravou o placar.)")

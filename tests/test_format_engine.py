@@ -45,27 +45,38 @@ def _synthetic_edition() -> tuple[Edition, object]:
     for g, ts in groups.items():
         for i in range(len(ts)):
             for j in range(i + 1, len(ts)):
-                fixtures.append(Fixture(match_id=mid, stage="group", group=g, date="2030-06-01",
-                                        home=ts[i], away=ts[j], neutral=True))
+                fixtures.append(
+                    Fixture(
+                        match_id=mid, stage="group", group=g, date="2030-06-01", home=ts[i], away=ts[j], neutral=True
+                    )
+                )
                 mid += 1
     ko = [
-        (25, "QF", "1G1", "2G2"), (26, "QF", "1G3", "2G4"),
-        (27, "QF", "1G2", "2G1"), (28, "QF", "1G4", "2G3"),
-        (29, "SF", "W25", "W26"), (30, "SF", "W27", "W28"),
+        (25, "QF", "1G1", "2G2"),
+        (26, "QF", "1G3", "2G4"),
+        (27, "QF", "1G2", "2G1"),
+        (28, "QF", "1G4", "2G3"),
+        (29, "SF", "W25", "W26"),
+        (30, "SF", "W27", "W28"),
         (31, "final", "W29", "W30"),
     ]
     for m, stage, h, a in ko:
         fixtures.append(Fixture(match_id=m, stage=stage, date="2030-07-01", home=h, away=a, neutral=True))
 
     spec = TournamentSpec(
-        name="Copa Sintética", edition=2030, hosts=[],
+        name="Copa Sintética",
+        edition=2030,
+        hosts=[],
         group_stage=GroupStageSpec(
-            num_groups=4, group_size=4, advance_per_group=2, best_thirds=0,
-            tiebreakers=TB, knockout_stages=["QF", "SF", "final"],
+            num_groups=4,
+            group_size=4,
+            advance_per_group=2,
+            best_thirds=0,
+            tiebreakers=TB,
+            knockout_stages=["QF", "SF", "final"],
         ),
     )
-    edition = Edition(spec=spec, groups=groups, fixtures=fixtures,
-                      scoring=ScoringConfig(), directory=Path("/tmp"))
+    edition = Edition(spec=spec, groups=groups, fixtures=fixtures, scoring=ScoringConfig(), directory=Path("/tmp"))
     # força crescente com o índice -> T15 é o mais forte
     model = make_model({t: i * 0.15 for i, t in enumerate(teams)})
     return edition, model

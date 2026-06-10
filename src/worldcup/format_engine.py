@@ -88,8 +88,10 @@ def _sort_key(stats: TeamStats, tiebreakers: list[str], rng: np.random.Generator
 
 
 def group_standings(
-    teams: list[str], results: dict[tuple[str, str], tuple[int, int]],
-    tiebreakers: list[str], rng: np.random.Generator,
+    teams: list[str],
+    results: dict[tuple[str, str], tuple[int, int]],
+    tiebreakers: list[str],
+    rng: np.random.Generator,
 ) -> list[TeamStats]:
     """Classificação de um grupo dado os placares de seus jogos."""
     stats = {t: TeamStats(t) for t in teams}
@@ -128,7 +130,7 @@ def _assign_thirds(slots: list[tuple[int, list[str]]], qualified_groups: list[st
 @dataclass
 class SimulationResult:
     champion_prob: dict[str, float] = field(default_factory=dict)
-    advance_prob: dict[str, float] = field(default_factory=dict)   # P(passar da fase de grupos)
+    advance_prob: dict[str, float] = field(default_factory=dict)  # P(passar da fase de grupos)
     rank_counts: dict[str, dict[str, Counter]] = field(default_factory=dict)  # grupo->team->rank Counter
     third_qualify: Counter = field(default_factory=Counter)
 
@@ -143,8 +145,11 @@ def _played_group_results(edition: Edition) -> dict[str, dict[tuple[str, str], t
 
 
 def monte_carlo(
-    edition: Edition, model: DixonColesModel, cache: MatrixCache,
-    n_sims: int = 8000, seed: int = 12345,
+    edition: Edition,
+    model: DixonColesModel,
+    cache: MatrixCache,
+    n_sims: int = 8000,
+    seed: int = 12345,
 ) -> SimulationResult:
     """Simula a Copa inteira N vezes para estimar probabilidades."""
     rng = np.random.default_rng(seed)
@@ -215,6 +220,7 @@ def _resolve_slot(slot: str, winners, runners, third_team, ko_winner, ko_loser) 
 
 def _resolve_pair(f, winners, runners, third_team, ko_winner, ko_loser) -> tuple[str | None, str | None]:
     """Resolve as duas seleções de um jogo de mata-mata a partir dos slots do fixture."""
+
     def one(slot: str) -> str | None:
         if slot == "3rd":
             return third_team.get(f.match_id)
@@ -263,7 +269,9 @@ class ResolvedMatch:
 
 
 def deterministic_bracket(
-    edition: Edition, sim: SimulationResult, cache: MatrixCache,
+    edition: Edition,
+    sim: SimulationResult,
+    cache: MatrixCache,
 ) -> list[ResolvedMatch]:
     """Monta o chaveamento do cenário mais provável a partir das contagens do Monte Carlo."""
     spec = edition.spec.group_stage
@@ -277,9 +285,7 @@ def deterministic_bracket(
         winners[g], runners[g], thirds[g] = winner, runner, third
 
     # 8 melhores terceiros pela frequência de classificação no Monte Carlo
-    third_groups_ranked = sorted(
-        edition.groups, key=lambda g: -sim.third_qualify.get(thirds[g], 0)
-    )[: spec.best_thirds]
+    third_groups_ranked = sorted(edition.groups, key=lambda g: -sim.third_qualify.get(thirds[g], 0))[: spec.best_thirds]
     ko = edition.knockout_fixtures()
     third_slots = [(f.match_id, f.third_groups) for f in ko if f.away == "3rd"]
     third_assign = _assign_thirds(third_slots, third_groups_ranked)

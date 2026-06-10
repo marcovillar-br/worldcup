@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import html
 import sys
 from pathlib import Path
 
@@ -82,13 +83,8 @@ def render_markdown(run: PredictionRun) -> str:
 
 
 def _esc(value: object) -> str:
-    """Escapa texto para inserção segura em HTML."""
-    return (
-        str(value)
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    """Escapa texto para inserção segura em HTML — inclusive aspas (contexto de atributo)."""
+    return html.escape(str(value), quote=True)
 
 
 def _pct(value: str) -> int:

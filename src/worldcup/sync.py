@@ -14,6 +14,9 @@ Depois é só rodar `predict` para repalpitar os jogos restantes.
 from __future__ import annotations
 
 import csv
+import os
+import tempfile
+from contextlib import suppress
 from pathlib import Path
 
 import numpy as np
@@ -164,10 +167,28 @@ def sync_results(year: int = 2026, base_dir: Path = EDITIONS_DIR) -> dict[str, i
                     r["ko_outcome"] = w
                 filled_ko += 1
 
-    with open(path, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=rows[0].keys())
-        w.writeheader()
-        w.writerows(rows)
+    _write_fixtures_atomic(path, rows)
 
     return {"group": filled_group, "knockout": filled_ko,
             "total_played_in_source": len(scores)}
+
+
+def _write_fixtures_atomic(path: Path, rows: list[dict]) -> None:
+    """Reescreve o fixtures.csv (spec versionada) de forma atômica.
+
+    Grava num temporário no mesmo diretório e faz `os.replace` (rename atômico): uma falha no
+    meio da escrita nunca deixa o arquivo original truncado/corrompido.
+    """
+    fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=".fixtures-", suffix=".csv.tmp")
+    try:
+        with os.fdopen(fd, "w", newline="") as fh:
+            w = csv.DictWriter(fh, fieldnames=rows[0].keys())
+            w.writeheader()
+            w.writerows(rows)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    except BaseException:
+        with suppress(OSError):
+            os.unlink(tmp)
+        raise

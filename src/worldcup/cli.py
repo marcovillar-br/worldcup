@@ -317,10 +317,9 @@ def cmd_record(args: argparse.Namespace) -> int:
     if not found:
         print(f"❌ Jogo {args.match} não encontrado em {path}", file=sys.stderr)
         return 1
-    with open(path, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=rows[0].keys())
-        w.writeheader()
-        w.writerows(rows)
+    from .sync import write_fixtures_atomic
+
+    write_fixtures_atomic(path, rows)
     print(f"✅ Jogo {args.match} registrado: {args.home}x{args.away}. "
           f"Rode `worldcup predict --edition {args.edition}` para repalpitar.")
     return 0

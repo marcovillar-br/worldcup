@@ -167,13 +167,13 @@ def sync_results(year: int = 2026, base_dir: Path = EDITIONS_DIR) -> dict[str, i
                     r["ko_outcome"] = w
                 filled_ko += 1
 
-    _write_fixtures_atomic(path, rows)
+    write_fixtures_atomic(path, rows)
 
     return {"group": filled_group, "knockout": filled_ko,
             "total_played_in_source": len(scores)}
 
 
-def _write_fixtures_atomic(path: Path, rows: list[dict]) -> None:
+def write_fixtures_atomic(path: Path, rows: list[dict]) -> None:
     """Reescreve o fixtures.csv (spec versionada) de forma atômica.
 
     Grava num temporário no mesmo diretório e faz `os.replace` (rename atômico): uma falha no

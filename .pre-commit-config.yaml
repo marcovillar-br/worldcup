@@ -1,0 +1,9 @@
+# Hooks locais antes do commit: ruff (lint + format). Instale com `uv run pre-commit install`.
+# O type checking (mypy) e os testes rodam no CI — aqui ficam só as checagens rápidas.
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.16
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format

@@ -21,9 +21,21 @@ uv run worldcup predict --edition 2026       # gera out/palpites-<ano>.{csv,md,h
 uv run worldcup sync-results --edition 2026  # baixa resultados reais da internet, preenche e repalpita
 uv run worldcup record --edition 2026 --match <id> --home X --away Y [--ko-winner <Team>]
 uv run worldcup backtest --edition 2022      # valida o modelo numa Copa passada
-uv run pytest        # testes
-uv run ruff check .  # lint (line-length 120)
 ```
+
+## Qualidade (rode antes de concluir mudanças)
+
+```bash
+uv run ruff check .          # lint (regras em pyproject; line-length 120)
+uv run ruff format           # formatador (--check no CI; --fix para o lint)
+uv run mypy                  # type checking estático (config em pyproject)
+uv run pytest                # testes
+uv run pre-commit install    # (1x) ativa o hook local de ruff lint+format
+```
+
+As mesmas checagens rodam no CI (`.github/workflows/ci.yml`, Python 3.11 e 3.13) em
+push/PR. O pre-commit roda só o ruff (rápido); mypy e testes ficam no CI. Convenções de
+código que ferramenta não pega ficam aqui no AGENTS.md (não há doc de regras separado).
 
 ## Arquitetura (`src/worldcup/`)
 
@@ -64,7 +76,7 @@ uv run ruff check .  # lint (line-length 120)
 - **Gerados (no .gitignore)**: `out/`, `data/historical_results.csv`, caches. Versionar só
   specs de edição, código, testes e a skill.
 - **Tabela longa**: ao mexer no formato de saída, o palpite tem 104 linhas (72 grupo + 32 KO).
-- Rode `uv run ruff check .` e `uv run pytest` antes de concluir mudanças.
+- Rode as checagens de **Qualidade** (ruff, mypy, pytest) antes de concluir mudanças.
 
 ## Limitações conhecidas
 

@@ -48,13 +48,19 @@ uv run ruff check .  # lint (line-length 120)
 - `fixtures.csv` — os 104 jogos. **O chaveamento mora aqui**, via slots em `home`/`away`:
   `1A`/`2A` (1º/2º do grupo A), `3rd` (+ `third_groups` permitidos), `W73` (vencedor do jogo 73),
   `L101` (perdedor). Colunas `home_goals,away_goals,ko_outcome` guardam o resultado real.
+  `match_id` é a numeração **interna** (e os slots `W##`/`L##` a referenciam), **não** o número
+  oficial da FIFA — não coincidem (ex.: jogo `50` aqui = *Match 51* FIFA). Ao cruzar com a escala
+  oficial, guie-se pelos **nomes das seleções**, nunca pelo número.
 - `scoring.toml` — sistema de pontos + pesos por fase (default: Sistema I + Equilíbrio gradual).
 
 ## Convenções e cuidados
 
 - **Nomes de seleção**: canônico em inglês internamente; PT só na exibição (`teams.display`).
   Arquivos de dados usam o canônico. Novos aliases vão em `teams._ALIASES`.
-- **Mando**: aplicado quando `neutral == false` (anfitriões em casa). A flag vem da fonte.
+- **Mando**: aplicado quando `neutral == false` (anfitriões em casa). A flag vem da fonte. O mando é
+  de quem está em `tournament.toml::hosts`, **não** necessariamente da coluna `home`: a escala oficial
+  pode listar o anfitrião como visitante num jogo no estádio dele (Copa 2026, jogos 50/51/60), e a
+  vantagem segue o anfitrião. Regra centralizada em `MatrixCache._host_away` → `score_matrix(host_away=…)`.
 - **Gerados (no .gitignore)**: `out/`, `data/historical_results.csv`, caches. Versionar só
   specs de edição, código, testes e a skill.
 - **Tabela longa**: ao mexer no formato de saída, o palpite tem 104 linhas (72 grupo + 32 KO).

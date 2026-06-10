@@ -38,6 +38,10 @@ das seleções). Então:
 ```bash
 uv run worldcup record --edition 2026 --match <ID> --home <gols_mandante> --away <gols_visitante>
 ```
+⚠️ **`--home`/`--away` são posicionais** e seguem a ordem `mandante,visitante` **do fixture**, que
+nem sempre é a intuitiva: a escala oficial lista o anfitrião como *visitante* em alguns jogos no
+estádio dele (ex.: o fixture do jogo 60 é `Turkey × United States`, não `EUA × Turquia`). **Confira a
+ordem do fixture antes de registrar** e mapeie o placar ditado para ela — senão grava invertido.
 Para mata-mata empatado nos 90'/prorrogação, acrescente `--ko-winner "<Seleção em inglês>"`
 (ex.: `--ko-winner Brazil`). Nomes canônicos em inglês — veja `data/editions/2026/groups.csv`.
 

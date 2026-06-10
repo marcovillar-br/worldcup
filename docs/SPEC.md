@@ -75,11 +75,13 @@ parseável e mantém **histórico e resultados na mesma origem**.
 - corte temporal: jogos a partir de `2006-01-01` (configurável);
 - só jogos disputados (descarta linhas com placar `NA` — inclusive os jogos futuros de 2026);
 - nomes de seleção canonizados para o padrão do dataset (inglês), via `teams.canonical`;
-- flag `neutral` booleana (define mando — ver §3.2).
+- flag `neutral` booleana (define mando — ver §3.1).
 
-A fonte já traz os 72 jogos de grupo de 2026 (com data, sede e `neutral`); por isso o `fixtures.csv`
-é derivado dela, sem transcrição manual. Os jogos de mata-mata de 2026 ainda não têm seleções, então
-seu chaveamento é codificado por slots (§7.2).
+A fonte já traz os 72 jogos de grupo de 2026 (com data, sede e `neutral`); o `fixtures.csv` é
+derivado dela seguindo a **escala oficial** da FIFA — cuja ordem `home`/`away` pode listar o
+anfitrião como *visitante* num jogo no estádio dele (§3.1). Por isso a ordem passa por conferência,
+não é cópia crua. Os jogos de mata-mata de 2026 ainda não têm seleções, então seu chaveamento é
+codificado por slots (§7.2).
 
 ---
 
@@ -90,12 +92,19 @@ seu chaveamento é codificado por slots (§7.2).
 Para um jogo entre mandante `h` e visitante `a`, os gols `(X, Y)` seguem Poisson com médias
 
 ```
-λ = exp( base + ataque[h] − defesa[a] + γ · mando )
-μ = exp( base + ataque[a] − defesa[h] )
+λ = exp( base + ataque[h] − defesa[a] + γ · mando_h )
+μ = exp( base + ataque[a] − defesa[h] + γ · mando_a )
 ```
 
-onde `mando ∈ {0,1}` (1 quando o jogo não é em campo neutro) e `γ` é a vantagem de mando.
-`base` é o intercepto (nível médio de gols em escala log).
+onde `γ` é a vantagem de mando e `base` é o intercepto (nível médio de gols em escala log).
+
+O mando vale `1` para o lado que joga em casa e `0` para o outro; em campo neutro ambos são `0`.
+Normalmente quem joga em casa é o mandante (`mando_h = 1`). **Exceção** — a escala oficial da FIFA
+às vezes lista o anfitrião como *visitante* num jogo disputado no estádio dele (ex.: Copa 2026,
+*Suíça × Canadá* em Vancouver). Nesse caso a vantagem vai para o visitante (`mando_a = 1`): a regra é
+"o mando é de quem está em `tournament.toml::hosts`", não da coluna `home`. No código isso é o
+parâmetro `host_away` de `score_matrix`, derivado em um único lugar (`MatrixCache._host_away`). Para o
+ajuste histórico e o backtest `host_away` é sempre `False` — o `neutral` da fonte já codifica o mando.
 
 O modelo **Poisson independente** daria `P(X=i, Y=j) = Pois(i;λ)·Pois(j;μ)`. Dixon & Coles (1997)
 mostraram que placares baixos têm **dependência** (empates 0–0/1–1 mais frequentes que o produto
@@ -337,6 +346,11 @@ O bracket é orientado a dados: as colunas `home`/`away` de um jogo de mata-mata
 
 Isso torna o motor independente do formato: outro número de grupos, com/sem terceiros, ou o formato
 antigo de 32 seleções, são apenas dados diferentes.
+
+> **Atenção**: o `match_id` (e os slots `W##`/`L##` que o referenciam) é a numeração **interna** do
+> `fixtures.csv`, **não** o número oficial de jogo da FIFA. Em 2026 elas não coincidem (ex.: o jogo
+> `50` daqui é o *Match 51* da FIFA; `60` ↔ *Match 59*). Ao cruzar com a escala oficial — para
+> conferir `home`/`away` ou um chaveamento — confie nos **nomes das seleções**, não no número.
 
 ### 7.3 Alocação dos 8 melhores terceiros
 

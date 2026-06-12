@@ -46,7 +46,8 @@ de zebra) e **otimizado para impressão** (Ctrl+P → salvar em PDF, com quebra 
 ## Estrutura
 
 - `src/worldcup/` — código (modelo, pontuação, simulação, CLI).
-- `data/editions/<ano>/` — spec do formato + jogos + pontuação de cada edição (orientado a dados).
+- `data/editions/<ano>/` — spec do formato + jogos + pontuação de cada edição (orientado a dados),
+  mais `BOLAO.md`, o diário de campanha do bolão (decisões não rederiváveis dos dados).
 - `data/historical_results.csv` — base histórica compartilhada, baixada pelo `fetch-data`.
 - `docs/SPEC.md` — **especificação técnica e metodologia** (matemática do modelo, fórmula de
   pontuação, simulação, validação) com derivações e exemplos numéricos.

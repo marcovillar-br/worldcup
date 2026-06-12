@@ -67,6 +67,13 @@ Opções úteis:
   `out/palpites-2026.html` (visualização no navegador; Ctrl+P para imprimir/salvar em PDF).
 - Lembre que cada palpite no app fecha **5 minutos antes do jogo**.
 
+### 5. Atualizar a memória de campanha
+Após sincronizar/repalpitar, atualize a seção **Estado atual** de `data/editions/<ano>/BOLAO.md`
+(quantos jogos preenchidos, configuração em uso) com a data do dia. Se houve **decisão de
+campanha** (mudou o `risk`, regra do bolão, situação no ranking), registre-a em **Decisões
+vivas**/**Histórico**. É a memória persistente agnóstica a ferramenta — leia-a também no início
+da sessão.
+
 ## Notas
 - Para editar a pontuação do bolão (se o admin do grupo usar valores diferentes), ajuste
   `data/editions/2026/scoring.toml`.

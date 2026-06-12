@@ -13,8 +13,8 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Estado atual (atualizado em 2026-06-12)
 
-- A Copa começou em 2026-06-11. Nenhum resultado sincronizado ainda em `fixtures.csv`
-  (0 de 104 jogos preenchidos).
+- A Copa começou em 2026-06-11. Resultados sincronizados até a 1ª rodada do grupo A
+  (2 de 104 jogos preenchidos): México 2x0 África do Sul, Coreia do Sul 2x1 Rep. Tcheca.
 - Palpites vigentes gerados com configuração padrão: `risk 0.5`, Sistema I conforme
   `scoring.toml` (sem customização do admin do bolão até agora).
 - Rotina diária (sob demanda, sem agendamento): `uv run worldcup sync-results --edition 2026`

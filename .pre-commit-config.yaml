@@ -7,3 +7,13 @@ repos:
       - id: ruff-check
         args: [--fix]
       - id: ruff-format
+  - repo: local
+    hooks:
+      # Aviso (não bloqueia): fixtures.csv mudou sem atualizar o diário de campanha (BOLAO.md).
+      # Regra de sincronia de artefatos no AGENTS.md, "Convenções e cuidados".
+      - id: bolao-sync
+        name: "aviso: fixtures.csv sem BOLAO.md"
+        language: system
+        files: ^data/editions/[^/]+/fixtures\.csv$
+        verbose: true
+        entry: bash -c 'for f in "$@"; do d=$(dirname "$f"); git diff --cached --name-only | grep -qx "$d/BOLAO.md" || echo "⚠️  $f mudou sem atualizar $d/BOLAO.md (Estado atual)."; done' --

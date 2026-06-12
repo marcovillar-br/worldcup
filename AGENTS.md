@@ -79,6 +79,11 @@ código que ferramenta não pega ficam aqui no AGENTS.md (não há doc de regras
 - **Gerados (no .gitignore)**: `out/`, `data/historical_results.csv`, caches. Versionar só
   specs de edição, código, testes e a skill.
 - **Tabela longa**: ao mexer no formato de saída, o palpite tem 104 linhas (72 grupo + 32 KO).
+- **Sincronia de artefatos**: toda mudança anda com sua documentação no mesmo commit —
+  (a) andamento da Copa (`sync-results`/`record`) → atualize o *Estado atual* do `BOLAO.md`
+  (um hook de pre-commit avisa se `fixtures.csv` mudar sem ele); (b) mudança de
+  comportamento/estrutura da aplicação → atualize `AGENTS.md`, `README.md` e/ou `docs/SPEC.md`
+  conforme o público afetado. Commit de código sem o doc correspondente está incompleto.
 - Rode as checagens de **Qualidade** (ruff, mypy, pytest) antes de concluir mudanças.
 
 ## Limitações conhecidas

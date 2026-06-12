@@ -221,3 +221,4 @@ __marimo__/
 out/
 data/historical_results.csv
 tmp/
+.claude/projects/

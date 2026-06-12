@@ -64,6 +64,9 @@ código que ferramenta não pega ficam aqui no AGENTS.md (não há doc de regras
   oficial da FIFA — não coincidem (ex.: jogo `50` aqui = *Match 51* FIFA). Ao cruzar com a escala
   oficial, guie-se pelos **nomes das seleções**, nunca pelo número.
 - `scoring.toml` — sistema de pontos + pesos por fase (default: Sistema I + Equilíbrio gradual).
+- `BOLAO.md` — **memória de campanha** do bolão (agnóstica a ferramenta): decisões vivas que não
+  são rederiváveis de dados/código (`risk` escolhido, situação no ranking, regras do bolão).
+  **Leia no início da sessão e atualize quando uma decisão de campanha acontecer.**
 
 ## Convenções e cuidados
 

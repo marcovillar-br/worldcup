@@ -108,8 +108,11 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   (um hook de pre-commit avisa se `fixtures.csv` mudar sem ele); (b) mudança de
   comportamento/estrutura da aplicação → atualize `AGENTS.md`, `README.md` e/ou `docs/SPEC.md`
   conforme o público afetado; (c) item do backlog resolvido → marque ✅ em
-  [`docs/BACKLOG.md`](docs/BACKLOG.md) no mesmo commit. Commit de código sem o doc correspondente
-  está incompleto.
+  [`docs/BACKLOG.md`](docs/BACKLOG.md) no mesmo commit; (d) **bump de versão** → mude
+  `pyproject.toml` **e** `src/worldcup/__init__.py`, rode `uv lock` e inclua o `uv.lock` no
+  **mesmo commit** — o CI roda `uv sync --locked` e quebra se o lock não refletir a nova versão
+  (já aconteceu: um commit vermelho entre o bump e o sync do lock). Commit de código sem o doc/
+  artefato correspondente está incompleto.
 - **Backlog de engenharia**: melhorias e dívidas vivem em [`docs/BACKLOG.md`](docs/BACKLOG.md)
   (fonte de verdade, rastreada). Consulte ao trabalhar em melhorias; cada item tem refs, critério
   de aceite e o commit que o fechou.

@@ -20,7 +20,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-4](#eng-4) | P3 | observabilidade | ✅ | `logging` no lugar de `print()` na biblioteca |
 | [ENG-5](#eng-5) | P3 | fetch_data | 🔴 | Validar schema do CSV baixado |
 | [ENG-6](#eng-6) | P3 | cli | 🔴 | Separar camada de render (`render.py`) |
-| [ENG-7](#eng-7) | P3 | tipos | 🔴 | mypy não cobre `tests/` |
+| [ENG-7](#eng-7) | P3 | tipos | ✅ | mypy não cobre `tests/` |
 | [ENG-8](#eng-8) | P3 | ci | 🔴 | Sem medição de cobertura |
 | [ENG-9](#eng-9) | P3 | tests | 🔴 | Guardrail: toda seleção da edição tem tradução PT |
 | [ENG-10](#eng-10) | P3 | release | 🔴 | Versão estática, sem CHANGELOG/tags |
@@ -105,13 +105,13 @@ schema, o erro estoura adiante, críptico.
 **Commit:** —
 
 ## ENG-7
-**mypy não cobre `tests/`** · P3 · tipos · 🔴 todo
+**mypy não cobre `tests/`** · P3 · tipos · ✅ feito
 
 `pyproject` tem `files = ["src"]`; os testes não são type-checked.
 
 **Correção proposta:** incluir `tests` no mypy (ou config separada), corrigindo o que aparecer.
 **Aceite:** `uv run mypy` passa cobrindo `tests/`.
-**Commit:** —
+**Commit:** 4686edf
 
 ## ENG-8
 **Sem medição de cobertura** · P3 · ci · 🔴 todo

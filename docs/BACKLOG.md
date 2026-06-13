@@ -25,6 +25,9 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-9](#eng-9) | P3 | tests | ✅ | Guardrail: toda seleção da edição tem tradução PT |
 | [ENG-10](#eng-10) | P3 | release | ✅ | Versão estática, sem CHANGELOG/tags |
 | [ENG-11](#eng-11) | P3 | processo | ✅ | Vigiar proporcionalidade doc/código; consolidar docs |
+| [ENG-12](#eng-12) | P2 | scoring | 🔴 | Bônus de prorrogação/pênaltis definidos mas não computados |
+| [ENG-13](#eng-13) | P3 | format_engine | 🔴 | Default morto `n_sims=8000` em `monte_carlo()` |
+| [ENG-14](#eng-14) | P2 | scoring | 🔴 | Curva de pontos base não reproduz o app (50%→3, não 2) |
 
 ---
 
@@ -169,3 +172,53 @@ cada salto de doc.)
 para o SPEC). Demais sobreposições são audiências distintas (ex.: README §Estrutura ≠ AGENTS
 §Arquitetura). Reabrir a cada salto de doc/skill.
 **Commit:** 8e4616d
+
+## ENG-12
+**Bônus de prorrogação/pênaltis definidos mas não computados** · P2 · `scoring.py` · 🔴 todo
+
+`scoring.toml` define `extra_time = 3.0` e `penalties = 3.0` (bônus oficiais do app, confirmados nas
+telas de regras), mas `Scorer.points()` nunca lê esses parâmetros — só computa base + exact +
+goal_diff + winner_goals + loser_goals + goleada. Consequências: (a) o **backtest subestima** os
+pontos em jogos de mata-mata decididos na prorrogação/pênaltis; (b) a config tem valores mortos que
+enganam quem for ajustar a pontuação. (Para a escolha do placar de 90' é neutro: o bônus de ET/pên
+independe do placar escolhido.)
+
+**Correção proposta:** método `Scorer.knockout_bonus()` que pontua os palpites de prorrogação/
+pênaltis (`KnockoutPrediction.extra_time`/`penalty_winner`) contra o desfecho real, e integrá-lo ao
+backtest onde o desfecho é determinável (ex.: `shootouts.csv` indica ida a pênaltis e vencedor).
+Cuidado: o histórico nem sempre separa placar de 90' vs prorrogação (ver SPEC §9.2) — escopo e
+limites a definir.
+**Aceite:** teste cobrindo um KO decidido nos pênaltis → bônus +3 concedido; backtest usa o desfecho
+real. `pytest` verde.
+**Commit:** —
+
+## ENG-13
+**Default morto `n_sims=8000` em `monte_carlo()`** · P3 · `format_engine.py` · 🔴 todo
+
+`format_engine.monte_carlo()` tem assinatura `n_sims: int = 8000`, mas o caminho real (CLI/pipeline)
+sempre passa `5000`, e o SPEC §7.1 diz "padrão 5000". O default da assinatura nunca é exercitado e
+diverge da documentação — confunde quem lê a função isolada.
+
+**Correção proposta:** alinhar o default da assinatura a 5000 (fonte única do default no
+`pipeline`/CLI) ou remover o default e exigir o parâmetro. Verificar se algum teste depende de 8000.
+**Aceite:** default coerente com o caminho real e com o SPEC; `pytest` verde.
+**Commit:** —
+
+## ENG-14
+**Curva de pontos base não reproduz o app (50%→3, não 2)** · P2 · `scoring.py` · 🔴 todo
+
+A tela do "Simulador de Pontos" do app mostra **50% de chance → 3 pts** (base, sem bônus). A fórmula
+do projeto, `_base_points`, no risco "fiel" 0.5 usa `base = (1/p)^(2·risk) = 1/p`, que em p=0,5 dá
+**2 pts**. Os extremos batem (p→1 → 1 pt = `base_min`; zebra → 13 = `base_max`), mas o **meio da
+curva** não. Implicação: a curva real do app é mais íngreme que `1/p` (γ "fiel" implícito ≈ log2(3)
+≈ 1,585 → equivaleria a `risk ≈ 0,8`), ou seja **o projeto sub-recompensa zebra** vs. o app — afeta
+`best_prediction` e a estratégia de risco.
+
+**Correção proposta:** coletar 3–4 pontos `(probabilidade, pontos)` do Simulador do app (ex.: 50/40/
+30/20/10%), ajustar a forma de `_base_points` (expoente/curva) para reproduzi-los, e **desacoplar**
+a curva-base-do-app do knob `risk` (hoje os dois são o mesmo γ — conceitualmente distintos: a curva
+é fixa do app, `risk` é estratégia do palpiteiro). Revisar a calibração de "risk=0.5 = fiel".
+**Aceite:** `_base_points` reproduz os pontos observados do app dentro de ±0,5 pt nos pontos
+coletados; teste com os pares observados. `pytest` verde. **Bloqueado por:** coleta dos dados do
+Simulador (depende do usuário).
+**Commit:** —

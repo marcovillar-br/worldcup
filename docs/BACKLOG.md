@@ -25,7 +25,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-9](#eng-9) | P3 | tests | ✅ | Guardrail: toda seleção da edição tem tradução PT |
 | [ENG-10](#eng-10) | P3 | release | ✅ | Versão estática, sem CHANGELOG/tags |
 | [ENG-11](#eng-11) | P3 | processo | ✅ | Vigiar proporcionalidade doc/código; consolidar docs |
-| [ENG-12](#eng-12) | P2 | scoring | 🔴 | Bônus de prorrogação/pênaltis definidos mas não computados |
+| [ENG-12](#eng-12) | P2 | scoring | 🟡 | Bônus de prorrogação/pênaltis definidos mas não computados |
 | [ENG-13](#eng-13) | P3 | format_engine | ✅ | Default morto `n_sims=8000` em `monte_carlo()` |
 | [ENG-14](#eng-14) | P2 | scoring | 🔴 | Curva de pontos base não reproduz o app (50%→3, não 2) |
 
@@ -174,7 +174,7 @@ para o SPEC). Demais sobreposições são audiências distintas (ex.: README §E
 **Commit:** 8e4616d
 
 ## ENG-12
-**Bônus de prorrogação/pênaltis definidos mas não computados** · P2 · `scoring.py` · 🔴 todo
+**Bônus de prorrogação/pênaltis definidos mas não computados** · P2 · `scoring.py` · 🟡 fazendo
 
 `scoring.toml` define `extra_time = 3.0` e `penalties = 3.0` (bônus oficiais do app, confirmados nas
 telas de regras), mas `Scorer.points()` nunca lê esses parâmetros — só computa base + exact +
@@ -190,6 +190,11 @@ Cuidado: o histórico nem sempre separa placar de 90' vs prorrogação (ver SPEC
 limites a definir.
 **Aceite:** teste cobrindo um KO decidido nos pênaltis → bônus +3 concedido; backtest usa o desfecho
 real. `pytest` verde.
+**Progresso (c00dc93):** método `Scorer.knockout_bonus()` implementado e testado (config não está
+mais morta). **Bloqueio descoberto:** o `historical_results.csv` local (saída do `fetch_data.normalize`)
+não tem coluna de **fase** nem dados de **pênaltis** (`shootouts`), então o backtest não identifica
+jogos de KO nem o desfecho ET/pênaltis. Fechar exige estender o pipeline: persistir `shootouts` no
+histórico + inferir/rotular a fase. Sub-tarefa de dados antes de wirar no backtest.
 **Commit:** —
 
 ## ENG-13

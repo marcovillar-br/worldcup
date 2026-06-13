@@ -18,7 +18,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-2](#eng-2) | P2 | backtest | ✅ | Mando do anfitrião não aplicado no backtest |
 | [ENG-3](#eng-3) | P2 | model | ✅ | Convergência do otimizador ignorada |
 | [ENG-4](#eng-4) | P3 | observabilidade | ✅ | `logging` no lugar de `print()` na biblioteca |
-| [ENG-5](#eng-5) | P3 | fetch_data | 🔴 | Validar schema do CSV baixado |
+| [ENG-5](#eng-5) | P3 | fetch_data | ✅ | Validar schema do CSV baixado |
 | [ENG-6](#eng-6) | P3 | cli | 🔴 | Separar camada de render (`render.py`) |
 | [ENG-7](#eng-7) | P3 | tipos | ✅ | mypy não cobre `tests/` |
 | [ENG-8](#eng-8) | P3 | ci | 🔴 | Sem medição de cobertura |
@@ -84,7 +84,7 @@ não-convergência (ENG-3), alias/seleção sem tradução.
 **Commit:** f364ee2
 
 ## ENG-5
-**Validar schema do CSV baixado** · P3 · `fetch_data` · 🔴 todo
+**Validar schema do CSV baixado** · P3 · `fetch_data` · ✅ feito
 
 `download_raw`/`normalize` (`fetch_data.py`) não checam as colunas da fonte. Se o `martj42` mudar o
 schema, o erro estoura adiante, críptico.
@@ -92,7 +92,7 @@ schema, o erro estoura adiante, críptico.
 **Correção proposta:** após o download, validar presença das colunas esperadas e dar `NetworkError`
 (ou erro dedicado) claro e cedo.
 **Aceite:** teste com CSV de colunas faltando → erro explícito. `pytest` verde.
-**Commit:** —
+**Commit:** 061f223
 
 ## ENG-6
 **Separar camada de render (`render.py`)** · P3 · `cli` · 🔴 todo

@@ -124,7 +124,7 @@ A probabilidade (não normalizada) de um placar é então
 P̃(i,j) = τ(i,j; λ, μ, ρ) · Pois(i;λ) · Pois(j;μ)
 ```
 
-e a matriz é normalizada (§3.4) para somar 1 sobre a grade `0..max_goals`.
+e a matriz é normalizada (§3.4) para somar 1 sobre a grade `0..10` (`FitConfig.max_goals`).
 
 ### 3.2 Verossimilhança ponderada
 
@@ -145,7 +145,9 @@ com peso `w_k = decaimento_k · torneio_k · multiplicador_k`:
 
 - **Decaimento temporal**: `decaimento = 0.5^(idade_anos / meia_vida)`, meia-vida padrão **2,5 anos**.
   Um jogo de 2,5 anos atrás pesa metade; de 5 anos, um quarto.
-- **Importância do torneio**: Copa = 1,0; eliminatórias/continentais ≈ 0,8–0,85; amistoso = 0,5
+- **Importância do torneio**: Copa = 1,0; continentais 0,8–0,85; eliminatórias 0,8; Nations
+  League/Gold Cup e torneios não listados 0,70–0,75; amistoso = 0,5 (tabela canônica em
+  `model._TOURNAMENT_WEIGHTS`/`_DEFAULT_TOURNAMENT_WEIGHT`)
   (`model.tournament_weight`).
 - **Multiplicador** (realimentação): jogos já disputados da própria Copa entram com peso extra
   (`CURRENT_EDITION_BOOST = 6.0`) para reajustar as forças à forma real no torneio.
@@ -276,7 +278,8 @@ Dado a matriz `P` do jogo, o valor esperado de um palpite `s = (p_h, p_a)` é
 E[pts(s)] = Σ_{i,j} P(i,j) · pontos( s, (i,j), probs )
 ```
 
-e escolhe-se `s* = argmax_s E[pts(s)]` sobre a grade `0..max_goals` (padrão 6). Reportamos também o
+e escolhe-se `s* = argmax_s E[pts(s)]` sobre uma grade de placares de palpite `0..6`
+(`Scorer.max_goals`, **distinto** do teto da matriz `FitConfig.max_goals = 10` do §3.1/§3.4). Reportamos também o
 **placar mais provável** (`argmax P(i,j)`) como referência, e marcamos `is_upset` quando o resultado
 do palpite difere do favorito do modelo.
 

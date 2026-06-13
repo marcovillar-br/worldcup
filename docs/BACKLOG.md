@@ -26,7 +26,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-10](#eng-10) | P3 | release | ✅ | Versão estática, sem CHANGELOG/tags |
 | [ENG-11](#eng-11) | P3 | processo | ✅ | Vigiar proporcionalidade doc/código; consolidar docs |
 | [ENG-12](#eng-12) | P2 | scoring | 🔴 | Bônus de prorrogação/pênaltis definidos mas não computados |
-| [ENG-13](#eng-13) | P3 | format_engine | 🔴 | Default morto `n_sims=8000` em `monte_carlo()` |
+| [ENG-13](#eng-13) | P3 | format_engine | ✅ | Default morto `n_sims=8000` em `monte_carlo()` |
 | [ENG-14](#eng-14) | P2 | scoring | 🔴 | Curva de pontos base não reproduz o app (50%→3, não 2) |
 
 ---
@@ -193,7 +193,7 @@ real. `pytest` verde.
 **Commit:** —
 
 ## ENG-13
-**Default morto `n_sims=8000` em `monte_carlo()`** · P3 · `format_engine.py` · 🔴 todo
+**Default morto `n_sims=8000` em `monte_carlo()`** · P3 · `format_engine.py` · ✅ feito
 
 `format_engine.monte_carlo()` tem assinatura `n_sims: int = 8000`, mas o caminho real (CLI/pipeline)
 sempre passa `5000`, e o SPEC §7.1 diz "padrão 5000". O default da assinatura nunca é exercitado e
@@ -202,7 +202,7 @@ diverge da documentação — confunde quem lê a função isolada.
 **Correção proposta:** alinhar o default da assinatura a 5000 (fonte única do default no
 `pipeline`/CLI) ou remover o default e exigir o parâmetro. Verificar se algum teste depende de 8000.
 **Aceite:** default coerente com o caminho real e com o SPEC; `pytest` verde.
-**Commit:** —
+**Commit:** e4b23bb
 
 ## ENG-14
 **Curva de pontos base não reproduz o app (50%→3, não 2)** · P2 · `scoring.py` · 🔴 todo

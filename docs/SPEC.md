@@ -103,8 +103,10 @@ Normalmente quem joga em casa é o mandante (`mando_h = 1`). **Exceção** — a
 às vezes lista o anfitrião como *visitante* num jogo disputado no estádio dele (ex.: Copa 2026,
 *Suíça × Canadá* em Vancouver). Nesse caso a vantagem vai para o visitante (`mando_a = 1`): a regra é
 "o mando é de quem está em `tournament.toml::hosts`", não da coluna `home`. No código isso é o
-parâmetro `host_away` de `score_matrix`, derivado em um único lugar (`MatrixCache._host_away`). Para o
-ajuste histórico e o backtest `host_away` é sempre `False` — o `neutral` da fonte já codifica o mando.
+parâmetro `host_away` de `score_matrix`, derivado em um único lugar (`MatrixCache._host_away`). No
+**ajuste histórico** `host_away` é sempre `False` (o `neutral` da fonte já codifica o mando); o
+**backtest** roteia pela mesma `MatrixCache`, com os anfitriões da Copa-alvo (`_WORLD_CUP_HOSTS`),
+para pontuar os jogos do país-sede como a produção faria (§9.1).
 
 O modelo **Poisson independente** daria `P(X=i, Y=j) = Pois(i;λ)·Pois(j;μ)`. Dixon & Coles (1997)
 mostraram que placares baixos têm **dependência** (empates 0–0/1–1 mais frequentes que o produto
@@ -390,7 +392,10 @@ recebem palpite.
 `backtest.py` treina **só com jogos anteriores** ao início da Copa-alvo e palpita todos os jogos
 daquela Copa, somando os pontos do Sistema I. A **seleção** do placar usa o `risk` testado, mas os
 pontos são **concedidos sempre pela fórmula fiel** (`risk = 0.5`), como o app faria — assim a
-comparação entre estratégias é justa.
+comparação entre estratégias é justa. As matrizes passam pela mesma `MatrixCache` da produção, com
+os anfitriões da Copa-alvo (`_WORLD_CUP_HOSTS`), para tratar o mando do país-sede de forma idêntica
+(§3.1). Em 2022 isso não altera a tabela: o Qatar abriu como mandante, então o caso *host-away*
+nunca dispara.
 
 Resultado na Copa **2022** (64 jogos):
 

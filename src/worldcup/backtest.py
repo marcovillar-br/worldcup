@@ -14,11 +14,18 @@ import pandas as pd
 
 from .edition import ScoringConfig
 from .fetch_data import load_historical
+from .format_engine import MatrixCache
 from .model import DixonColesModel, FitConfig
 from .scoring import Scorer, outcome_probs_from_matrix
+from .teams import canonical
 
 # Início aproximado de cada Copa (para cortar o treino antes do torneio).
 _WORLD_CUP_START = {2010: "2010-06-11", 2014: "2014-06-12", 2018: "2018-06-14", 2022: "2022-11-20"}
+
+# Anfitrião de cada Copa (nome canônico). O mando é aplicado como na produção, via MatrixCache:
+# jogos não-neutros do país-sede recebem vantagem, mesmo quando a fonte lista o anfitrião como
+# visitante. Sem isso, o backtest pontuava esses jogos diferente do caminho real do app.
+_WORLD_CUP_HOSTS = {2010: ("South Africa",), 2014: ("Brazil",), 2018: ("Russia",), 2022: ("Qatar",)}
 
 
 @dataclass
@@ -47,6 +54,8 @@ def run_backtest(year: int = 2022, risks: tuple[float, ...] = (0.0, 0.5, 1.0), n
 
     model = DixonColesModel(FitConfig()).fit(train, ref_date=pd.Timestamp(start))
     award = _award_scorer()
+    # mesma lógica de mando da produção (anfitrião joga em casa mesmo listado como visitante).
+    cache = MatrixCache(model, _WORLD_CUP_HOSTS.get(year, ()))
 
     by_risk: dict[float, dict[str, float]] = {}
     for risk in risks:
@@ -54,7 +63,7 @@ def run_backtest(year: int = 2022, risks: tuple[float, ...] = (0.0, 0.5, 1.0), n
         selector = Scorer(cfg)
         total = exact = correct = 0.0
         for _, m in test.iterrows():
-            mat = model.score_matrix(m["home_team"], m["away_team"], bool(m["neutral"]))
+            mat = cache.matrix(canonical(m["home_team"]), canonical(m["away_team"]), bool(m["neutral"]))
             pred = selector.best_prediction(mat)
             actual = (int(m["home_score"]), int(m["away_score"]))
             probs = outcome_probs_from_matrix(mat)

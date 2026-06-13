@@ -15,7 +15,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | ID | Pri | Área | Status | Item |
 |----|-----|------|--------|------|
 | [ENG-1](#eng-1) | P1 | sync | ✅ | Reencontro de seleções colapsa resultado indexado por par |
-| [ENG-2](#eng-2) | P2 | backtest | 🔴 | Mando do anfitrião não aplicado no backtest |
+| [ENG-2](#eng-2) | P2 | backtest | ✅ | Mando do anfitrião não aplicado no backtest |
 | [ENG-3](#eng-3) | P2 | model | 🔴 | Convergência do otimizador ignorada |
 | [ENG-4](#eng-4) | P3 | observabilidade | 🔴 | `logging` no lugar de `print()` na biblioteca |
 | [ENG-5](#eng-5) | P3 | fetch_data | 🔴 | Validar schema do CSV baixado |
@@ -45,7 +45,7 @@ orientação; o jogo de grupo recebe o placar do grupo e o de KO o placar do KO.
 **Commit:** 17272f2
 
 ## ENG-2
-**Mando do anfitrião não aplicado no backtest** · P2 · `backtest.py` · 🔴 todo
+**Mando do anfitrião não aplicado no backtest** · P2 · `backtest.py` · ✅ feito
 
 `backtest.run_backtest` chama `score_matrix(home, away, neutral)` sem `host_away`/`hosts`. A produção usa
 `MatrixCache._host_away` + `edition.hosts` (e trata o anfitrião listado como visitante). Logo, jogos
@@ -56,7 +56,7 @@ backtest deixa de reproduzir fielmente o que o app faria.
 lógica de `host_away` da produção (idealmente via `MatrixCache`).
 **Aceite:** num jogo do anfitrião, a matriz do backtest == a da produção. Teste cobrindo um caso
 host-away. `pytest` verde.
-**Commit:** —
+**Commit:** 75255bc
 
 ## ENG-3
 **Convergência do otimizador ignorada** · P2 · `model.py` · 🔴 todo

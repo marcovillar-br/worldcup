@@ -7,7 +7,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-from worldcup.model import DixonColesModel, tournament_weight
+from worldcup.model import DixonColesModel, FitConfig, tournament_weight
 from worldcup.scoring import outcome_probs_from_matrix
 
 
@@ -60,6 +60,16 @@ def test_fit_logs_dropped_low_match_teams(caplog):
         DixonColesModel().fit(df)
     assert any("descartou" in r.message for r in caplog.records)
     assert "Rarea" in caplog.text
+
+
+def test_fit_warns_when_optimizer_does_not_converge(caplog):
+    # maxiter=1 força o L-BFGS-B a parar antes de convergir -> deve avisar (ENG-3)
+    with caplog.at_level(logging.WARNING, logger="worldcup.model"):
+        model = DixonColesModel(FitConfig(maxiter=1)).fit(_synthetic_matches())
+    assert any("não convergiu" in r.message for r in caplog.records)
+    # mesmo sem convergir, devolve um modelo utilizável (res.x), sem quebrar a saída
+    mat = model.score_matrix("A", "C", neutral=True)
+    assert abs(mat.sum() - 1.0) < 1e-9
 
 
 def test_score_matrix_is_a_distribution():

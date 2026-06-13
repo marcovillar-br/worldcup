@@ -54,6 +54,7 @@ class FitConfig:
     max_goals: int = 10  # alcance da matriz de placares
     max_xg: float = 6.0  # teto de gols esperados por time (estabilidade numérica)
     min_matches: int = 10  # ignora seleções com menos jogos no período (ruído não-FIFA)
+    maxiter: int = 500  # teto de iterações do otimizador (L-BFGS-B)
 
 
 class DixonColesModel:
@@ -137,7 +138,14 @@ class DixonColesModel:
             return -np.sum(weights * ll) + penalty
 
         bounds = [(-3, 3)] * (2 * n) + [(-1.0, 1.0), (-0.2, 0.2), (-2.0, 2.0)]
-        res = minimize(neg_ll, x0, method="L-BFGS-B", bounds=bounds, options={"maxiter": 500})
+        res = minimize(neg_ll, x0, method="L-BFGS-B", bounds=bounds, options={"maxiter": self.config.maxiter})
+
+        if not res.success:
+            # fit não-convergido gera forças ruins sem sinal; avisa (não interrompe — res.x é o
+            # melhor ponto alcançado). Considerar subir maxiter quando a base crescer.
+            logger.warning("ajuste do modelo não convergiu (maxiter=%d): %s", self.config.maxiter, res.message)
+        if not np.all(np.isfinite(res.x)):
+            logger.warning("ajuste do modelo produziu parâmetros não-finitos; previsões podem ser inválidas")
 
         x = res.x
         att = x[:n]

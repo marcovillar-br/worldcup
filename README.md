@@ -37,7 +37,7 @@ uv run ruff check .  # lint
 
 Flag global `-v`/`--verbose` (antes do subcomando) desce o nível de log para `INFO` e mostra os
 avisos informativos da biblioteca em `stderr` — ex.: quais seleções o `min_matches` descartou no
-ajuste. Por padrão só avisos de nível `WARNING` aparecem.
+ajuste. Por padrão só avisos de nível `WARNING` aparecem (ex.: ajuste do modelo não-convergido).
 
 `sync-results` é a forma automática de realimentar: baixa os placares já disputados (do mesmo
 dataset público, atualizado poucas horas após cada jogo), preenche a fase de grupos e o mata-mata

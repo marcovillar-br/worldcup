@@ -153,10 +153,13 @@ def monte_carlo(
     edition: Edition,
     model: DixonColesModel,
     cache: MatrixCache,
-    n_sims: int = 8000,
+    n_sims: int = 5000,
     seed: int = 12345,
 ) -> SimulationResult:
-    """Simula a Copa inteira N vezes para estimar probabilidades."""
+    """Simula a Copa inteira N vezes para estimar probabilidades.
+
+    O default `n_sims=5000` espelha o caminho real (CLI `predict --sims`/`pipeline.run`) e o SPEC §7.1.
+    """
     rng = np.random.default_rng(seed)
     spec = edition.spec.group_stage
     tb = spec.tiebreakers

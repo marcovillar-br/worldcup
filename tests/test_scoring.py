@@ -23,7 +23,7 @@ def test_exact_score_gets_all_bonuses():
     probs = (0.5, 0.3, 0.2)
     # placar exato 2x1: base + exact(5) + winner_goals(3) + goal_diff(2) + loser_goals(1)
     pts = s.points((2, 1), (2, 1), probs)
-    base = 1.0 / 0.5  # risk 0.5 -> gamma 1 -> 1/p
+    base = 3.0  # curva fiel do app: p=0.50 -> 3 pts base
     assert abs(pts - (base + 5 + 3 + 2 + 1)) < 1e-6
 
 
@@ -48,6 +48,41 @@ def test_best_prediction_picks_favored_outcome():
     assert pred.expected_points > 0
 
 
+def test_base_points_reproduce_app_simulator():
+    # curva base fiel ao Simulador do app (ENG-14): pontos observados nas telas de regras.
+    s = _scorer()
+    observed = {0.80: 2, 0.50: 3, 0.15: 7, 0.05: 11}
+    for p, expected in observed.items():
+        assert abs(s._base_points(p) - expected) <= 0.5, f"p={p}: {s._base_points(p)} != {expected}"
+    # extremos clipados
+    assert s._base_points(0.999) == 1.0  # favorito óbvio -> base_min
+    assert s._base_points(0.001) == 13.0  # zebra extrema -> base_max
+
+
+def test_base_points_independent_of_risk():
+    # a régua de pontos do app é fixa; risk não deve alterá-la (só a escolha do palpite)
+    assert _scorer(0.5)._base_points(0.5) == _scorer(0.9)._base_points(0.5)
+
+
+def _picked_outcome_prob(pred) -> float:
+    """Probabilidade do resultado (1x2) que o palpite escolheu."""
+    if pred.home_goals > pred.away_goals:
+        return pred.p_home
+    if pred.home_goals == pred.away_goals:
+        return pred.p_draw
+    return pred.p_away
+
+
+def test_higher_risk_favors_underdog_pick():
+    # matriz equilibrada, mandante levemente favorito; risco alto tende a um resultado menos provável
+    mat = np.array([[0.10, 0.18, 0.12], [0.14, 0.12, 0.06], [0.08, 0.05, 0.15]])
+    mat = mat / mat.sum()
+    cautious = _scorer(0.2).best_prediction(mat)
+    bold = _scorer(0.9).best_prediction(mat)
+    # o palpite ousado não escolhe um resultado mais provável que o cauteloso
+    assert _picked_outcome_prob(bold) <= _picked_outcome_prob(cautious)
+
+
 def test_so_vencedor_system():
     s = Scorer(ScoringConfig(system="so_vencedor"))
     probs = (0.5, 0.3, 0.2)
@@ -60,7 +95,7 @@ def test_goal_difference_bonus_on_draw():
     probs = (0.3, 0.4, 0.3)
     # previu empate 1x1, saiu 2x2: acerta resultado (empate) + saldo, mas não o exato
     pts = s.points((1, 1), (2, 2), probs)
-    base = 1.0 / 0.4
+    base = 4.0  # curva fiel: p=0.40 -> 4 pts base
     assert abs(pts - (base + 2)) < 1e-6  # base + goal_diff
 
 

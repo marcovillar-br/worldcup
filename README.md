@@ -82,8 +82,8 @@ O default já vem calibrado como **Sistema I** (base 1–13 + bônus reais do ap
 
 Rode `uv run worldcup backtest --edition 2022` para ver quantos pontos o modelo teria feito na
 Copa de 2022 (treinando só com jogos anteriores). Lá a estratégia **agressiva** (`risk=1.0`)
-fez ~47% mais pontos que a conservadora — coerente com "azarão vale mais". Se quiser arriscar
-para subir no ranking, gere com `--risk 0.7` ou `--risk 1.0`.
+fez ~28% mais pontos que a fiel (`0.5`) — coerente com "azarão vale mais", ao custo de acertar menos
+o 1×2. Se quiser arriscar para subir no ranking, gere com `--risk 0.7` ou `--risk 1.0`.
 
 ## Limitações conhecidas
 

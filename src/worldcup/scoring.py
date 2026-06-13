@@ -11,6 +11,7 @@ O **nível de risco** (`risk`) controla o quanto inclinar para zebras de valor.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -66,17 +67,19 @@ class Scorer:
 
     # ----------------------------------------------------------- pontos
     def _base_points(self, p_outcome: float) -> float:
-        """Pontos base do Sistema I: variam com a probabilidade do resultado (base_min..base_max).
+        """Pontos base do app: crescem com a raridade do resultado, de `base_min` a `base_max`.
 
-        O `risk` ajusta a ousadia: 0.5 = fiel (base ~ 1/p), >0.5 valoriza mais a zebra,
-        <0.5 achata a curva em direção ao placar mais provável.
+        Forma **logarítmica** `base = 1 + a·log10(1/p)`, calibrada ao Simulador de Pontos do app
+        (ex.: 80%→2, 50%→3, 15%→7, 5%→11; `a≈7,55`), arredondada e limitada a [base_min, base_max].
+        É a pontuação **fiel** do app, independente de `risk` — o risco mora na *escolha* do palpite
+        (`best_prediction`), não na régua de pontos.
         """
         c = self.cfg.sistema_i
         lo = float(c.get("base_min", 1.0))
         hi = float(c.get("base_max", 13.0))
-        gamma = 2.0 * self.risk  # risk=0.5 -> gamma=1 (fiel a 1/p)
-        raw = (1.0 / max(p_outcome, 1e-6)) ** gamma
-        return float(min(hi, max(lo, raw)))
+        a = float(c.get("base_log_coeff", 7.55))
+        raw = 1.0 + a * math.log10(1.0 / max(p_outcome, 1e-6))
+        return float(min(hi, max(lo, math.floor(raw + 0.5))))
 
     def points(
         self,
@@ -165,18 +168,27 @@ class Scorer:
         return total
 
     def best_prediction(self, matrix: np.ndarray) -> Prediction:
-        """Escolhe o placar que maximiza os pontos esperados."""
+        """Escolhe o placar maximizando os pontos esperados, com tilt de risco.
+
+        Objetivo = `E[pontos] · (1/P(resultado))^(2·risk − 1)`. Em `risk=0.5` o expoente é 0
+        (fator 1) → **maximiza E[pontos] puro** (fiel). `>0.5` favorece resultados raros (zebra);
+        `<0.5` puxa para o favorito. O `expected_points` reportado é sempre o E[pontos] **real**.
+        """
         probs = outcome_probs_from_matrix(matrix)
         favorite = int(np.argmax(probs))  # 0=mandante,1=empate,2=visitante
         mg = min(self.max_goals, matrix.shape[0] - 1)
         modal = np.unravel_index(int(np.argmax(matrix)), matrix.shape)
+        tilt = 2.0 * self.risk - 1.0  # 0 em risk=0.5 (E-max puro); >0 ousa mais; <0 conservador
 
-        best, best_ep = (0, 0), -1.0
+        best, best_obj, best_ep = (0, 0), -1.0, 0.0
         for h in range(mg + 1):
             for a in range(mg + 1):
                 ep = self.expected_points((h, a), matrix)
-                if ep > best_ep:
-                    best_ep, best = ep, (h, a)
+                outcome = 0 if h > a else 1 if h == a else 2
+                p_o = max(probs[outcome], 1e-6)
+                obj = ep * (1.0 / p_o) ** tilt
+                if obj > best_obj:
+                    best_obj, best, best_ep = obj, (h, a), ep
         pred_outcome = 0 if best[0] > best[1] else 1 if best[0] == best[1] else 2
         return Prediction(
             home_goals=best[0],

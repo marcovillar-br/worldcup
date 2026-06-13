@@ -5,9 +5,10 @@
 # Sistema de pontos: "sistema_i" | "simplificado" | "so_vencedor"
 system = "sistema_i"
 
-# Nível de risco da estratégia. 0.5 = fiel (maximiza pontos esperados pela fórmula real do app).
-# >0.5 = mais agressivo (arrisca mais zebras — útil para diferenciar e subir no ranking quando
-# está atrás); <0.5 = conservador (tende ao placar mais provável). Default fiel = 0.5.
+# Nível de risco da ESTRATÉGIA (só na escolha do palpite, não na régua de pontos do app).
+# best_prediction maximiza E[pontos] · (1/P(resultado))^(2·risk−1):
+# 0.5 = fiel (maximiza pontos esperados puro); >0.5 = arrisca mais zebras (útil para subir no
+# ranking quando está atrás); <0.5 = conservador (tende ao favorito). Default fiel = 0.5.
 risk = 0.5
 
 # Peso por fase (Equilíbrio gradual): grupos 1x, eliminatórias 2x, final 4x.
@@ -24,8 +25,9 @@ final = 4.0
 # Parâmetros do Sistema I ("O mais justo e equilibrado"), valores oficiais do app.
 # Pontos base variam com a probabilidade do resultado (1 a 13); os bônus são cumulativos.
 [sistema_i]
-base_min = 1.0       # pontos base mínimos (favorito óbvio)
-base_max = 13.0      # pontos base máximos (zebra acertada)
+base_min = 1.0          # pontos base mínimos (favorito óbvio)
+base_max = 13.0         # pontos base máximos (zebra acertada)
+base_log_coeff = 7.55   # curva base = 1 + a·log10(1/p), calibrada ao Simulador do app (a≈7.55)
 exact = 5.0          # +5 placar exato
 winner_goals = 3.0   # +3 acertar os gols do vencedor ("Placar Vencedor")
 goal_diff = 2.0      # +2 acertar a diferença de gols (saldo)

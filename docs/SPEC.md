@@ -210,27 +210,31 @@ Valores oficiais do app (confirmados no print de regras do grupo):
 
 Os bônus são **cumulativos** e só contam se o **resultado (1×2) estiver certo** (errou o lado → 0).
 
-### 4.1 Pontos base e o nível de risco
+### 4.1 Pontos base (régua fiel do app)
 
 A base traduz "varia com a probabilidade, 1 a 13" como função da probabilidade `p` do resultado que
-de fato aconteceu:
+de fato aconteceu. A forma é **logarítmica**, calibrada ao **Simulador de Pontos do app**:
 
 ```
-base(p) = clip( (1/p)^γ , base_min=1 , base_max=13 ),   com γ = 2 · risk
+base(p) = clip( round( 1 + a · log10(1/p) ) , base_min=1 , base_max=13 ),   a ≈ 7.55
 ```
 
-- `risk = 0.5 → γ = 1`: `base = 1/p` (fiel ao "1 a 13"; teto 13 atingido em `p ≈ 1/13 ≈ 7.7%`).
-- `risk = 0 → γ = 0`: `base = 1` sempre → ignora raridade, tende ao placar mais provável (conservador).
-- `risk = 1 → γ = 2`: `base = (1/p)²` → amplia a zebra (agressivo).
+Essa é a régua **fiel do app** e **não depende de `risk`** — o risco mora na *escolha* do palpite
+(§5), não na pontuação. Pontos observados no Simulador (que fixaram a calibração) e o teto:
 
-Tabela de `base(p)`:
+| p | base (app) | base(p) do modelo |
+|---|---|---|
+| 0.80 | 2 | 2 |
+| 0.50 | 3 | 3 |
+| 0.20 | — | 6 |
+| 0.15 | 7 | 7 |
+| 0.10 | — | 9 |
+| 0.05 | 11 | 11 |
+| ≤ ~0.026 | 13 (teto) | 13 |
 
-| p | γ=0 (risk 0) | γ=1 (risk 0.5) | γ=2 (risk 1) |
-|---|---|---|---|
-| 0.70 | 1.0 | 1.43 | 2.04 |
-| 0.50 | 1.0 | 2.00 | 4.00 |
-| 0.20 | 1.0 | 5.00 | 13.0 (cap) |
-| 0.10 | 1.0 | 10.0 | 13.0 (cap) |
+> Nota: a forma `(1/p)^γ` antiga **não** reproduzia o app (em `p=0.5` dava 2, o app dá 3); a calibração
+> log-linear acima ajusta os pontos observados dentro de ±0.5. Coeficiente em `scoring.toml::base_log_coeff`;
+> refinar com mais pontos do Simulador se necessário. (Backlog ENG-14.)
 
 ### 4.2 Função de pontos
 
@@ -250,23 +254,23 @@ senão:
 
 ### 4.3 Exemplos numéricos
 
-**Zebra cravada** (vitória do visitante, `p = 0.63`), palpite `0×1`, real `0×1`, `risk = 0.5`:
+**Resultado mediano cravado** (`p = 0.63`), palpite `0×1`, real `0×1`:
 
 ```
-base = 1/0.63 = 1.587
-+ exato 5  + saldo 2  + gols do vencedor 3 (Arg fez 1, previu 1)  + gols do perdedor 1
-= 1.587 + 11 = 12.59 pts
+base(0.63) = round(1 + 7.55·log10(1/0.63)) = round(2.52) = 3
++ exato 5  + saldo 2  + gols do vencedor 3  + gols do perdedor 1
+= 3 + 11 = 14 pts
 ```
 
 **Favorito cravado** (`p = 0.81`), palpite `2×0`, real `2×0`:
 
 ```
-base = 1/0.81 = 1.235  + 5 + 2 + 3 + 1 = 12.23 pts
+base(0.81) = round(1 + 7.55·log10(1/0.81)) = round(1.69) = 2  + 5 + 2 + 3 + 1 = 13 pts
 ```
 
 **Por que a zebra vale mais**: acertar **exato** um resultado de `p = 0.10` rende
-`10 + 5 + 2 + 3 + 1 = 21 pts`, contra ~12 do favorito — embora aconteça menos vezes (ver §5, o
-trade-off é resolvido pela maximização do valor esperado).
+`base(0.10)=9 → 9 + 5 + 2 + 3 + 1 = 20 pts`, contra 13 do favorito — embora aconteça menos vezes
+(o trade-off é resolvido na escolha, §5).
 
 ---
 
@@ -278,22 +282,27 @@ Dado a matriz `P` do jogo, o valor esperado de um palpite `s = (p_h, p_a)` é
 E[pts(s)] = Σ_{i,j} P(i,j) · pontos( s, (i,j), probs )
 ```
 
-e escolhe-se `s* = argmax_s E[pts(s)]` sobre uma grade de placares de palpite `0..6`
-(`Scorer.max_goals`, **distinto** do teto da matriz `FitConfig.max_goals = 10` do §3.1/§3.4). Reportamos também o
-**placar mais provável** (`argmax P(i,j)`) como referência, e marcamos `is_upset` quando o resultado
-do palpite difere do favorito do modelo.
+e escolhe-se o palpite que maximiza um **objetivo com tilt de risco**:
 
-**Exemplo de trade-off.** Jogo com `probs = (favorito 0.55, empate 0.25, zebra 0.20)`, `risk = 0.5`.
-Comparando dois palpites extremos pelo valor esperado (apenas o termo base, para intuição):
+```
+s* = argmax_s  E[pts(s)] · (1/P(resultado de s))^(2·risk − 1)
+```
 
-- Apostar no favorito: ganha base quando o favorito vence (prob 0.55), `base ≈ 1/0.55 = 1.82` →
-  contribuição ~`0.55·1.82 = 1.00` + bônus por exatidão.
-- Apostar na zebra: ganha quando a zebra vence (prob 0.20), `base = 1/0.20 = 5.0` →
-  contribuição ~`0.20·5.0 = 1.00` + bônus.
+sobre uma grade de placares de palpite `0..6` (`Scorer.max_goals`, **distinto** do teto da matriz
+`FitConfig.max_goals = 10` do §3.1/§3.4). O `expected_points` reportado é sempre o **E[pts] real**
+(sem tilt). Reportamos também o **placar mais provável** (`argmax P(i,j)`) e marcamos `is_upset`
+quando o resultado do palpite difere do favorito do modelo.
 
-As contribuições base se aproximam (é o desenho do Sistema I: `p · (1/p) = 1`), e o desempate vem
-dos **bônus de exatidão**, que favorecem o resultado cuja distribuição de placares é mais concentrada.
-Subir o `risk` (γ>1) quebra esse equilíbrio a favor da zebra — por isso `risk` alto arrisca mais.
+**O papel do `risk`** (agora desacoplado da régua de pontos — a régua é fixa do app, §4.1):
+
+- `risk = 0.5` → expoente `0` → fator `1` → **maximiza E[pts] puro** (fiel).
+- `risk > 0.5` → expoente `> 0` → multiplica o objetivo por `(1/P)` elevado a algo positivo, o que
+  **favorece resultados raros** (zebra) além do que o valor esperado puro escolheria.
+- `risk < 0.5` → expoente `< 0` → puxa para o favorito (conservador).
+
+Assim a régua de pontos reproduz o app e o `risk` vira um **knob de estratégia** explícito: arriscar
+mais zebra (útil para ganhar variância e subir no ranking) sem distorcer a pontuação fiel usada no
+backtest e no E[pts].
 
 ---
 
@@ -394,8 +403,8 @@ recebem palpite.
 
 `backtest.py` treina **só com jogos anteriores** ao início da Copa-alvo e palpita todos os jogos
 daquela Copa, somando os pontos do Sistema I. A **seleção** do placar usa o `risk` testado, mas os
-pontos são **concedidos sempre pela fórmula fiel** (`risk = 0.5`), como o app faria — assim a
-comparação entre estratégias é justa. As matrizes passam pela mesma `MatrixCache` da produção, com
+pontos são **concedidos pela régua fiel do app** (§4.1, independente do risco), como o app faria —
+assim a comparação entre estratégias é justa. As matrizes passam pela mesma `MatrixCache` da produção, com
 os anfitriões da Copa-alvo (`_WORLD_CUP_HOSTS`), para tratar o mando do país-sede de forma idêntica
 (§3.1). Em 2022 isso não altera a tabela: o Qatar abriu como mandante, então o caso *host-away*
 nunca dispara.
@@ -404,11 +413,14 @@ Resultado na Copa **2022** (64 jogos):
 
 | risco | pts totais | média/jogo | % resultado | % placar exato |
 |---|---|---|---|---|
-| 0.0 / 0.5 | 140.5 | 2.20 | 42.2% | 9.4% |
-| 1.0 | **207.4** | 3.24 | 43.8% | **17.2%** |
+| 0.0 | 170.0 | 2.66 | 42.2% | 9.4% |
+| 0.5 | 177.0 | 2.77 | 43.8% | 9.4% |
+| 1.0 | **226.0** | 3.53 | 32.8% | **12.5%** |
 
-A estratégia agressiva fez ~47% mais pontos numa Copa cheia de zebras — coerente com "azarão vale
-mais". (Uma Copa só; não generalizar cegamente.)
+A estratégia agressiva (`risk=1.0`) fez **~28% mais pontos** que a fiel (`0.5`) e ~33% mais que a
+conservadora (`0.0`) numa Copa cheia de zebras — coerente com "azarão vale mais", ao custo de acertar
+menos o 1×2 (32.8% vs 43.8%). (Uma Copa só; não generalizar cegamente. Números com a régua de pontos
+calibrada ao app — §4.1.)
 
 ### 9.2 Limitações conhecidas
 

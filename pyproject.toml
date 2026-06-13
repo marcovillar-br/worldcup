@@ -1,6 +1,6 @@
 [project]
 name = "worldcup"
-version = "0.1.0"
+version = "0.2.0"
 description = "Gerador de palpites de bolão da Copa do Mundo com modelo estatístico (Dixon-Coles)"
 readme = "README.md"
 license = "MIT"

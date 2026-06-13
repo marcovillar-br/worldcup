@@ -70,6 +70,7 @@ do git (`.gitignore`); só os runs reais (`--archive`) são versionados em `hist
 - `docs/SPEC.md` — **especificação técnica e metodologia** (matemática do modelo, fórmula de
   pontuação, simulação, validação) com derivações e exemplos numéricos.
 - `AGENTS.md` (+ symlink `CLAUDE.md`) — guia para quem desenvolve/mantém o projeto.
+- `CHANGELOG.md` — mudanças relevantes por versão (Keep a Changelog); tags `vX.Y.Z` marcam marcos.
 
 ## Ajustar a pontuação do seu grupo
 

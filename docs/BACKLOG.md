@@ -22,7 +22,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-6](#eng-6) | P3 | cli | 🔴 | Separar camada de render (`render.py`) |
 | [ENG-7](#eng-7) | P3 | tipos | ✅ | mypy não cobre `tests/` |
 | [ENG-8](#eng-8) | P3 | ci | 🔴 | Sem medição de cobertura |
-| [ENG-9](#eng-9) | P3 | tests | 🔴 | Guardrail: toda seleção da edição tem tradução PT |
+| [ENG-9](#eng-9) | P3 | tests | ✅ | Guardrail: toda seleção da edição tem tradução PT |
 | [ENG-10](#eng-10) | P3 | release | 🔴 | Versão estática, sem CHANGELOG/tags |
 | [ENG-11](#eng-11) | P3 | processo | 🔴 | Vigiar proporcionalidade doc/código; consolidar docs |
 
@@ -123,14 +123,14 @@ Os testes rodam, mas nada mede o que ficou de fora (ex.: o caso do ENG-1 não ti
 **Commit:** —
 
 ## ENG-9
-**Guardrail: toda seleção da edição tem tradução PT** · P3 · tests · 🔴 todo
+**Guardrail: toda seleção da edição tem tradução PT** · P3 · tests · ✅ feito
 
 Seleção sem entrada em `teams._PT_DISPLAY` cai no inglês **silenciosamente**.
 
 **Correção proposta:** teste que afirma que todo time em `groups.csv` de cada edição tem `display`
 diferente do canônico (ou entrada explícita no mapa).
 **Aceite:** teste cobre a edição 2026; falha se faltar tradução. `pytest` verde.
-**Commit:** —
+**Commit:** 593568f
 
 ## ENG-10
 **Versão estática, sem CHANGELOG/tags** · P3 · release · 🔴 todo

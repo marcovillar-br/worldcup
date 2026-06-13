@@ -1,8 +1,8 @@
 match_id,stage,group,date,home,away,neutral,third_groups,home_goals,away_goals,ko_outcome
 1,group,A,2026-06-11,Mexico,South Africa,False,,2,0,
 2,group,A,2026-06-11,South Korea,Czech Republic,True,,2,1,
-3,group,B,2026-06-12,Canada,Bosnia and Herzegovina,False,,,,
-4,group,D,2026-06-12,United States,Paraguay,False,,,,
+3,group,B,2026-06-12,Canada,Bosnia and Herzegovina,False,,1,1,
+4,group,D,2026-06-12,United States,Paraguay,False,,4,1,
 5,group,D,2026-06-13,Australia,Turkey,True,,,,
 6,group,C,2026-06-13,Brazil,Morocco,True,,,,
 7,group,C,2026-06-13,Haiti,Scotland,True,,,,

@@ -28,6 +28,7 @@ Outros comandos:
 
 ```bash
 uv run worldcup sync-results --edition 2026   # baixa os resultados reais da internet e repalpita
+uv run worldcup predict --edition 2026 --archive   # +snapshot versionado do dia (history/)
 uv run worldcup record --edition 2026 --match <id> --home 2 --away 1   # registra um placar manualmente
 uv run worldcup backtest --edition 2022       # valida o modelo numa Copa passada
 uv run pytest        # testes
@@ -42,6 +43,12 @@ roda o `predict`. Use `record` para um ajuste pontual ou se quiser corrigir algo
 Os palpites ficam em `out/palpites-<edição>.md` (tabela pronta para copiar), `.csv` e
 `.html` — este último é autocontido (abre no navegador, com barras de probabilidade e destaque
 de zebra) e **otimizado para impressão** (Ctrl+P → salvar em PDF, com quebra de página por fase).
+
+`out/` é regenerável (gitignored) e sobrescrito a cada run. Para guardar o **histórico** de como
+os palpites evoluem rodada a rodada, use `predict --archive` (ou `--archive AAAA-MM-DD`): grava um
+snapshot imutável e **versionado** em `data/editions/<edição>/history/<data>.{csv,md}`. Faz sentido
+porque, depois que novos resultados entram e o modelo reajusta, o palpite de um dia não é mais
+reproduzível.
 
 ## Estrutura
 

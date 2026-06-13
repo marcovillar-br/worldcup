@@ -18,6 +18,7 @@ Nada específico de um ano fica no código. Cada edição é descrita por **dado
 uv sync                                      # ambiente a partir do uv.lock
 uv run worldcup fetch-data                   # baixa/normaliza a base histórica
 uv run worldcup predict --edition 2026       # gera out/palpites-<ano>.{csv,md,html}
+uv run worldcup predict --edition 2026 --archive          # +snapshot versionado do dia em history/
 uv run worldcup sync-results --edition 2026  # baixa resultados reais da internet, preenche e repalpita
 uv run worldcup record --edition 2026 --match <id> --home X --away Y [--ko-winner <Team>]
 uv run worldcup backtest --edition 2022      # valida o modelo numa Copa passada
@@ -67,6 +68,12 @@ código que ferramenta não pega ficam aqui no AGENTS.md (não há doc de regras
 - `BOLAO.md` — **memória de campanha** do bolão (agnóstica a ferramenta): decisões vivas que não
   são rederiváveis de dados/código (`risk` escolhido, situação no ranking, regras do bolão).
   **Leia no início da sessão e atualize quando uma decisão de campanha acontecer.**
+- `history/<data>.{csv,md}` — **snapshots diários versionados** dos palpites (`predict --archive`,
+  default = data de hoje). Diferente de `out/` (regenerável, gitignored), são **imutáveis e
+  rastreados**: depois que resultados entram e o modelo reajusta, o palpite de um dia não é mais
+  reproduzível — daí versionar. Só CSV (canônico/diffável) + MD; nunca HTML. Sufixo `.reconstruido`
+  (+ banner no MD) marca dias gerados a posteriori, que **não** são o que a ferramenta produziu
+  naquele dia. Gravados por `cli.archive_outputs`.
 
 ## Convenções e cuidados
 
@@ -77,7 +84,8 @@ código que ferramenta não pega ficam aqui no AGENTS.md (não há doc de regras
   pode listar o anfitrião como visitante num jogo no estádio dele (Copa 2026, jogos 50/51/60), e a
   vantagem segue o anfitrião. Regra centralizada em `MatrixCache._host_away` → `score_matrix(host_away=…)`.
 - **Gerados (no .gitignore)**: `out/`, `data/historical_results.csv`, caches. Versionar só
-  specs de edição, código, testes e a skill.
+  specs de edição, código, testes e a skill. **Exceção deliberada:** `data/editions/<ano>/history/`
+  é versionado — são snapshots imutáveis e não-reprodutíveis (ver acima), não a saída regenerável.
 - **Tabela longa**: ao mexer no formato de saída, o palpite tem 104 linhas (72 grupo + 32 KO).
 - **Sincronia de artefatos**: toda mudança anda com sua documentação no mesmo commit —
   (a) andamento da Copa (`sync-results`/`record`) → atualize o *Estado atual* do `BOLAO.md`

@@ -14,6 +14,7 @@ import argparse
 import csv
 import html
 import sys
+from datetime import date
 from pathlib import Path
 
 from .edition import EDITIONS_DIR, load_edition
@@ -284,6 +285,35 @@ def save_outputs(run: PredictionRun, year: int) -> tuple[Path, Path, Path]:
     return csv_path, md_path, html_path
 
 
+def archive_outputs(run: PredictionRun, year: int, date_str: str, *, reconstructed: bool = False) -> tuple[Path, Path]:
+    """Grava um snapshot imutável dos palpites do dia em `data/editions/<year>/history/`.
+
+    Diferente de `out/` (regenerável e gitignored), o snapshot é **versionado**: depois que
+    novos resultados entram e o modelo reajusta, o palpite de um dia não é mais reproduzível —
+    é justamente essa não-reprodutibilidade que justifica guardar. Só CSV (canônico, diffável)
+    + MD (legível); HTML fica de fora. `reconstructed=True` marca dias gerados a posteriori
+    (sufixo no nome do arquivo + aviso no topo do MD), para não confundir com um run real.
+    """
+    hist = EDITIONS_DIR / str(year) / "history"
+    hist.mkdir(parents=True, exist_ok=True)
+    suffix = ".reconstruido" if reconstructed else ""
+    csv_path = hist / f"{date_str}{suffix}.csv"
+    md_path = hist / f"{date_str}{suffix}.md"
+    with csv_path.open("w", newline="") as fh:
+        w = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
+        w.writeheader()
+        w.writerows(run.rows)
+    md = render_markdown(run)
+    if reconstructed:
+        md = (
+            f"> ⚠️ Snapshot **reconstruído** para {date_str}: gerado a posteriori reajustando o modelo "
+            f"apenas com os resultados conhecidos até essa data. **Não** é o que a ferramenta produziu "
+            f"naquele dia (o `out/` já fora sobrescrito) — é uma aproximação fiel à metodologia.\n\n"
+        ) + md
+    md_path.write_text(md, encoding="utf-8")
+    return csv_path, md_path
+
+
 def print_console_summary(run: PredictionRun) -> None:
     from .teams import display
 
@@ -327,6 +357,10 @@ def cmd_predict(args: argparse.Namespace) -> int:
     print(
         f"\n💾 CSV: {csv_path}\n💾 Markdown (pronto p/ copiar): {md_path}\n💾 HTML (visualizar/imprimir): {html_path}"
     )
+    if getattr(args, "archive", None) is not None:
+        date_str = date.today().isoformat() if args.archive == "@today" else args.archive
+        a_csv, _a_md = archive_outputs(pred, args.edition, date_str)
+        print(f"🗄️  Snapshot versionado do dia: {a_csv}")
     return 0
 
 
@@ -390,6 +424,14 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--sims", type=int, default=5000, help="nº de simulações Monte Carlo")
     pr.add_argument("--seed", type=int, default=12345)
     pr.add_argument("--risk", type=float, default=None, help="sobrescreve o risco (0..1)")
+    pr.add_argument(
+        "--archive",
+        nargs="?",
+        const="@today",
+        default=None,
+        metavar="DATA",
+        help="arquiva snapshot versionado em data/editions/<ed>/history/<DATA>.{csv,md} (default: hoje)",
+    )
     pr.set_defaults(func=cmd_predict)
 
     rc = sub.add_parser("record", help="registra o placar real de um jogo")
@@ -406,6 +448,14 @@ def build_parser() -> argparse.ArgumentParser:
     sr.add_argument("--seed", type=int, default=12345)
     sr.add_argument("--risk", type=float, default=None)
     sr.add_argument("--no-predict", action="store_true", help="só sincroniza, não repalpita")
+    sr.add_argument(
+        "--archive",
+        nargs="?",
+        const="@today",
+        default=None,
+        metavar="DATA",
+        help="arquiva snapshot versionado em data/editions/<ed>/history/<DATA>.{csv,md} (default: hoje)",
+    )
     sr.set_defaults(func=cmd_sync_results)
 
     bt = sub.add_parser("backtest", help="valida o modelo numa Copa passada")

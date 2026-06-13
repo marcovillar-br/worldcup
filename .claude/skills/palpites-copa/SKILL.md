@@ -27,10 +27,13 @@ uv run worldcup fetch-data
 ### 2. Atualizar resultados já disputados (realimentação)
 **Forma automática (preferida)** — baixa todos os placares reais da internet e já repalpita:
 ```bash
-uv run worldcup sync-results --edition 2026
+uv run worldcup sync-results --edition 2026 --archive
 ```
 Use isto quando o usuário disser "atualiza os palpites" ou após uma rodada acontecer. Preenche
 grupos e mata-mata sozinho (pênaltis inclusos). Para só sincronizar sem repalpitar: `--no-predict`.
+O `--archive` grava o snapshot versionado do dia em `data/editions/2026/history/<hoje>.{csv,md}`
+(histórico de como os palpites evoluem); inclua-o na rotina diária. Sem ele, `out/` é sobrescrito
+e o palpite do dia se perde.
 
 **Forma manual (pontual)** — se o usuário ditou um placar específico ou quer corrigir algo.
 Descubra o `match_id` em `out/palpites-2026.csv` ou `data/editions/2026/fixtures.csv` (pelos nomes

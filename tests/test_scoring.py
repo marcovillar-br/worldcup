@@ -62,3 +62,20 @@ def test_goal_difference_bonus_on_draw():
     pts = s.points((1, 1), (2, 2), probs)
     base = 1.0 / 0.4
     assert abs(pts - (base + 2)) < 1e-6  # base + goal_diff
+
+
+def test_knockout_bonus_extra_time_and_penalties():
+    s = _scorer()
+    # acertou que vai a pênaltis (+3) e o vencedor nos pênaltis (+3)
+    assert s.knockout_bonus("penalties", "home", "penalties", "home") == 6.0
+    # acertou só a ida a pênaltis, errou o vencedor (+3)
+    assert s.knockout_bonus("penalties", "home", "penalties", "away") == 3.0
+    # acertou que um lado vence na prorrogação (+3); sem pênaltis, sem bônus de pênaltis
+    assert s.knockout_bonus("home", "home", "home", None) == 3.0
+    # errou a prorrogação e não foi a pênaltis: zero
+    assert s.knockout_bonus("home", "home", "penalties", "away") == 0.0
+
+
+def test_knockout_bonus_only_for_sistema_i():
+    s = Scorer(ScoringConfig(system="so_vencedor"))
+    assert s.knockout_bonus("penalties", "home", "penalties", "home") == 0.0

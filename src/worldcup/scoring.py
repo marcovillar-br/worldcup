@@ -123,6 +123,32 @@ class Scorer:
                 pts += float(c.get("goleada", 1.0))
         return pts
 
+    def knockout_bonus(
+        self,
+        pred_extra_time: str,
+        pred_penalty_winner: str,
+        actual_extra_time: str,
+        actual_penalty_winner: str | None,
+    ) -> float:
+        """Bônus de mata-mata do Sistema I (camadas 2 e 3), independentes do placar de 90'.
+
+        - `extra_time` (+3): acertar o desfecho da prorrogação — `"home"`/`"away"` (um lado
+          vence na prorrogação) ou `"penalties"` (foi à disputa).
+        - `penalties` (+3): acertar o vencedor nos pênaltis (só quando o jogo foi a pênaltis).
+
+        Os valores vêm do `scoring.toml` (`extra_time`/`penalties`). Só o Sistema I tem essas camadas.
+        """
+        if self.system != "sistema_i":
+            return 0.0
+        c = self.cfg.sistema_i
+        bonus = 0.0
+        if pred_extra_time == actual_extra_time:
+            bonus += float(c.get("extra_time", 3.0))
+        went_to_pens = actual_extra_time == "penalties" and actual_penalty_winner is not None
+        if went_to_pens and pred_penalty_winner == actual_penalty_winner:
+            bonus += float(c.get("penalties", 3.0))
+        return bonus
+
     # ----------------------------------------------------------- escolha
     def expected_points(self, pred: tuple[int, int], matrix: np.ndarray) -> float:
         """E[pontos] do palpite `pred` integrando sobre a matriz de placares."""

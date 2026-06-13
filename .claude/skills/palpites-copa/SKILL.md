@@ -78,6 +78,10 @@ vivas**/**Histórico**. É a memória persistente agnóstica a ferramenta — le
 da sessão.
 
 ## Notas
+- **Histórico/reconstrução**: `predict --archive` guarda o snapshot do dia em `history/`. Para
+  reconstruir um dia passado (ou semear o histórico retroativo), use
+  `predict --edition 2026 --as-of AAAA-MM-DD` — gera a visão daquela data (só resultados até a
+  véspera), grava `history/<data>.reconstruido.{csv,md}` e **não** mexe no `out/` vivo.
 - Para editar a pontuação do bolão (se o admin do grupo usar valores diferentes), ajuste
   `data/editions/2026/scoring.toml`.
 - O app é agnóstico à edição: para uma Copa futura, use `--edition <ano>` com os dados em

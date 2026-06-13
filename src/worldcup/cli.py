@@ -350,6 +350,24 @@ def cmd_predict(args: argparse.Namespace) -> int:
     edition = load_edition(args.edition)
     if args.risk is not None:
         edition.scoring.risk = args.risk
+
+    as_of = getattr(args, "as_of", None)
+    if as_of is not None:
+        try:
+            as_of = date.fromisoformat(as_of).isoformat()
+        except ValueError:
+            print(f"❌ --as-of inválido: {as_of!r}. Use AAAA-MM-DD.", file=sys.stderr)
+            return 1
+        # Visão reconstruída: não sobrescreve out/ (palpites vivos da campanha); grava só no history/.
+        edition = edition.as_of(as_of)
+        print(f"⏪ Visão reconstruída de {as_of} ({edition.spec.name}, {args.sims} simulações)...")
+        print("   usando apenas os resultados conhecidos até a véspera; out/ não será alterado.")
+        pred = run(edition, n_sims=args.sims, seed=args.seed)
+        print_console_summary(pred)
+        a_csv, _a_md = archive_outputs(pred, args.edition, as_of, reconstructed=True)
+        print(f"\n🗄️  Snapshot reconstruído: {a_csv}")
+        return 0
+
     print(f"⚙️  Gerando palpites de {edition.spec.name} ({args.sims} simulações)...")
     pred = run(edition, n_sims=args.sims, seed=args.seed)
     csv_path, md_path, html_path = save_outputs(pred, args.edition)
@@ -431,6 +449,13 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="DATA",
         help="arquiva snapshot versionado em data/editions/<ed>/history/<DATA>.{csv,md} (default: hoje)",
+    )
+    pr.add_argument(
+        "--as-of",
+        default=None,
+        metavar="AAAA-MM-DD",
+        help="visão reconstruída de uma data passada (só resultados até a véspera); grava em "
+        "history/<DATA>.reconstruido.{csv,md} sem tocar em out/",
     )
     pr.set_defaults(func=cmd_predict)
 

@@ -19,6 +19,7 @@ uv sync                                      # ambiente a partir do uv.lock
 uv run worldcup fetch-data                   # baixa/normaliza a base histórica
 uv run worldcup predict --edition 2026       # gera out/palpites-<ano>.{csv,md,html}
 uv run worldcup predict --edition 2026 --archive          # +snapshot versionado do dia em history/
+uv run worldcup predict --edition 2026 --as-of 2026-06-12 # visão reconstruída de uma data passada
 uv run worldcup sync-results --edition 2026  # baixa resultados reais da internet, preenche e repalpita
 uv run worldcup record --edition 2026 --match <id> --home X --away Y [--ko-winner <Team>]
 uv run worldcup backtest --edition 2022      # valida o modelo numa Copa passada
@@ -41,6 +42,7 @@ código que ferramenta não pega ficam aqui no AGENTS.md (não há doc de regras
 ## Arquitetura (`src/worldcup/`)
 
 - `edition.py` — modelos **Pydantic v2** + `load_edition()`; carrega e valida a spec.
+  `Edition.as_of(data)` devolve a edição como conhecida no início de uma data (base do `--as-of`).
 - `teams.py` — nome canônico (inglês, do dataset) ↔ exibição em português.
 - `fetch_data.py` — baixa `results.csv`/`shootouts.csv` (martj42), normaliza → `data/historical_results.csv`.
 - `model.py` — `DixonColesModel`: ajuste ponderado (decaimento temporal + peso de torneio + mando),
@@ -73,7 +75,10 @@ código que ferramenta não pega ficam aqui no AGENTS.md (não há doc de regras
   rastreados**: depois que resultados entram e o modelo reajusta, o palpite de um dia não é mais
   reproduzível — daí versionar. Só CSV (canônico/diffável) + MD; nunca HTML. Sufixo `.reconstruido`
   (+ banner no MD) marca dias gerados a posteriori, que **não** são o que a ferramenta produziu
-  naquele dia. Gravados por `cli.archive_outputs`.
+  naquele dia. Gravados por `cli.archive_outputs`. Reconstruir é de primeira classe:
+  `predict --as-of AAAA-MM-DD` reaproveita `Edition.as_of()` (descarta resultados a partir da data)
+  e grava direto no `history/` como reconstruído — **sem tocar em `out/`** (não sobrescreve os
+  palpites vivos da campanha). `--as-of <hoje>` reproduz o run real do dia (consistência verificável).
 
 ## Convenções e cuidados
 

@@ -109,6 +109,20 @@ class Edition(BaseModel):
     def knockout_fixtures(self) -> list[Fixture]:
         return [f for f in self.fixtures if not f.is_group]
 
+    def as_of(self, date_str: str) -> Edition:
+        """Edição como conhecida no **início** de `date_str` (formato AAAA-MM-DD).
+
+        Descarta os resultados dos jogos a partir dessa data (inclusive) — eles ainda não
+        haviam acontecido naquela manhã. Reproduz o estado de conhecimento de um dia para
+        gerar a "visão reconstruída" dos palpites, sem mexer no histórico em disco.
+        """
+        cutoff = date_str.strip()
+        fixtures = [
+            f.model_copy(update={"home_goals": None, "away_goals": None, "ko_outcome": None}) if f.date >= cutoff else f
+            for f in self.fixtures
+        ]
+        return self.model_copy(update={"fixtures": fixtures})
+
     # ---- validação estrutural ----
     @model_validator(mode="after")
     def _validate(self) -> Edition:

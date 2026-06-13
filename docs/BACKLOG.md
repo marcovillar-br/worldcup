@@ -23,7 +23,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-7](#eng-7) | P3 | tipos | ✅ | mypy não cobre `tests/` |
 | [ENG-8](#eng-8) | P3 | ci | ✅ | Sem medição de cobertura |
 | [ENG-9](#eng-9) | P3 | tests | ✅ | Guardrail: toda seleção da edição tem tradução PT |
-| [ENG-10](#eng-10) | P3 | release | 🔴 | Versão estática, sem CHANGELOG/tags |
+| [ENG-10](#eng-10) | P3 | release | ✅ | Versão estática, sem CHANGELOG/tags |
 | [ENG-11](#eng-11) | P3 | processo | ✅ | Vigiar proporcionalidade doc/código; consolidar docs |
 
 ---
@@ -135,7 +135,7 @@ diferente do canônico (ou entrada explícita no mapa).
 **Commit:** 593568f
 
 ## ENG-10
-**Versão estática, sem CHANGELOG/tags** · P3 · release · 🔴 todo
+**Versão estática, sem CHANGELOG/tags** · P3 · release · ✅ feito
 
 `version = "0.1.0"` fixo, sem `CHANGELOG` nem tags. Para algo agnóstico a edição que sobrevive a
 várias Copas, dificulta rastrear o que mudou entre edições.
@@ -143,11 +143,12 @@ várias Copas, dificulta rastrear o que mudou entre edições.
 **Correção proposta:** adotar `CHANGELOG.md` (Keep a Changelog) + tags por marco; avaliar versão
 dinâmica via `hatch`.
 **Aceite:** CHANGELOG criado com o histórico recente; convenção de tag definida.
-**Adiado (2026-06-13):** decisão de não adicionar a cerimônia agora — em projeto pré-1.0 de
-mantenedor único, o `docs/BACKLOG.md` (com refs de commit por item) + os commits convencionais já
-são o registro de mudanças, e a camada meta já está pesada (ver [ENG-11]). **Gatilho para
-revisitar:** primeiro release tagueado ou a virada para uma nova edição (`data/editions/<ano>/`).
-**Commit:** —
+**Resolução (2026-06-13):** adiado e reaberto no mesmo dia (a pedido) — implementado em escopo
+**enxuto**: `CHANGELOG.md` (Keep a Changelog) semeado com o marco `0.2.0`, bump de versão em
+`pyproject`/`__init__`, convenção de tag `vX.Y.Z` documentada e tag `v0.2.0` criada. Versão dinâmica
+via `hatch` ficou de fora (baixo valor p/ mantenedor único); revisitar se a manutenção do bump
+manual em dois arquivos incomodar.
+**Commit:** 94fe954
 
 ## ENG-11
 **Vigiar proporcionalidade doc/código; consolidar docs** · P3 · processo · ✅ feito

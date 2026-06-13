@@ -24,7 +24,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-8](#eng-8) | P3 | ci | ✅ | Sem medição de cobertura |
 | [ENG-9](#eng-9) | P3 | tests | ✅ | Guardrail: toda seleção da edição tem tradução PT |
 | [ENG-10](#eng-10) | P3 | release | 🔴 | Versão estática, sem CHANGELOG/tags |
-| [ENG-11](#eng-11) | P3 | processo | 🔴 | Vigiar proporcionalidade doc/código; consolidar docs |
+| [ENG-11](#eng-11) | P3 | processo | ✅ | Vigiar proporcionalidade doc/código; consolidar docs |
 
 ---
 
@@ -146,7 +146,7 @@ dinâmica via `hatch`.
 **Commit:** —
 
 ## ENG-11
-**Vigiar proporcionalidade doc/código; consolidar docs** · P3 · processo · 🔴 todo
+**Vigiar proporcionalidade doc/código; consolidar docs** · P3 · processo · ✅ feito
 
 A camada *meta* (docs/processo/skills) cresceu a ~64% do tamanho do código (1.366 linhas de md vs
 ~2.135 LOC) e a regra de sincronia de artefatos obriga tocar vários docs por mudança — o andaime
@@ -158,4 +158,9 @@ preferir **consolidar a adicionar**. Revisar sobreposição entre `AGENTS.md`, `
 **Aceite:** revisão de sobreposição registrada; nenhuma seção duplicada entre os três docs sem um
 canônico declarado. (Item de vigilância recorrente — fechar quando a revisão for feita; reabrir a
 cada salto de doc.)
-**Commit:** —
+**Revisão (2026-06-13):** canônicos declarados — comandos → `README.md`; arquitetura/convenções →
+`AGENTS.md`; metodologia/matemática → `docs/SPEC.md`; **limitações → `docs/SPEC.md` §9.2** (era a
+única duplicada sem canônico: estava nos três docs; README mantém resumo ao usuário, AGENTS aponta
+para o SPEC). Demais sobreposições são audiências distintas (ex.: README §Estrutura ≠ AGENTS
+§Arquitetura). Reabrir a cada salto de doc/skill.
+**Commit:** 8e4616d

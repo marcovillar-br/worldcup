@@ -16,7 +16,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 |----|-----|------|--------|------|
 | [ENG-1](#eng-1) | P1 | sync | ✅ | Reencontro de seleções colapsa resultado indexado por par |
 | [ENG-2](#eng-2) | P2 | backtest | ✅ | Mando do anfitrião não aplicado no backtest |
-| [ENG-3](#eng-3) | P2 | model | 🔴 | Convergência do otimizador ignorada |
+| [ENG-3](#eng-3) | P2 | model | ✅ | Convergência do otimizador ignorada |
 | [ENG-4](#eng-4) | P3 | observabilidade | ✅ | `logging` no lugar de `print()` na biblioteca |
 | [ENG-5](#eng-5) | P3 | fetch_data | 🔴 | Validar schema do CSV baixado |
 | [ENG-6](#eng-6) | P3 | cli | 🔴 | Separar camada de render (`render.py`) |
@@ -59,7 +59,7 @@ host-away. `pytest` verde.
 **Commit:** 75255bc
 
 ## ENG-3
-**Convergência do otimizador ignorada** · P2 · `model.py` · 🔴 todo
+**Convergência do otimizador ignorada** · P2 · `model.py` · ✅ feito
 
 `minimize(...)` em `model.DixonColesModel.fit` roda com `maxiter=500` e descarta `res.success`/`res.status`; usa
 `res.x` aconteça o que acontecer. Um fit não-convergido gera previsões ruins sem nenhum sinal.
@@ -69,7 +69,7 @@ host-away. `pytest` verde.
 crescer.
 **Aceite:** teste que força não-convergência (maxiter baixo) e verifica que o aviso é emitido sem
 quebrar a saída. `pytest` verde.
-**Commit:** —
+**Commit:** f4ffd48
 
 ## ENG-4
 **`logging` no lugar de `print()` na biblioteca** · P3 · observabilidade · ✅ feito

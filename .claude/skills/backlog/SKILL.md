@@ -41,11 +41,16 @@ Esta é a **disciplina de fechamento** — tudo num **único commit**:
    (especialmente para P1/P2).
 3. Rode as checagens de Qualidade do `AGENTS.md`: `uv run ruff check .`, `uv run ruff format`,
    `uv run mypy`, `uv run pytest` — todas verdes.
-4. No backlog: status **✅ feito** (índice **e** detalhe) e preencha `**Commit:**` com o hash.
-   Como o hash só existe após o commit, use o fluxo: `git commit` → pegue o hash com
-   `git rev-parse --short HEAD` → edite o `**Commit:**` → `git commit --amend --no-edit`.
-   (ou deixe o `**Commit:** <ID-do-PR>` se preferir rastrear por PR.)
-5. O fix e a marcação ✅ andam **no mesmo commit** (regra de sincronia de artefatos do `AGENTS.md`).
+4. No backlog: status **✅ feito** (índice **e** detalhe) e preencha `**Commit:**` com o hash do
+   **commit do fix** — que precisa **existir e ser alcançável** no histórico.
+   ⚠️ **Não use `git commit --amend` para gravar o hash**: um commit não pode conter o próprio
+   hash final, então o amend deixa o hash que você gravou **órfão** (some no rewrite, não vai pro
+   remoto). Use **dois commits adjacentes**: (1) o fix (com o teste) → pegue o hash com
+   `git rev-parse --short HEAD`; (2) a marcação ✅ + `**Commit:** <hash do fix>`. O hash referencia
+   o **pai** alcançável. (Alternativa: `**Commit:** <ID-do-PR>` se rastrear por PR.)
+5. Fix e fechamento vão **no mesmo push, adjacentes** (a intenção da sincronia de artefatos é
+   "doc não atrasa o código" — dois commits no mesmo push a satisfazem; um único commit
+   auto-referente é impossível, ver passo 4).
 
 ## Notas
 

@@ -14,7 +14,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 
 | ID | Pri | Área | Status | Item |
 |----|-----|------|--------|------|
-| [ENG-1](#eng-1) | P1 | sync | 🔴 | Reencontro de seleções colapsa resultado indexado por par |
+| [ENG-1](#eng-1) | P1 | sync | ✅ | Reencontro de seleções colapsa resultado indexado por par |
 | [ENG-2](#eng-2) | P2 | backtest | 🔴 | Mando do anfitrião não aplicado no backtest |
 | [ENG-3](#eng-3) | P2 | model | 🔴 | Convergência do otimizador ignorada |
 | [ENG-4](#eng-4) | P3 | observabilidade | 🔴 | `logging` no lugar de `print()` na biblioteca |
@@ -29,7 +29,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 ---
 
 ## ENG-1
-**Reencontro de seleções colapsa o resultado indexado por par** · P1 · `sync.py` · 🔴 todo
+**Reencontro de seleções colapsa o resultado indexado por par** · P1 · `sync.py` · ✅ feito
 
 `sync._edition_results` monta `scores[(home, away)]` para todos os jogos da Copa do ano.
 Se duas seleções se enfrentam **duas vezes** na mesma Copa com a mesma orientação na fonte
@@ -42,7 +42,7 @@ resultados.
 `fixtures.csv` quanto a fonte têm `date`. Casar cada fixture pelo seu `date`.
 **Aceite:** teste de regressão com um par que joga 2× na mesma Copa (grupo + KO) com a mesma
 orientação; o jogo de grupo recebe o placar do grupo e o de KO o placar do KO. `pytest` verde.
-**Commit:** —
+**Commit:** 17272f2
 
 ## ENG-2
 **Mando do anfitrião não aplicado no backtest** · P2 · `backtest.py` · 🔴 todo

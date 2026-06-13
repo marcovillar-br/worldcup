@@ -11,6 +11,7 @@ A saída principal é `score_matrix(home, away, neutral)`: a matriz de probabili
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 
 import numpy as np
@@ -19,6 +20,8 @@ from scipy.optimize import minimize
 from scipy.stats import poisson
 
 from .teams import canonical
+
+logger = logging.getLogger(__name__)
 
 # Peso por tipo de torneio (importância na estimativa de força).
 _TOURNAMENT_WEIGHTS = {
@@ -87,6 +90,15 @@ class DixonColesModel:
         competitive = set(df.loc[is_major, "home_team"]) | set(df.loc[is_major, "away_team"])
         counts = pd.concat([df["home_team"], df["away_team"]]).value_counts()
         keep = competitive & set(counts[counts >= self.config.min_matches].index)
+        all_teams = set(df["home_team"]) | set(df["away_team"])
+        dropped = all_teams - keep
+        if dropped:
+            logger.info(
+                "min_matches=%d/filtro de competitividade descartou %d seleções: %s",
+                self.config.min_matches,
+                len(dropped),
+                ", ".join(sorted(dropped)[:15]) + (" …" if len(dropped) > 15 else ""),
+            )
         df = df[df["home_team"].isin(keep) & df["away_team"].isin(keep)].reset_index(drop=True)
 
         teams = sorted(set(df["home_team"]) | set(df["away_team"]))

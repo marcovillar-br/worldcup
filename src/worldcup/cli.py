@@ -13,6 +13,7 @@ from __future__ import annotations
 import argparse
 import csv
 import html
+import logging
 import sys
 from datetime import date
 from pathlib import Path
@@ -431,6 +432,12 @@ def cmd_backtest(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="worldcup", description="Gerador de palpites de bolão da Copa")
+    p.add_argument(
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="mostra avisos informativos da biblioteca (seleções descartadas, etc.)",
+    )
     sub = p.add_subparsers(dest="command", required=True)
 
     f = sub.add_parser("fetch-data", help="baixa e normaliza a base histórica")
@@ -491,8 +498,22 @@ def build_parser() -> argparse.ArgumentParser:
     return p
 
 
+def _configure_logging(verbose: bool) -> None:
+    """Avisos da biblioteca vão para stderr. Default WARNING; --verbose desce a INFO.
+
+    A saída ao usuário continua em `print()` (stdout); o `logging` é só para os avisos
+    da biblioteca (`model`/`sync`/`pipeline`), capturáveis em teste via `caplog`.
+    """
+    logging.basicConfig(
+        level=logging.INFO if verbose else logging.WARNING,
+        format="%(levelname)s: %(message)s",
+        stream=sys.stderr,
+    )
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    _configure_logging(getattr(args, "verbose", False))
     try:
         return args.func(args)
     except NetworkError as err:

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import numpy as np
 import pandas as pd
 
@@ -35,6 +37,29 @@ def _synthetic_matches() -> pd.DataFrame:
                 }
             )
     return pd.DataFrame(rows)
+
+
+def test_fit_logs_dropped_low_match_teams(caplog):
+    # uma seleção com poucos jogos é descartada por min_matches — antes era silencioso (ENG-4)
+    df = _synthetic_matches()
+    rare = pd.DataFrame(
+        [
+            {
+                "date": pd.Timestamp("2024-02-01"),
+                "home_team": "A",
+                "away_team": "Rarea",
+                "home_score": 5,
+                "away_score": 0,
+                "tournament": "FIFA World Cup qualification",
+                "neutral": False,
+            }
+        ]
+    )
+    df = pd.concat([df, rare], ignore_index=True)
+    with caplog.at_level(logging.INFO, logger="worldcup.model"):
+        DixonColesModel().fit(df)
+    assert any("descartou" in r.message for r in caplog.records)
+    assert "Rarea" in caplog.text
 
 
 def test_score_matrix_is_a_distribution():

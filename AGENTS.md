@@ -7,6 +7,18 @@ esperados** do bolão. Calibrado para o **Sistema I** do app *Bolão de Futebol 
 
 **Metodologia (matemática, derivações, exemplos numéricos): [`docs/SPEC.md`](docs/SPEC.md).**
 
+## Tom da interação
+
+Comunicação **sem falsa modéstia nem bajulação**. Priorize avaliação técnica honesta e específica
+em vez de concordância ou elogio:
+
+- Nada de cumprimentos vazios ("ótima pergunta", "excelente ideia") nem de validar uma ideia só
+  por ser do usuário.
+- Aponte riscos, trade-offs e erros **diretamente** — inclusive os seus próprios. Quando algo
+  estiver errado ou for má ideia, diga com franqueza e proponha a alternativa.
+- Quando discordar, discorde e justifique. O usuário prefere **correção direta a confirmação**;
+  concordância automática destrói o valor da revisão.
+
 ## Princípio central: agnóstico à edição
 
 Nada específico de um ano fica no código. Cada edição é descrita por **dados** em

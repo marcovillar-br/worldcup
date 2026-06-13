@@ -222,3 +222,5 @@ out/
 data/historical_results.csv
 tmp/
 .claude/projects/
+# Snapshots reconstruídos são regeneráveis sob demanda (predict --as-of); versiona só runs reais.
+data/editions/*/history/*.reconstruido.*

@@ -14,16 +14,9 @@ Nada específico de um ano fica no código. Cada edição é descrita por **dado
 
 ## Comandos (sempre via uv)
 
-```bash
-uv sync                                      # ambiente a partir do uv.lock
-uv run worldcup fetch-data                   # baixa/normaliza a base histórica
-uv run worldcup predict --edition 2026       # gera out/palpites-<ano>.{csv,md,html}
-uv run worldcup predict --edition 2026 --archive          # +snapshot versionado do dia em history/
-uv run worldcup predict --edition 2026 --as-of 2026-06-12 # visão reconstruída de uma data passada
-uv run worldcup sync-results --edition 2026  # baixa resultados reais da internet, preenche e repalpita
-uv run worldcup record --edition 2026 --match <id> --home X --away Y [--ko-winner <Team>]
-uv run worldcup backtest --edition 2022      # valida o modelo numa Copa passada
-```
+Ambiente: `uv sync` (a partir do `uv.lock`). O **catálogo completo da CLI `worldcup`**
+(`predict`/`sync-results`/`record`/`backtest`, com `--archive` e `--as-of`) é canônico no
+**[`README.md`](README.md)** — não duplicar aqui. As checagens de qualidade ficam abaixo.
 
 ## Qualidade (rode antes de concluir mudanças)
 
@@ -72,15 +65,14 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `BOLAO.md` — **memória de campanha** do bolão (agnóstica a ferramenta): decisões vivas que não
   são rederiváveis de dados/código (`risk` escolhido, situação no ranking, regras do bolão).
   **Leia no início da sessão e atualize quando uma decisão de campanha acontecer.**
-- `history/<data>.{csv,md}` — **snapshots diários versionados** dos palpites (`predict --archive`,
-  default = data de hoje). Diferente de `out/` (regenerável, gitignored), são **imutáveis e
-  rastreados**: depois que resultados entram e o modelo reajusta, o palpite de um dia não é mais
-  reproduzível — daí versionar. Só CSV (canônico/diffável) + MD; nunca HTML. Sufixo `.reconstruido`
-  (+ banner no MD) marca dias gerados a posteriori, que **não** são o que a ferramenta produziu
-  naquele dia. Gravados por `cli.archive_outputs`. Reconstruir é de primeira classe:
-  `predict --as-of AAAA-MM-DD` reaproveita `Edition.as_of()` (descarta resultados a partir da data)
-  e grava direto no `history/` como reconstruído — **sem tocar em `out/`** (não sobrescreve os
-  palpites vivos da campanha). `--as-of <hoje>` reproduz o run real do dia (consistência verificável).
+- `history/<data>.{csv,md}` — **snapshots diários** dos palpites (`predict --archive`, default =
+  hoje). Só CSV (canônico/diffável) + MD; nunca HTML. Gravados por `cli.archive_outputs`.
+  **Versionamento por reprodutibilidade**: o run **real** do dia é **rastreado** (depois que
+  resultados entram e o modelo reajusta, não é mais reproduzível — daí versionar); o snapshot
+  **reconstruído** (sufixo `.reconstruido` + banner no MD) é **gitignored**, porque é regenerável
+  sob demanda por `predict --as-of AAAA-MM-DD` — que reaproveita `Edition.as_of()` (descarta
+  resultados a partir da data), grava no `history/` **sem tocar em `out/`** e, com a data de hoje,
+  reproduz o run real (consistência verificável).
 
 ## Convenções e cuidados
 

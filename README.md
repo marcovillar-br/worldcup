@@ -50,11 +50,12 @@ snapshot imutável e **versionado** em `data/editions/<edição>/history/<data>.
 porque, depois que novos resultados entram e o modelo reajusta, o palpite de um dia não é mais
 reproduzível.
 
-Para **reconstruir** a visão de um dia passado (ou semear o histórico retroativamente), use
-`predict --as-of AAAA-MM-DD`: reajusta o modelo usando só os resultados conhecidos até a véspera
-daquela data e grava `history/<data>.reconstruido.{csv,md}` (marcado como reconstruído, com aviso),
-**sem tocar em `out/`** — os palpites vivos da campanha ficam intactos. `--as-of` com a data de hoje
-reproduz exatamente o run real do dia.
+Para **reconstruir** a visão de um dia passado, use `predict --as-of AAAA-MM-DD`: reajusta o modelo
+usando só os resultados conhecidos até a véspera daquela data e grava
+`history/<data>.reconstruido.{csv,md}` (marcado como reconstruído, com aviso), **sem tocar em
+`out/`** — os palpites vivos da campanha ficam intactos. `--as-of` com a data de hoje reproduz
+exatamente o run real do dia. Os reconstruídos são **regeneráveis sob demanda**, então ficam fora
+do git (`.gitignore`); só os runs reais (`--archive`) são versionados em `history/`.
 
 ## Estrutura
 

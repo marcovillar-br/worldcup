@@ -36,8 +36,10 @@ uv run pre-commit install    # (1x) ativa o hook local de ruff lint+format
 ```
 
 As mesmas checagens rodam no CI (`.github/workflows/ci.yml`, Python 3.11 e 3.13) em
-push/PR. O pre-commit roda só o ruff (rápido); mypy e testes ficam no CI. Convenções de
-código que ferramenta não pega ficam aqui no AGENTS.md (não há doc de regras separado).
+push/PR. O pre-commit roda o ruff (rápido), o aviso `bolao-sync` e o `backlog-integrity`
+(bloqueia se o `docs/BACKLOG.md` quebrar invariantes — ver `scripts/check_backlog.py`); mypy e
+testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui no AGENTS.md
+(não há doc de regras separado).
 
 ## Arquitetura (`src/worldcup/`)
 
@@ -89,14 +91,20 @@ código que ferramenta não pega ficam aqui no AGENTS.md (não há doc de regras
   pode listar o anfitrião como visitante num jogo no estádio dele (Copa 2026, jogos 50/51/60), e a
   vantagem segue o anfitrião. Regra centralizada em `MatrixCache._host_away` → `score_matrix(host_away=…)`.
 - **Gerados (no .gitignore)**: `out/`, `data/historical_results.csv`, caches. Versionar só
-  specs de edição, código, testes e a skill. **Exceção deliberada:** `data/editions/<ano>/history/`
-  é versionado — são snapshots imutáveis e não-reprodutíveis (ver acima), não a saída regenerável.
+  specs de edição, código, testes e a skill. **Exceção deliberada:** os runs **reais** em
+  `data/editions/<ano>/history/` são versionados — snapshots imutáveis e não-reprodutíveis
+  (ver acima); os `*.reconstruido.*` ficam no `.gitignore` (regeneráveis via `--as-of`).
 - **Tabela longa**: ao mexer no formato de saída, o palpite tem 104 linhas (72 grupo + 32 KO).
 - **Sincronia de artefatos**: toda mudança anda com sua documentação no mesmo commit —
   (a) andamento da Copa (`sync-results`/`record`) → atualize o *Estado atual* do `BOLAO.md`
   (um hook de pre-commit avisa se `fixtures.csv` mudar sem ele); (b) mudança de
   comportamento/estrutura da aplicação → atualize `AGENTS.md`, `README.md` e/ou `docs/SPEC.md`
-  conforme o público afetado. Commit de código sem o doc correspondente está incompleto.
+  conforme o público afetado; (c) item do backlog resolvido → marque ✅ em
+  [`docs/BACKLOG.md`](docs/BACKLOG.md) no mesmo commit. Commit de código sem o doc correspondente
+  está incompleto.
+- **Backlog de engenharia**: melhorias e dívidas vivem em [`docs/BACKLOG.md`](docs/BACKLOG.md)
+  (fonte de verdade, rastreada). Consulte ao trabalhar em melhorias; cada item tem refs, critério
+  de aceite e o commit que o fechou.
 - Rode as checagens de **Qualidade** (ruff, mypy, pytest) antes de concluir mudanças.
 
 ## Limitações conhecidas
@@ -105,7 +113,9 @@ Modelo puramente estatístico (favorece quem vem bem; pode subestimar potência 
 desempates de grupo simplificados (sem confronto direto oficial); alocação dos 8 melhores terceiros
 por casamento de restrição (Annex C da FIFA aproximado). Detalhes no `README.md`.
 
-## Skill
+## Skills
 
-`.claude/skills/palpites-copa/` — orquestra `sync-results`/`record` + `predict` e apresenta os
-palpites da próxima rodada. Use durante a Copa para atualizar rodada a rodada.
+- `.claude/skills/palpites-copa/` — orquestra `sync-results`/`record` + `predict` e apresenta os
+  palpites da próxima rodada. Use durante a Copa para atualizar rodada a rodada.
+- `.claude/skills/backlog/` — dinâmica de registro/revisão/resolução de itens em `docs/BACKLOG.md`
+  (verbos e invariantes; o formato é o do próprio backlog). Use ao anotar ou fechar melhorias.

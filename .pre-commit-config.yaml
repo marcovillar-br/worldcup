@@ -17,3 +17,10 @@ repos:
         files: ^data/editions/[^/]+/fixtures\.csv$
         verbose: true
         entry: bash -c 'for f in "$@"; do d=$(dirname "$f"); git diff --cached --name-only | grep -qx "$d/BOLAO.md" || echo "⚠️  $f mudou sem atualizar $d/BOLAO.md (Estado atual)."; done' --
+      # Bloqueia: integridade do backlog (IDs únicos, índice↔detalhe, status casado, ✅⇒commit).
+      # Lógica em scripts/check_backlog.py; dinâmica de registro/resolução na skill `backlog`.
+      - id: backlog-integrity
+        name: "integridade do BACKLOG.md"
+        language: system
+        files: ^docs/BACKLOG\.md$
+        entry: python3 scripts/check_backlog.py

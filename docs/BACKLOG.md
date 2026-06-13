@@ -27,7 +27,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-11](#eng-11) | P3 | processo | ✅ | Vigiar proporcionalidade doc/código; consolidar docs |
 | [ENG-12](#eng-12) | P2 | scoring | 🟡 | Bônus de prorrogação/pênaltis definidos mas não computados |
 | [ENG-13](#eng-13) | P3 | format_engine | ✅ | Default morto `n_sims=8000` em `monte_carlo()` |
-| [ENG-14](#eng-14) | P2 | scoring | 🔴 | Curva de pontos base não reproduz o app (50%→3, não 2) |
+| [ENG-14](#eng-14) | P2 | scoring | ✅ | Curva de pontos base não reproduz o app (50%→3, não 2) |
 
 ---
 
@@ -210,7 +210,7 @@ diverge da documentação — confunde quem lê a função isolada.
 **Commit:** e4b23bb
 
 ## ENG-14
-**Curva de pontos base não reproduz o app (50%→3, não 2)** · P2 · `scoring.py` · 🔴 todo
+**Curva de pontos base não reproduz o app (50%→3, não 2)** · P2 · `scoring.py` · ✅ feito
 
 A tela do "Simulador de Pontos" do app mostra **50% de chance → 3 pts** (base, sem bônus). A fórmula
 do projeto, `_base_points`, no risco "fiel" 0.5 usa `base = (1/p)^(2·risk) = 1/p`, que em p=0,5 dá
@@ -226,4 +226,9 @@ a curva-base-do-app do knob `risk` (hoje os dois são o mesmo γ — conceitualm
 **Aceite:** `_base_points` reproduz os pontos observados do app dentro de ±0,5 pt nos pontos
 coletados; teste com os pares observados. `pytest` verde. **Bloqueado por:** coleta dos dados do
 Simulador (depende do usuário).
-**Commit:** —
+**Resolução (43f2be2):** dados do Simulador coletados (80%→2, 50%→3, 15%→7, 5%→11). Curva trocada
+para log-linear `base = 1 + 7.55·log10(1/p)` (reproduz os 4 pontos ±0.5) e `risk` **desacoplado** da
+régua → migrou para um tilt na escolha (`best_prediction`), preservando "0.5 = E-max puro". Backtest
+2022 recalculado. **Refinar depois:** com mais pontos do Simulador (ex.: 40/30%) dá para apertar o
+coeficiente; o teto de 13 e o arredondamento são hipóteses a confirmar.
+**Commit:** 43f2be2

@@ -41,7 +41,8 @@ select = ["E", "F", "I", "UP", "B", "SIM", "C4", "RUF", "PIE", "PT", "PTH", "RET
 ignore = ["RUF001", "RUF002", "RUF003"]
 
 [tool.mypy]
-files = ["src"]
+files = ["src", "tests"]
+mypy_path = ["src", "tests"]  # resolve imports de src e do conftest dos testes
 python_version = "3.11"
 plugins = ["pydantic.mypy"]
 check_untyped_defs = true

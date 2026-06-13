@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -15,6 +16,9 @@ from worldcup.format_engine import (
     group_standings,
     monte_carlo,
 )
+
+if TYPE_CHECKING:
+    from worldcup.model import DixonColesModel
 
 RNG = np.random.default_rng(0)
 TB = ["points", "goal_difference", "goals_for", "random"]
@@ -35,7 +39,7 @@ def test_assign_thirds_respects_allowed_groups():
     assert assign[77] == "D"
 
 
-def _synthetic_edition() -> tuple[Edition, object]:
+def _synthetic_edition() -> tuple[Edition, DixonColesModel]:
     """Formato diferente do de 2026: 4 grupos de 4, sem melhores terceiros."""
     teams = [f"T{i}" for i in range(16)]
     groups = {g: teams[i * 4 : i * 4 + 4] for i, g in enumerate(["G1", "G2", "G3", "G4"])}
@@ -88,7 +92,7 @@ def test_synthetic_edition_runs_end_to_end():
     sim = monte_carlo(edition, model, cache, n_sims=300, seed=1)
     # probabilidades de título somam ~1 e o time mais forte é o favorito
     assert abs(sum(sim.champion_prob.values()) - 1.0) < 1e-6
-    favorite = max(sim.champion_prob, key=sim.champion_prob.get)
+    favorite = max(sim.champion_prob, key=lambda t: sim.champion_prob[t])
     assert favorite in {"T15", "T14", "T13"}
 
     bracket = deterministic_bracket(edition, sim, cache)

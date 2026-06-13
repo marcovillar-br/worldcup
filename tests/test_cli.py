@@ -36,16 +36,16 @@ def _tiny_run():
     row = dict.fromkeys(cli.CSV_COLUMNS, "")
     row.update(
         {
-            "jogo": 1,
+            "jogo": "1",
             "data": "2026-06-11",
             "fase": "group",
             "grupo": "A",
             "mandante": "México",
             "palpite": "2x0",
             "visitante": "África do Sul",
-            "P_mandante": 73,
-            "P_empate": 19,
-            "P_visitante": 9,
+            "P_mandante": "73",
+            "P_empate": "19",
+            "P_visitante": "9",
             "status": "PREVISTO",
         }
     )

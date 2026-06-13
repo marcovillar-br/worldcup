@@ -21,7 +21,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-5](#eng-5) | P3 | fetch_data | ✅ | Validar schema do CSV baixado |
 | [ENG-6](#eng-6) | P3 | cli | ✅ | Separar camada de render (`render.py`) |
 | [ENG-7](#eng-7) | P3 | tipos | ✅ | mypy não cobre `tests/` |
-| [ENG-8](#eng-8) | P3 | ci | 🔴 | Sem medição de cobertura |
+| [ENG-8](#eng-8) | P3 | ci | ✅ | Sem medição de cobertura |
 | [ENG-9](#eng-9) | P3 | tests | ✅ | Guardrail: toda seleção da edição tem tradução PT |
 | [ENG-10](#eng-10) | P3 | release | 🔴 | Versão estática, sem CHANGELOG/tags |
 | [ENG-11](#eng-11) | P3 | processo | 🔴 | Vigiar proporcionalidade doc/código; consolidar docs |
@@ -114,13 +114,15 @@ schema, o erro estoura adiante, críptico.
 **Commit:** 4686edf
 
 ## ENG-8
-**Sem medição de cobertura** · P3 · ci · 🔴 todo
+**Sem medição de cobertura** · P3 · ci · ✅ feito
 
 Os testes rodam, mas nada mede o que ficou de fora (ex.: o caso do ENG-1 não tinha teste).
 
 **Correção proposta:** `pytest-cov` + relatório no CI (e, opcional, um piso de cobertura).
 **Aceite:** CI reporta cobertura; decisão registrada sobre piso (ou ausência).
-**Commit:** —
+**Decisão:** piso `fail_under = 65` (cobertura medida ~74%) — pega regressões grandes sem fragilidade;
+subir conforme `sync`/`pipeline` (hoje 34%/40%) ganharem testes de integração.
+**Commit:** 43bcacb
 
 ## ENG-9
 **Guardrail: toda seleção da edição tem tradução PT** · P3 · tests · ✅ feito

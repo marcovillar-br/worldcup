@@ -22,6 +22,10 @@ class NetworkError(Exception):
     """Falha ao baixar dados da fonte pública (sem conexão, timeout ou fonte fora do ar)."""
 
 
+class DataSourceError(Exception):
+    """A fonte respondeu, mas o CSV não tem as colunas esperadas (schema mudou?)."""
+
+
 DEFAULT_URL = "https://raw.githubusercontent.com/martj42/international_results/master/results.csv"
 SHOOTOUTS_URL = "https://raw.githubusercontent.com/martj42/international_results/master/shootouts.csv"
 DEFAULT_CUTOFF = "2006-01-01"
@@ -33,6 +37,17 @@ DATA_DIR = PROJECT_ROOT / "data"
 HISTORICAL_CSV = DATA_DIR / "historical_results.csv"
 
 COLUMNS = ["date", "home_team", "away_team", "home_score", "away_score", "tournament", "neutral"]
+SHOOTOUT_COLUMNS = ["date", "home_team", "away_team", "winner"]
+
+
+def _require_columns(df: pd.DataFrame, expected: list[str], source: str) -> None:
+    """Falha cedo e claro se a fonte mudar o schema (em vez de um KeyError críptico adiante)."""
+    missing = [c for c in expected if c not in df.columns]
+    if missing:
+        raise DataSourceError(
+            f"O CSV de {source} não tem as colunas esperadas (faltam: {', '.join(missing)}). "
+            f"Recebidas: {', '.join(map(str, df.columns))}. A fonte pública pode ter mudado o formato."
+        )
 
 
 def _download_text(url: str, timeout: int, retries: int = 1) -> str:
@@ -54,12 +69,16 @@ def _download_text(url: str, timeout: int, retries: int = 1) -> str:
 
 def download_raw(url: str = DEFAULT_URL, timeout: int = 60) -> pd.DataFrame:
     """Baixa o CSV bruto da fonte e retorna como DataFrame (inclui jogos futuros)."""
-    return pd.read_csv(StringIO(_download_text(url, timeout)))
+    df = pd.read_csv(StringIO(_download_text(url, timeout)))
+    _require_columns(df, COLUMNS, "resultados")
+    return df
 
 
 def download_shootouts(url: str = SHOOTOUTS_URL, timeout: int = 60) -> pd.DataFrame:
     """Baixa o CSV de disputas de pênaltis (date, home_team, away_team, winner)."""
-    return pd.read_csv(StringIO(_download_text(url, timeout)))
+    df = pd.read_csv(StringIO(_download_text(url, timeout)))
+    _require_columns(df, SHOOTOUT_COLUMNS, "pênaltis")
+    return df
 
 
 def normalize(df: pd.DataFrame, cutoff: str = DEFAULT_CUTOFF, played_only: bool = True) -> pd.DataFrame:

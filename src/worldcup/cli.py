@@ -19,7 +19,7 @@ from datetime import date
 from pathlib import Path
 
 from .edition import EDITIONS_DIR, load_edition
-from .fetch_data import DEFAULT_CUTOFF, NetworkError, fetch
+from .fetch_data import DEFAULT_CUTOFF, DataSourceError, NetworkError, fetch
 from .pipeline import PredictionRun, run
 
 OUT_DIR = Path(__file__).resolve().parent.parent.parent / "out"
@@ -518,6 +518,9 @@ def main(argv: list[str] | None = None) -> int:
         return args.func(args)
     except NetworkError as err:
         print(f"🌐 {err}", file=sys.stderr)
+        return 1
+    except DataSourceError as err:
+        print(f"⚠️  {err}", file=sys.stderr)
         return 1
 
 

@@ -7,7 +7,7 @@ import urllib.error
 import pytest
 
 from worldcup import fetch_data
-from worldcup.fetch_data import NetworkError, _download_text
+from worldcup.fetch_data import DataSourceError, NetworkError, _download_text
 
 
 class _FakeResp:
@@ -53,3 +53,18 @@ def test_download_text_retries_then_succeeds(monkeypatch):
 
     assert _download_text("https://example.test/x", timeout=1, retries=1) == "ok,data\n1,2\n"
     assert state["n"] == 2  # falhou uma vez, sucesso na segunda
+
+
+def test_download_raw_rejects_unexpected_schema(monkeypatch):
+    # a fonte respondeu, mas faltam colunas -> erro explícito e cedo (ENG-5), não KeyError adiante
+    csv_sem_colunas = "date,home_team,away_team\n2026-06-11,Mexico,South Africa\n"
+    monkeypatch.setattr(fetch_data, "_download_text", lambda url, timeout: csv_sem_colunas)
+    with pytest.raises(DataSourceError, match="home_score"):
+        fetch_data.download_raw()
+
+
+def test_download_shootouts_rejects_unexpected_schema(monkeypatch):
+    csv_sem_winner = "date,home_team,away_team\n2026-06-11,Mexico,South Africa\n"
+    monkeypatch.setattr(fetch_data, "_download_text", lambda url, timeout: csv_sem_winner)
+    with pytest.raises(DataSourceError, match="winner"):
+        fetch_data.download_shootouts()

@@ -107,7 +107,8 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 
 Modelo puramente estatístico (favorece quem vem bem; pode subestimar potência em má fase recente);
 desempates de grupo simplificados (sem confronto direto oficial); alocação dos 8 melhores terceiros
-por casamento de restrição (Annex C da FIFA aproximado). Detalhes no `README.md`.
+por casamento de restrição (Annex C da FIFA aproximado). **Fonte canônica:**
+[`docs/SPEC.md`](docs/SPEC.md) §9.2 (o `README.md` traz a versão para o usuário).
 
 ## Skills
 

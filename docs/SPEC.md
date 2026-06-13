@@ -409,6 +409,8 @@ mais". (Uma Copa só; não generalizar cegamente.)
 
 ### 9.2 Limitações conhecidas
 
+_Fonte canônica das limitações do projeto. O `README.md` resume para o usuário; o `AGENTS.md` aponta para cá._
+
 - **Modelo baseado em resultados**: pondera fortemente o recente → favorece quem vem bem (CONMEBOL
   aparece forte) e pode subestimar potência em má fase recente (ex.: França).
 - **Desempates de grupo** simplificados (sem confronto direto / fair-play oficiais).

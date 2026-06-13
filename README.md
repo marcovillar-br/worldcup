@@ -86,6 +86,8 @@ para subir no ranking, gere com `--risk 0.7` ou `--risk 1.0`.
 
 ## Limitações conhecidas
 
+(Resumo para o usuário; a fonte canônica, com o detalhamento técnico, é [`docs/SPEC.md`](docs/SPEC.md) §9.2.)
+
 - **Modelo baseado em resultados**: pondera muito os jogos recentes, então favorece quem vem
   bem (seleções da América do Sul aparecem fortes) e pode subestimar potências em má fase
   recente. É o comportamento esperado de um modelo puramente estatístico.

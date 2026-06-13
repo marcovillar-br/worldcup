@@ -27,15 +27,20 @@ from .format_engine import group_standings
 from .teams import canonical
 
 
-def _edition_results(year: int) -> tuple[dict[tuple[str, str], tuple[int, int]], dict[frozenset[str], str]]:
-    """Resultados reais (placar por par) e vencedores de pênaltis da Copa do ano dado."""
+def _edition_results(year: int) -> tuple[dict[tuple[str, str], list[tuple[str, int, int]]], dict[frozenset[str], str]]:
+    """Resultados reais (jogos por par) e vencedores de pênaltis da Copa do ano dado.
+
+    Cada par mapeia para uma **lista** de `(data, gols_casa, gols_fora)`: numa mesma Copa o
+    mesmo par pode jogar 2× (adversários de grupo que se reencontram no mata-mata — possível no
+    formato 2026). Guardar lista + data evita que a segunda partida sobrescreva a primeira.
+    """
     raw = download_raw()
     wc = raw[(raw["tournament"] == "FIFA World Cup") & (raw["date"].astype(str).str.startswith(str(year)))].copy()
     wc = wc.dropna(subset=["home_score", "away_score"])
-    scores: dict[tuple[str, str], tuple[int, int]] = {}
+    scores: dict[tuple[str, str], list[tuple[str, int, int]]] = {}
     for _, r in wc.iterrows():
         h, a = canonical(r["home_team"]), canonical(r["away_team"])
-        scores[(h, a)] = (int(r["home_score"]), int(r["away_score"]))
+        scores.setdefault((h, a), []).append((str(r["date"]), int(r["home_score"]), int(r["away_score"])))
 
     so = download_shootouts()
     so = so[so["date"].astype(str).str.startswith(str(year))]
@@ -45,14 +50,27 @@ def _edition_results(year: int) -> tuple[dict[tuple[str, str], tuple[int, int]],
     return scores, shootouts
 
 
-def _result_for(scores, home: str, away: str) -> tuple[int, int] | None:
-    """Placar do confronto na orientação (home, away), independente da ordem na fonte."""
-    if (home, away) in scores:
-        return scores[(home, away)]
-    if (away, home) in scores:
-        hg, ag = scores[(away, home)]
-        return ag, hg
-    return None
+def _result_for(scores, home: str, away: str, date: str | None = None) -> tuple[int, int] | None:
+    """Placar do confronto na orientação (home, away), independente da ordem na fonte.
+
+    `scores` mapeia cada par a uma **lista** de jogos. Com um único jogo registrado, devolve-o
+    direto (robusto a divergência de data entre fixture e fonte). Com mais de um (o mesmo par 2×
+    na Copa), desambigua por `date`; sem casar a data, devolve `None` em vez de chutar.
+    """
+    candidates: list[tuple[str, int, int]] = []
+    for d, hg, ag in scores.get((home, away), []):
+        candidates.append((d, hg, ag))
+    for d, hg, ag in scores.get((away, home), []):
+        candidates.append((d, ag, hg))  # orientação invertida na fonte -> placar espelhado
+    if not candidates:
+        return None
+    if len(candidates) == 1:
+        return candidates[0][1], candidates[0][2]
+    if date is not None:
+        for d, hg, ag in candidates:
+            if d == date:
+                return hg, ag
+    return None  # par jogou 2× e a data não casou: não dá pra desambiguar com segurança
 
 
 def _winner(home: str, away: str, hg: int, ag: int, shootouts) -> str | None:
@@ -76,7 +94,7 @@ def _resolve_real_bracket(edition: Edition, scores, shootouts) -> dict[int, tupl
         for f in edition.group_fixtures():
             if f.group != g:
                 continue
-            res = _result_for(scores, f.home, f.away)
+            res = _result_for(scores, f.home, f.away, f.date)
             if res is None:
                 all_groups_complete = False
                 break
@@ -125,7 +143,7 @@ def _resolve_real_bracket(edition: Edition, scores, shootouts) -> dict[int, tupl
         if not home or not away:
             continue
         resolved[f.match_id] = (home, away)
-        res = _result_for(scores, home, away)
+        res = _result_for(scores, home, away, f.date)
         if res is None:
             continue
         hg, ag = res
@@ -153,13 +171,13 @@ def sync_results(year: int = 2026, base_dir: Path = EDITIONS_DIR) -> dict[str, i
             continue
         mid = int(r["match_id"])
         if r["stage"] == "group":
-            res = _result_for(scores, r["home"], r["away"])
+            res = _result_for(scores, r["home"], r["away"], r["date"])
             if res:
                 r["home_goals"], r["away_goals"] = str(res[0]), str(res[1])
                 filled_group += 1
         elif mid in bracket:
             home, away = bracket[mid]
-            res = _result_for(scores, home, away)
+            res = _result_for(scores, home, away, r["date"])
             if res:
                 hg, ag = res
                 r["home_goals"], r["away_goals"] = str(hg), str(ag)
@@ -170,7 +188,8 @@ def sync_results(year: int = 2026, base_dir: Path = EDITIONS_DIR) -> dict[str, i
 
     write_fixtures_atomic(path, rows)
 
-    return {"group": filled_group, "knockout": filled_ko, "total_played_in_source": len(scores)}
+    total_played = sum(len(v) for v in scores.values())
+    return {"group": filled_group, "knockout": filled_ko, "total_played_in_source": total_played}
 
 
 def write_fixtures_atomic(path: Path, rows: list[dict]) -> None:

@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from worldcup import cli, fetch_data
-from worldcup.cli import _esc, main
+from worldcup.cli import main
 from worldcup.edition import load_edition
 from worldcup.fetch_data import NetworkError
 from worldcup.pipeline import PredictionRun
+from worldcup.render import CSV_COLUMNS, _esc
 
 
 def test_esc_escapes_html_metacharacters():
@@ -33,7 +34,7 @@ def test_main_translates_network_error_to_exit_code(monkeypatch, capsys):
 
 def _tiny_run():
     ed = load_edition(2026)
-    row = dict.fromkeys(cli.CSV_COLUMNS, "")
+    row = dict.fromkeys(CSV_COLUMNS, "")
     row.update(
         {
             "jogo": "1",

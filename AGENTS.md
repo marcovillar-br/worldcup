@@ -48,8 +48,12 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `format_engine.py` — simulação genérica: standings, Monte Carlo, chaveamento determinístico.
 - `sync.py` — resolve o bracket só com resultados reais e preenche `fixtures.csv`.
 - `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites.
-- `cli.py` — argparse; entrypoint `worldcup`. `render_markdown`/`render_html` + `save_outputs`
-  (CSV/MD/HTML); HTML é autocontido e print-friendly (gerado do `PredictionRun`, não do CSV).
+- `render.py` — camada de **apresentação** (funções puras): `render_markdown`/`render_html` +
+  `CSV_COLUMNS`. Geram texto a partir do `PredictionRun` (não do CSV); HTML autocontido e
+  print-friendly. Sem I/O.
+- `cli.py` — argparse; entrypoint `worldcup`. **Só orquestra**: parsing, escrita em disco
+  (`save_outputs`/`archive_outputs`, que chamam o `render`) e a saída de console. `-v/--verbose`
+  configura o nível de log da biblioteca.
 
 ## Modelo de dados de uma edição (`data/editions/2026/`)
 

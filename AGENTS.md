@@ -102,6 +102,11 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   specs de edição, código, testes e a skill. **Exceção deliberada:** os runs **reais** em
   `data/editions/<ano>/history/` são versionados — snapshots imutáveis e não-reprodutíveis
   (ver acima); os `*.reconstruido.*` ficam no `.gitignore` (regeneráveis via `--as-of`).
+- **Higiene de artefatos**: limpeza é **sob demanda** via `scripts/clean-artifacts.sh`
+  (dry-run por padrão; `--force` apaga). Poda transcripts de sessão (`~/.claude/.../*.jsonl`) com
+  mais de 7 dias preservando a sessão ativa, e o scratch `tmp/`. **A memória
+  (`.claude/.../memory/*.md`) nunca entra em deleção automática** — higieniza-se por revisão
+  (dedup/remover obsoleto/validar contra o repo). Nunca apagar artefato por glob amplo.
 - **Tabela longa**: ao mexer no formato de saída, o palpite tem 104 linhas (72 grupo + 32 KO).
 - **Sincronia de artefatos**: toda mudança anda com sua documentação no mesmo commit —
   (a) andamento da Copa (`sync-results`/`record`) → atualize o *Estado atual* do `BOLAO.md`

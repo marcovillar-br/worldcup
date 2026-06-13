@@ -143,6 +143,10 @@ várias Copas, dificulta rastrear o que mudou entre edições.
 **Correção proposta:** adotar `CHANGELOG.md` (Keep a Changelog) + tags por marco; avaliar versão
 dinâmica via `hatch`.
 **Aceite:** CHANGELOG criado com o histórico recente; convenção de tag definida.
+**Adiado (2026-06-13):** decisão de não adicionar a cerimônia agora — em projeto pré-1.0 de
+mantenedor único, o `docs/BACKLOG.md` (com refs de commit por item) + os commits convencionais já
+são o registro de mudanças, e a camada meta já está pesada (ver [ENG-11]). **Gatilho para
+revisitar:** primeiro release tagueado ou a virada para uma nova edição (`data/editions/<ano>/`).
 **Commit:** —
 
 ## ENG-11

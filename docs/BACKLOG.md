@@ -19,7 +19,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-3](#eng-3) | P2 | model | ✅ | Convergência do otimizador ignorada |
 | [ENG-4](#eng-4) | P3 | observabilidade | ✅ | `logging` no lugar de `print()` na biblioteca |
 | [ENG-5](#eng-5) | P3 | fetch_data | ✅ | Validar schema do CSV baixado |
-| [ENG-6](#eng-6) | P3 | cli | 🔴 | Separar camada de render (`render.py`) |
+| [ENG-6](#eng-6) | P3 | cli | ✅ | Separar camada de render (`render.py`) |
 | [ENG-7](#eng-7) | P3 | tipos | ✅ | mypy não cobre `tests/` |
 | [ENG-8](#eng-8) | P3 | ci | 🔴 | Sem medição de cobertura |
 | [ENG-9](#eng-9) | P3 | tests | ✅ | Guardrail: toda seleção da edição tem tradução PT |
@@ -95,14 +95,14 @@ schema, o erro estoura adiante, críptico.
 **Commit:** 061f223
 
 ## ENG-6
-**Separar camada de render (`render.py`)** · P3 · `cli` · 🔴 todo
+**Separar camada de render (`render.py`)** · P3 · `cli` · ✅ feito
 
 `cli.py` tem ~500 LOC e mistura argparse, handlers, escrita CSV e ~200 linhas de
 `render_markdown`/`render_html`. Coesão/teste isolado da apresentação.
 
 **Correção proposta:** extrair render (MD/HTML/CSV) para `render.py`; `cli.py` só orquestra.
 **Aceite:** sem mudança de comportamento; render testável sem a CLI; `ruff`/`mypy`/`pytest` verdes.
-**Commit:** —
+**Commit:** 51f24a5
 
 ## ENG-7
 **mypy não cobre `tests/`** · P3 · tipos · ✅ feito

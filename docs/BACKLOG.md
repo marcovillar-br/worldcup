@@ -17,7 +17,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-1](#eng-1) | P1 | sync | ✅ | Reencontro de seleções colapsa resultado indexado por par |
 | [ENG-2](#eng-2) | P2 | backtest | ✅ | Mando do anfitrião não aplicado no backtest |
 | [ENG-3](#eng-3) | P2 | model | 🔴 | Convergência do otimizador ignorada |
-| [ENG-4](#eng-4) | P3 | observabilidade | 🔴 | `logging` no lugar de `print()` na biblioteca |
+| [ENG-4](#eng-4) | P3 | observabilidade | ✅ | `logging` no lugar de `print()` na biblioteca |
 | [ENG-5](#eng-5) | P3 | fetch_data | 🔴 | Validar schema do CSV baixado |
 | [ENG-6](#eng-6) | P3 | cli | 🔴 | Separar camada de render (`render.py`) |
 | [ENG-7](#eng-7) | P3 | tipos | 🔴 | mypy não cobre `tests/` |
@@ -72,7 +72,7 @@ quebrar a saída. `pytest` verde.
 **Commit:** —
 
 ## ENG-4
-**`logging` no lugar de `print()` na biblioteca** · P3 · observabilidade · 🔴 todo
+**`logging` no lugar de `print()` na biblioteca** · P3 · observabilidade · ✅ feito
 
 Tudo é `print()` no `cli.py`; a biblioteca (`model`, `sync`, `pipeline`) não tem como emitir avisos.
 Decisões silenciosas hoje invisíveis: seleções descartadas pelo `min_matches` em `DixonColesModel.fit`,
@@ -81,7 +81,7 @@ não-convergência (ENG-3), alias/seleção sem tradução.
 **Correção proposta:** `logging.getLogger(__name__)` na biblioteca; CLI configura handler/nível
 (ex.: `--verbose`). Mantém `print()` só para a saída ao usuário.
 **Aceite:** avisos saem por `logging` e são capturáveis em teste (`caplog`). `pytest` verde.
-**Commit:** —
+**Commit:** f364ee2
 
 ## ENG-5
 **Validar schema do CSV baixado** · P3 · `fetch_data` · 🔴 todo

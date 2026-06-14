@@ -228,6 +228,9 @@ A lógica: tentar a primária; se falhar ou se os jogos esperados não aparecere
 **Aceite:** `fetch-data` (ou `sync-results`) obtém os placares do dia corrente sem intervenção
 manual quando martj42 estiver atrasada; teste de unidade cobre o fallback (mock de URLs).
 `pytest` verde.
+**Resolução:** `download_from_urls(urls)` em `fetch_data.py` tenta cada URL em cascata
+(`NetworkError`/`DataSourceError` dispara o próximo); `fetch()` e `sync_results()` aceitam
+a lista; CLI expõe `--source-url` (appendável) em `fetch-data` e `sync-results`. 3 testes novos.
 **Commit:** —
 
 ## ENG-14

@@ -22,19 +22,25 @@ from pathlib import Path
 import numpy as np
 
 from .edition import EDITIONS_DIR, Edition, load_edition
-from .fetch_data import download_raw, download_shootouts
+from .fetch_data import DEFAULT_URL, download_from_urls, download_shootouts
 from .format_engine import group_standings
 from .teams import canonical
 
 
-def _edition_results(year: int) -> tuple[dict[tuple[str, str], list[tuple[str, int, int]]], dict[frozenset[str], str]]:
+def _edition_results(
+    year: int,
+    results_urls: list[str] | None = None,
+) -> tuple[dict[tuple[str, str], list[tuple[str, int, int]]], dict[frozenset[str], str]]:
     """Resultados reais (jogos por par) e vencedores de pênaltis da Copa do ano dado.
 
     Cada par mapeia para uma **lista** de `(data, gols_casa, gols_fora)`: numa mesma Copa o
     mesmo par pode jogar 2× (adversários de grupo que se reencontram no mata-mata — possível no
     formato 2026). Guardar lista + data evita que a segunda partida sobrescreva a primeira.
+
+    `results_urls` é a lista ordenada de fontes a tentar; cai para a próxima em caso de falha
+    de rede ou schema inesperado. Default: `[DEFAULT_URL]` (martj42).
     """
-    raw = download_raw()
+    raw = download_from_urls(results_urls or [DEFAULT_URL])
     wc = raw[(raw["tournament"] == "FIFA World Cup") & (raw["date"].astype(str).str.startswith(str(year)))].copy()
     wc = wc.dropna(subset=["home_score", "away_score"])
     scores: dict[tuple[str, str], list[tuple[str, int, int]]] = {}
@@ -154,10 +160,14 @@ def _resolve_real_bracket(edition: Edition, scores, shootouts) -> dict[int, tupl
     return resolved
 
 
-def sync_results(year: int = 2026, base_dir: Path = EDITIONS_DIR) -> dict[str, int]:
+def sync_results(
+    year: int = 2026,
+    base_dir: Path = EDITIONS_DIR,
+    results_urls: list[str] | None = None,
+) -> dict[str, int]:
     """Baixa resultados e preenche fixtures.csv. Retorna contagem de jogos preenchidos."""
     edition = load_edition(year, base_dir)
-    scores, shootouts = _edition_results(year)
+    scores, shootouts = _edition_results(year, results_urls)
 
     path = base_dir / str(year) / "fixtures.csv"
     with path.open(newline="") as fh:

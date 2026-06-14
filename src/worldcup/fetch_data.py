@@ -1,12 +1,14 @@
 """Download e normalização da base histórica de jogos internacionais.
 
-Fonte: dataset público `martj42/international_results` (resultados de seleções desde 1872).
-Salvamos apenas jogos **já disputados** a partir de um corte de data, com os nomes de
-seleção canonizados, em `data/historical_results.csv`.
+Fonte primária: dataset público `martj42/international_results` (resultados de seleções desde 1872).
+`download_from_urls()` tenta cada URL em ordem, caindo para a próxima em caso de `NetworkError` ou
+`DataSourceError`. Use `fetch(urls=[...])` ou a flag `--source-url` da CLI para configurar fontes
+alternativas quando a primária estiver atrasada ou fora do ar.
 """
 
 from __future__ import annotations
 
+import logging
 import time
 import urllib.error
 import urllib.request
@@ -16,6 +18,8 @@ from pathlib import Path
 import pandas as pd
 
 from .teams import canonical
+
+logger = logging.getLogger(__name__)
 
 
 class NetworkError(Exception):
@@ -74,6 +78,26 @@ def download_raw(url: str = DEFAULT_URL, timeout: int = 60) -> pd.DataFrame:
     return df
 
 
+def download_from_urls(urls: list[str], timeout: int = 60) -> pd.DataFrame:
+    """Tenta cada URL em ordem; retorna o primeiro DataFrame válido.
+
+    Cai para a próxima fonte em caso de `NetworkError` ou `DataSourceError`.
+    Relança o último erro se todas falharem.
+    """
+    last_err: Exception = NetworkError("Nenhuma URL fornecida")
+    for i, url in enumerate(urls):
+        try:
+            df = download_raw(url, timeout)
+            if i > 0:
+                logger.info("Usando fonte alternativa: %s", url)
+            return df
+        except (NetworkError, DataSourceError) as err:
+            last_err = err
+            if i < len(urls) - 1:
+                logger.warning("Fonte %s falhou (%s); tentando próxima...", url, err)
+    raise last_err
+
+
 def download_shootouts(url: str = SHOOTOUTS_URL, timeout: int = 60) -> pd.DataFrame:
     """Baixa o CSV de disputas de pênaltis (date, home_team, away_team, winner)."""
     df = pd.read_csv(StringIO(_download_text(url, timeout)))
@@ -99,12 +123,12 @@ def normalize(df: pd.DataFrame, cutoff: str = DEFAULT_CUTOFF, played_only: bool 
 
 
 def fetch(
-    url: str = DEFAULT_URL,
+    urls: list[str] | None = None,
     cutoff: str = DEFAULT_CUTOFF,
     out_path: Path = HISTORICAL_CSV,
 ) -> Path:
     """Baixa, normaliza e grava a base histórica. Retorna o caminho do CSV salvo."""
-    df = download_raw(url)
+    df = download_from_urls(urls or [DEFAULT_URL])
     norm = normalize(df, cutoff=cutoff, played_only=True)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     norm.to_csv(out_path, index=False)

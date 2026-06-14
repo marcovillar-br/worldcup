@@ -7,7 +7,7 @@ import urllib.error
 import pytest
 
 from worldcup import fetch_data
-from worldcup.fetch_data import DataSourceError, NetworkError, _download_text
+from worldcup.fetch_data import DataSourceError, NetworkError, _download_text, download_from_urls
 
 
 class _FakeResp:
@@ -68,3 +68,68 @@ def test_download_shootouts_rejects_unexpected_schema(monkeypatch):
     monkeypatch.setattr(fetch_data, "_download_text", lambda url, timeout: csv_sem_winner)
     with pytest.raises(DataSourceError, match="winner"):
         fetch_data.download_shootouts()
+
+
+_VALID_CSV = (
+    "date,home_team,away_team,home_score,away_score,tournament,neutral\n"
+    "2026-06-11,Mexico,South Africa,2,0,FIFA World Cup,False\n"
+)
+
+_PRIMARY = "https://primary.test/r.csv"
+_FALLBACK = "https://fallback.test/r.csv"
+
+
+def _make_fake_raw(valid_csv: str):
+    from io import StringIO
+
+    import pandas as pd
+
+    def _fake(url: str, timeout: int = 60) -> pd.DataFrame:
+        return pd.read_csv(StringIO(valid_csv))
+
+    return _fake
+
+
+def test_download_from_urls_falls_back_on_network_error(monkeypatch):
+    """Primeira URL com NetworkError → usa a segunda."""
+    called = []
+    good = _make_fake_raw(_VALID_CSV)
+
+    def fake_download_raw(url: str, timeout: int = 60):
+        called.append(url)
+        if url == _PRIMARY:
+            raise NetworkError("offline")
+        return good(url, timeout)
+
+    monkeypatch.setattr(fetch_data, "download_raw", fake_download_raw)
+    df = download_from_urls([_PRIMARY, _FALLBACK])
+    assert called == [_PRIMARY, _FALLBACK]
+    assert len(df) == 1
+
+
+def test_download_from_urls_falls_back_on_schema_error(monkeypatch):
+    """Primeira URL com DataSourceError → usa a segunda."""
+    called = []
+    good = _make_fake_raw(_VALID_CSV)
+
+    def fake_download_raw(url: str, timeout: int = 60):
+        called.append(url)
+        if url == _PRIMARY:
+            raise DataSourceError("schema mudou")
+        return good(url, timeout)
+
+    monkeypatch.setattr(fetch_data, "download_raw", fake_download_raw)
+    df = download_from_urls([_PRIMARY, _FALLBACK])
+    assert called == [_PRIMARY, _FALLBACK]
+    assert len(df) == 1
+
+
+def test_download_from_urls_raises_when_all_fail(monkeypatch):
+    """Todas as URLs falham → relança o último erro."""
+
+    def fake_download_raw(url: str, timeout: int = 60):
+        raise NetworkError(f"offline: {url}")
+
+    monkeypatch.setattr(fetch_data, "download_raw", fake_download_raw)
+    with pytest.raises(NetworkError, match="offline"):
+        download_from_urls([_PRIMARY, _FALLBACK])

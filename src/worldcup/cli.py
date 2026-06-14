@@ -21,7 +21,7 @@ from datetime import date
 from pathlib import Path
 
 from .edition import EDITIONS_DIR, load_edition
-from .fetch_data import DEFAULT_CUTOFF, DataSourceError, NetworkError, fetch
+from .fetch_data import DEFAULT_CUTOFF, DEFAULT_URL, DataSourceError, NetworkError, fetch
 from .pipeline import PredictionRun, run
 from .render import CSV_COLUMNS, render_html, render_markdown
 
@@ -99,7 +99,8 @@ def print_console_summary(run: PredictionRun) -> None:
 
 # ----------------------------------------------------------------- subcomandos
 def cmd_fetch_data(args: argparse.Namespace) -> int:
-    path = fetch(cutoff=args.cutoff)
+    urls = args.source_url or [DEFAULT_URL]
+    path = fetch(urls=urls, cutoff=args.cutoff)
     print(f"✅ Base histórica salva em {path}")
     return 0
 
@@ -169,7 +170,8 @@ def cmd_sync_results(args: argparse.Namespace) -> int:
     from .sync import sync_results
 
     print("🌐 Baixando resultados reais da fonte pública...")
-    counts = sync_results(args.edition)
+    urls = args.source_url or None
+    counts = sync_results(args.edition, results_urls=urls)
     print(
         f"✅ Sincronizado: {counts['group']} jogos de grupo + {counts['knockout']} de mata-mata "
         f"preenchidos ({counts['total_played_in_source']} jogos da Copa já disputados na fonte)."
@@ -199,6 +201,13 @@ def build_parser() -> argparse.ArgumentParser:
 
     f = sub.add_parser("fetch-data", help="baixa e normaliza a base histórica")
     f.add_argument("--cutoff", default=DEFAULT_CUTOFF, help="data mínima (YYYY-MM-DD)")
+    f.add_argument(
+        "--source-url",
+        action="append",
+        default=None,
+        metavar="URL",
+        help="URL alternativa de resultados (pode repetir para fallback em cascata; default: martj42)",
+    )
     f.set_defaults(func=cmd_fetch_data)
 
     pr = sub.add_parser("predict", help="gera os palpites de uma edição")
@@ -237,6 +246,13 @@ def build_parser() -> argparse.ArgumentParser:
     sr.add_argument("--seed", type=int, default=12345)
     sr.add_argument("--risk", type=float, default=None)
     sr.add_argument("--no-predict", action="store_true", help="só sincroniza, não repalpita")
+    sr.add_argument(
+        "--source-url",
+        action="append",
+        default=None,
+        metavar="URL",
+        help="URL alternativa de resultados (pode repetir para fallback em cascata; default: martj42)",
+    )
     sr.add_argument(
         "--archive",
         nargs="?",

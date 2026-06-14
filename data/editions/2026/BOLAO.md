@@ -11,19 +11,22 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-13)
+## Estado atual (atualizado em 2026-06-14)
 
-- A Copa começou em 2026-06-11. Resultados sincronizados até 2026-06-12
-  (4 de 104 jogos preenchidos): México 2x0 África do Sul, Coreia do Sul 2x1 Rep. Tcheca,
-  Canadá 1x1 Bósnia, EUA 4x1 Paraguai.
-- Próxima rodada a palpitar: 2026-06-13 (J5–J8): Austrália×Turquia, Brasil×Marrocos,
-  Haiti×Escócia, Catar×Suíça.
-- Favorito ao título: Argentina (29,4%), seguido de Brasil (18,2%) e Colômbia (10,7%).
+- A Copa começou em 2026-06-11. 8 de 104 jogos disputados e registrados (J1–J8).
+  A fonte martj42 tem só J1–J4; J5–J8 foram registrados manualmente via web search (confirmados).
+  Resultados: México 2×0 África do Sul, Coreia do Sul 2×1 Rep. Tcheca, Canadá 1×1 Bósnia,
+  EUA 4×1 Paraguai, Austrália 2×0 Turquia, Brasil 1×1 Marrocos, Haiti 0×1 Escócia,
+  Catar 1×1 Suíça.
+- Próxima rodada a palpitar: 2026-06-14 (J9–J12): Alemanha×Curaçao, Costa do Marfim×Equador,
+  Holanda×Japão, Suécia×Tunísia.
+- Favorito ao título: Argentina (30,9%), seguido de Brasil (14,2%) e Colômbia (11,0%).
+  Brasil caiu de 18,2% após empate com Marrocos.
 - Palpites vigentes gerados com configuração padrão: `risk 0.5`, Sistema I conforme
   `scoring.toml` (sem customização do admin do bolão até agora).
-- Rotina diária (sob demanda, sem agendamento): `uv run worldcup sync-results --edition 2026 --archive`
-  → conferir a próxima rodada em `out/palpites-2026.md`. O `--archive` guarda o snapshot do dia
-  versionado em `history/` (histórico da evolução dos palpites).
+- Nota operacional: martj42 tem latência de 1-2 dias; quando atrasada, buscar placares via
+  web search e registrar com `worldcup record`. Rotina: `sync-results --archive` → se 0 jogos
+  novos, buscar manualmente → `predict --archive`.
 
 ## Decisões vivas
 

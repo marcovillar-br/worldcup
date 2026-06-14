@@ -28,6 +28,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-12](#eng-12) | P2 | scoring | 🟡 | Bônus de prorrogação/pênaltis definidos mas não computados |
 | [ENG-13](#eng-13) | P3 | format_engine | ✅ | Default morto `n_sims=8000` em `monte_carlo()` |
 | [ENG-14](#eng-14) | P2 | scoring | ✅ | Curva de pontos base não reproduz o app (50%→3, não 2) |
+| [ENG-15](#eng-15) | P2 | fetch_data | 🔴 | `sync-results` depende de fonte única (martj42) sem fallback |
 
 ---
 
@@ -208,6 +209,26 @@ diverge da documentação — confunde quem lê a função isolada.
 `pipeline`/CLI) ou remover o default e exigir o parâmetro. Verificar se algum teste depende de 8000.
 **Aceite:** default coerente com o caminho real e com o SPEC; `pytest` verde.
 **Commit:** e4b23bb
+
+## ENG-15
+**`sync-results` depende de fonte única (martj42) sem fallback** · P2 · `fetch_data.py` · 🔴 todo
+
+`fetch_data.DEFAULT_URL` aponta exclusivamente para o CSV do repositório `martj42/international_results`.
+Na Copa 2026, a latência típica da fonte é de 1-2 dias — os placares de J5–J8 (2026-06-13) não
+estavam disponíveis no dia seguinte, forçando busca manual na web e registro via `worldcup record`.
+Conforme a Copa avança (vários jogos por dia), o risco de ficarem defasados é alto e o custo manual
+cresce.
+
+**Correção proposta:** suportar lista ordenada de fontes em `fetch_data.fetch()`. Candidatos:
+- Fonte primária: martj42 (já existente, histórico completo).
+- Fonte secundária: CSV público de resultado da Copa atual (ex.: API-football, football-data.org,
+  ou outro dataset que atualize no mesmo dia). Alternativamente, expor `--source-url` na CLI para
+  que o operador passe uma URL alternativa sem mudar o código.
+A lógica: tentar a primária; se falhar ou se os jogos esperados não aparecerem, tentar a próxima.
+**Aceite:** `fetch-data` (ou `sync-results`) obtém os placares do dia corrente sem intervenção
+manual quando martj42 estiver atrasada; teste de unidade cobre o fallback (mock de URLs).
+`pytest` verde.
+**Commit:** —
 
 ## ENG-14
 **Curva de pontos base não reproduz o app (50%→3, não 2)** · P2 · `scoring.py` · ✅ feito

@@ -28,7 +28,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-12](#eng-12) | P2 | scoring | 🟡 | Bônus de prorrogação/pênaltis definidos mas não computados |
 | [ENG-13](#eng-13) | P3 | format_engine | ✅ | Default morto `n_sims=8000` em `monte_carlo()` |
 | [ENG-14](#eng-14) | P2 | scoring | ✅ | Curva de pontos base não reproduz o app (50%→3, não 2) |
-| [ENG-15](#eng-15) | P2 | fetch_data | 🔴 | `sync-results` depende de fonte única (martj42) sem fallback |
+| [ENG-15](#eng-15) | P2 | fetch_data | ✅ | `sync-results` depende de fonte única (martj42) sem fallback |
 
 ---
 
@@ -211,7 +211,7 @@ diverge da documentação — confunde quem lê a função isolada.
 **Commit:** e4b23bb
 
 ## ENG-15
-**`sync-results` depende de fonte única (martj42) sem fallback** · P2 · `fetch_data.py` · 🔴 todo
+**`sync-results` depende de fonte única (martj42) sem fallback** · P2 · `fetch_data.py` · ✅ feito
 
 `fetch_data.DEFAULT_URL` aponta exclusivamente para o CSV do repositório `martj42/international_results`.
 Na Copa 2026, a latência típica da fonte é de 1-2 dias — os placares de J5–J8 (2026-06-13) não
@@ -231,7 +231,7 @@ manual quando martj42 estiver atrasada; teste de unidade cobre o fallback (mock 
 **Resolução:** `download_from_urls(urls)` em `fetch_data.py` tenta cada URL em cascata
 (`NetworkError`/`DataSourceError` dispara o próximo); `fetch()` e `sync_results()` aceitam
 a lista; CLI expõe `--source-url` (appendável) em `fetch-data` e `sync-results`. 3 testes novos.
-**Commit:** —
+**Commit:** 7e2f360
 
 ## ENG-14
 **Curva de pontos base não reproduz o app (50%→3, não 2)** · P2 · `scoring.py` · ✅ feito

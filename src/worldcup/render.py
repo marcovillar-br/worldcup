@@ -155,6 +155,7 @@ tr.final .score { color: var(--muted); }
 .legend { margin-top: 2.5rem; font-size: .78rem; color: var(--muted); border-top: 1px solid var(--line);
           padding-top: 1rem; }
 .legend b { color: var(--ink); }
+@page { size: A4 landscape; margin: 1.2cm 1.5cm; }
 @media print {
   body { padding: 0; font-size: 11px; max-width: none; }
   h2 { break-after: avoid; }

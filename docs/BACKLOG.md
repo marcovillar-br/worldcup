@@ -290,4 +290,10 @@ Dixon-Coles `tau` + ridge, com máscara na região do `clip`) passado via `jac=g
 Teste de regressão valida o jac contra diferenças centrais nos 4 ramos de placar baixo do `tau`; o
 fixture sintético ganhou sinal de mando real (era simétrico → `home_adv` convergido ~0, deixava os
 testes de mando no fio da navalha — falso-passe por não-convergência).
+**Validação (backtest, mesmo código alternando só o gradiente, determinístico):** o fit convergido
+melhora os pontos do bolão (Sistema I, risk 0.5, 64 jogos/Copa) em **todas** as 4 Copas, nunca pior —
+2010 +2 (303→305), 2014 +14 (205→219), 2018 +14 (257→271), **2022 +37 (170→207)**. A `% resultado`
+(acerto de vencedor/empate) fica **estável em 56%** com o fit convergido, vs. 42–56% oscilando com o
+não-convergido (a não-convergência parava a distâncias variáveis do ótimo — ruído, pior caso 2022:
+42%→56%). O `% placar exato` quase não muda — o ganho vem de acertar o lado certo.
 **Commit:** 0934fcc

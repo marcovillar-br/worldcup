@@ -143,8 +143,9 @@ minimizar   − Σ_k  w_k · ℓ_k   +   ridge · ( Σ ataque² + Σ defesa² )
 
 com peso `w_k = decaimento_k · torneio_k · multiplicador_k`:
 
-- **Decaimento temporal**: `decaimento = 0.5^(idade_anos / meia_vida)`, meia-vida padrão **2,5 anos**.
-  Um jogo de 2,5 anos atrás pesa metade; de 5 anos, um quarto.
+- **Decaimento temporal**: `decaimento = 0.5^(idade_anos / meia_vida)`, meia-vida padrão **2,0 anos**
+  (tunada via backtest leave-one-World-Cup-out — ver `docs/BACKLOG.md` ENG-17).
+  Um jogo de 2 anos atrás pesa metade; de 4 anos, um quarto.
 - **Importância do torneio**: Copa = 1,0; continentais 0,8–0,85; eliminatórias 0,8; Nations
   League/Gold Cup e torneios não listados 0,70–0,75; amistoso = 0,5 (tabela canônica em
   `model._TOURNAMENT_WEIGHTS`/`_DEFAULT_TOURNAMENT_WEIGHT`)

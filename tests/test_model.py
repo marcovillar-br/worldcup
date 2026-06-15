@@ -125,6 +125,15 @@ def test_tournament_weight_ordering():
     assert tournament_weight("FIFA World Cup qualification") > tournament_weight("Friendly")
 
 
+def test_fitconfig_calibrated_defaults():
+    # ENG-17: defaults tunados via backtest leave-one-World-Cup-out (+9,2% de pontos do bolão
+    # sobre os antigos 2.5/0.05, config vencedora nas 4 dobras). Trava a calibração escolhida —
+    # mudá-la deve ser deliberado (re-rodar o LOO-CV), não acidental.
+    cfg = FitConfig()
+    assert cfg.halflife_years == 2.0
+    assert cfg.ridge == 0.10
+
+
 def _low_score_matches() -> pd.DataFrame:
     """Liga sintética só com placares baixos — exercita todos os ramos da correção
     Dixon-Coles (tau): 0x0, 1x0, 0x1 e 1x1, cujas derivadas o gradiente analítico precisa cobrir."""

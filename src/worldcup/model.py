@@ -49,8 +49,8 @@ def tournament_weight(name: str) -> float:
 
 @dataclass
 class FitConfig:
-    halflife_years: float = 2.5  # meia-vida do decaimento temporal
-    ridge: float = 0.05  # força do prior (shrinkage à média)
+    halflife_years: float = 2.0  # meia-vida do decaimento temporal (tunado via backtest LOO, ENG-17)
+    ridge: float = 0.10  # força do prior (shrinkage à média; tunado via backtest LOO, ENG-17)
     max_goals: int = 10  # alcance da matriz de placares
     max_xg: float = 6.0  # teto de gols esperados por time (estabilidade numérica)
     min_matches: int = 10  # ignora seleções com menos jogos no período (ruído não-FIFA)

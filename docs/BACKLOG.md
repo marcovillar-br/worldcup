@@ -29,6 +29,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-13](#eng-13) | P3 | format_engine | ✅ | Default morto `n_sims=8000` em `monte_carlo()` |
 | [ENG-14](#eng-14) | P2 | scoring | ✅ | Curva de pontos base não reproduz o app (50%→3, não 2) |
 | [ENG-15](#eng-15) | P2 | fetch_data | ✅ | `sync-results` depende de fonte única (martj42) sem fallback |
+| [ENG-16](#eng-16) | P2 | model | 🔴 | Fit do Dixon-Coles não converge em `maxiter=500` com a base atual |
 
 ---
 
@@ -256,3 +257,25 @@ régua → migrou para um tilt na escolha (`best_prediction`), preservando "0.5 
 2022 recalculado. **Refinar depois:** com mais pontos do Simulador (ex.: 40/30%) dá para apertar o
 coeficiente; o teto de 13 e o arredondamento são hipóteses a confirmar.
 **Commit:** 43f2be2
+
+## ENG-16
+**Fit do Dixon-Coles não converge em `maxiter=500` com a base atual** · P2 · `model.py` · 🔴 todo
+
+Desde que os resultados da Copa 2026 passaram a realimentar o ajuste (jogos registrados recebem
+peso alto), `model.DixonColesModel.fit` emite o aviso de não-convergência do ENG-3 em todo run de
+`sync-results`/`predict`: `ajuste do modelo não convergiu (maxiter=500): STOP: TOTAL NO. OF F,G
+EVALUATIONS EXCEEDS LIMIT`. O guardrail do ENG-3 está funcionando (o aviso aparece e a saída segue
+usável), mas a **causa** não foi tratada: o otimizador esgota o orçamento de avaliações antes de
+convergir. Com a base crescendo (mais seleções/parâmetros + pesos altos nos jogos recentes), o
+`res.x` retornado pode estar longe do ótimo — previsões potencialmente piores sem sinal além do
+aviso. Observado em 2026-06-15 (12 jogos registrados).
+
+**Correção proposta:** investigar a não-convergência — (a) subir `maxiter`/`maxfun` do `minimize`
+e medir se converge e quanto custa em tempo; (b) avaliar escala/normalização dos parâmetros ou um
+chute inicial melhor (warm start) para acelerar; (c) checar se o peso alto dos jogos da Copa
+desequilibra a verossimilhança. Decidir um teto de iterações que convirja na base típica de uma
+Copa em andamento sem regredir o tempo de run de forma relevante.
+**Aceite:** em um run representativo com ~12+ jogos da edição 2026 registrados, `fit` converge
+(`res.success`/sem aviso) dentro de um tempo aceitável; teste/medição registrando o antes/depois
+(iterações até convergir ou ausência do warning). `pytest` verde.
+**Commit:** —

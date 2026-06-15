@@ -11,17 +11,16 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-14)
+## Estado atual (atualizado em 2026-06-15)
 
-- A Copa começou em 2026-06-11. 8 de 104 jogos disputados e registrados (J1–J8).
-  A fonte martj42 tem só J1–J4; J5–J8 foram registrados manualmente via web search (confirmados).
-  Resultados: México 2×0 África do Sul, Coreia do Sul 2×1 Rep. Tcheca, Canadá 1×1 Bósnia,
-  EUA 4×1 Paraguai, Austrália 2×0 Turquia, Brasil 1×1 Marrocos, Haiti 0×1 Escócia,
-  Catar 1×1 Suíça.
-- Próxima rodada a palpitar: 2026-06-14 (J9–J12): Alemanha×Curaçao, Costa do Marfim×Equador,
-  Holanda×Japão, Suécia×Tunísia.
-- Favorito ao título: Argentina (30,9%), seguido de Brasil (14,2%) e Colômbia (11,0%).
-  Brasil caiu de 18,2% após empate com Marrocos.
+- A Copa começou em 2026-06-11. 12 de 104 jogos disputados e registrados (J1–J12).
+  J9–J12 (2026-06-14) entraram via `sync-results` (fonte pública): Alemanha 7×1 Curaçao,
+  Costa do Marfim 1×0 Equador, Holanda 2×2 Japão, Suécia 5×1 Tunísia.
+  (J1–J8 já registrados antes; J5–J8 manualmente via web search.)
+- Próxima rodada a palpitar: 2026-06-15 (J13–J16): Bélgica×Egito, Irã×Nova Zelândia,
+  Arábia Saudita×Uruguai, Espanha×Cabo Verde. Nenhum palpite ousado (⚡) — todos seguem o favorito.
+- Favorito ao título: Argentina (23,2%), seguido de Espanha (16,1%), Brasil (10,8%),
+  Colômbia (8,7%) e Inglaterra (6,4%). Espanha subiu forte; Brasil segue em queda.
 - Palpites vigentes gerados com configuração padrão: `risk 0.5`, Sistema I conforme
   `scoring.toml` (sem customização do admin do bolão até agora).
 - Nota operacional: martj42 tem latência de 1-2 dias; quando atrasada, buscar placares via

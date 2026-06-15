@@ -29,7 +29,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-13](#eng-13) | P3 | format_engine | ✅ | Default morto `n_sims=8000` em `monte_carlo()` |
 | [ENG-14](#eng-14) | P2 | scoring | ✅ | Curva de pontos base não reproduz o app (50%→3, não 2) |
 | [ENG-15](#eng-15) | P2 | fetch_data | ✅ | `sync-results` depende de fonte única (martj42) sem fallback |
-| [ENG-16](#eng-16) | P2 | model | 🔴 | Fit do Dixon-Coles não converge em `maxiter=500` com a base atual |
+| [ENG-16](#eng-16) | P2 | model | ✅ | Fit do Dixon-Coles não converge em `maxiter=500` com a base atual |
 
 ---
 
@@ -259,7 +259,7 @@ coeficiente; o teto de 13 e o arredondamento são hipóteses a confirmar.
 **Commit:** 43f2be2
 
 ## ENG-16
-**Fit do Dixon-Coles não converge em `maxiter=500` com a base atual** · P2 · `model.py` · 🔴 todo
+**Fit do Dixon-Coles não converge em `maxiter=500` com a base atual** · P2 · `model.py` · ✅ feito
 
 Desde que os resultados da Copa 2026 passaram a realimentar o ajuste (jogos registrados recebem
 peso alto), `model.DixonColesModel.fit` emite o aviso de não-convergência do ENG-3 em todo run de
@@ -278,4 +278,16 @@ Copa em andamento sem regredir o tempo de run de forma relevante.
 **Aceite:** em um run representativo com ~12+ jogos da edição 2026 registrados, `fit` converge
 (`res.success`/sem aviso) dentro de um tempo aceitável; teste/medição registrando o antes/depois
 (iterações até convergir ou ausência do warning). `pytest` verde.
-**Commit:** —
+**Diagnóstico:** o limite que mordia era o `maxfun` default do scipy (15000), **não** o `maxiter`.
+Sem `jac`, o gradiente saía por diferenças finitas (~2n+1 = ~448 avaliações por gradiente nos 447
+params), esgotando o maxfun em **27 iterações**. Subir `maxiter` sozinho não muda nada. Medições na
+base real (19.677 jogos): atual = não-converge, 17s, nfev≈15.2k; força bruta (`maxfun=500k`) =
+converge mas **233s**; **jac analítico = converge em 1.7s**, mesmo ótimo (neg_ll 3306.37 vs 3306.39).
+Impacto comprovado nos palpites: Δxg de até **0,36 gol** entre o fit não-convergido e o convergido
+(ex.: Brasil×Croácia 1.88→1.53), `max|Δataque|`≈1,5 — não era cosmético.
+**Resolução (0934fcc):** gradiente analítico da log-verossimilhança (Poisson + correção
+Dixon-Coles `tau` + ridge, com máscara na região do `clip`) passado via `jac=grad` ao `minimize`.
+Teste de regressão valida o jac contra diferenças centrais nos 4 ramos de placar baixo do `tau`; o
+fixture sintético ganhou sinal de mando real (era simétrico → `home_adv` convergido ~0, deixava os
+testes de mando no fio da navalha — falso-passe por não-convergência).
+**Commit:** 0934fcc

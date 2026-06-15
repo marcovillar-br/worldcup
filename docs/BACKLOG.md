@@ -319,5 +319,12 @@ generaliza para a Copa de fora) — 2010 +20, 2014 +40, 2018 +25, 2022 +7; total
 jogos (+9,2%)** vs. os defaults atuais. Combina com o ganho do [ENG-16] (mesmo motor).
 **Resolução (57bb420):** `FitConfig.halflife_years` 2.5→2.0 e `ridge` 0.05→0.10; SPEC.md atualizado
 (meia-vida 2,0) e teste `test_fitconfig_calibrated_defaults` trava a calibração (mudança deve
-re-rodar o LOO-CV). Refino futuro (grade fina, pesos de torneio) fica para um item próprio se valer.
+re-rodar o LOO-CV).
+**Refino (grade fina + pesos de torneio):** varredura 3D `halflife×ridge×tournament_gamma`
+(gamma = expoente de nitidez `peso^gamma` aplicado só à verossimilhança, não ao `is_major`),
+hl∈{1.5,2.0,2.5,3.0} × rg∈{0.08,0.10,0.15} × gamma∈{0.5,1.0,1.5,2.0,2.5}, validada LOO-CV.
+**Resultado negativo:** `hl=2.0, rg=0.10, gamma=1.0` é o melhor in-sample **e nas 4 dobras** —
+gamma=1.0 (identidade) ótimo, afiar/achatar pesos de torneio não ganha nada; os `_TOURNAMENT_WEIGHTS`
+já estão bem calibrados. Ótimo é interior na grade (não é borda). O hook `tournament_gamma` foi
+prototipado e **revertido** (config morta — ENG-11). Os defaults do 57bb420 ficam confirmados.
 **Commit:** 57bb420

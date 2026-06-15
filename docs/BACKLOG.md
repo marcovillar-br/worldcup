@@ -30,6 +30,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-14](#eng-14) | P2 | scoring | ✅ | Curva de pontos base não reproduz o app (50%→3, não 2) |
 | [ENG-15](#eng-15) | P2 | fetch_data | ✅ | `sync-results` depende de fonte única (martj42) sem fallback |
 | [ENG-16](#eng-16) | P2 | model | ✅ | Fit do Dixon-Coles não converge em `maxiter=500` com a base atual |
+| [ENG-17](#eng-17) | P2 | model | ✅ | Defaults do `FitConfig` (meia-vida/ridge) subótimos no backtest |
 
 ---
 
@@ -297,3 +298,26 @@ melhora os pontos do bolão (Sistema I, risk 0.5, 64 jogos/Copa) em **todas** as
 não-convergido (a não-convergência parava a distâncias variáveis do ótimo — ruído, pior caso 2022:
 42%→56%). O `% placar exato` quase não muda — o ganho vem de acertar o lado certo.
 **Commit:** 0934fcc
+
+## ENG-17
+**Defaults do `FitConfig` (meia-vida/ridge) subótimos no backtest** · P2 · `model.py` · ✅ feito
+
+Os defaults `halflife_years=2.5` e `ridge=0.05` (`model.FitConfig`) ficam perto do **pior** ponto
+de uma varredura de hiperparâmetros no backtest das 4 Copas (2010/14/18/22, 256 jogos). Quase toda
+config da grade bate o atual. Surgiu da análise dos 12 jogos da Copa 2026: o motivo do baixo acerto
+não é a régua de empate (`best_prediction` é E-max ótimo; nunca palpitar empate é correto sob o
+sistema de pontos), e sim a calibração das forças.
+
+**Correção proposta:** retunar os defaults para `halflife_years=2.0`, `ridge=0.10` (mais shrinkage
+regulariza forças com poucos dados; meia-vida menor pesa um pouco mais a forma recente). Atualizar
+`docs/SPEC.md` (cita "meia-vida padrão 2,5 anos"). Refino futuro: grade mais fina + incluir pesos
+de torneio/`max_xg`.
+**Aceite:** validação **leave-one-World-Cup-out** (escolhe a config nas outras 3 Copas, avalia na de
+fora) com ganho positivo — não pode ser overfit in-sample. Teste documenta os defaults escolhidos.
+**Evidência (LOO-CV):** a config `hl=2.0, rg=0.10` vence em **todas as 4 dobras** (não é overfit:
+generaliza para a Copa de fora) — 2010 +20, 2014 +40, 2018 +25, 2022 +7; total **+92 pts em 256
+jogos (+9,2%)** vs. os defaults atuais. Combina com o ganho do [ENG-16] (mesmo motor).
+**Resolução (57bb420):** `FitConfig.halflife_years` 2.5→2.0 e `ridge` 0.05→0.10; SPEC.md atualizado
+(meia-vida 2,0) e teste `test_fitconfig_calibrated_defaults` trava a calibração (mudança deve
+re-rodar o LOO-CV). Refino futuro (grade fina, pesos de torneio) fica para um item próprio se valer.
+**Commit:** 57bb420

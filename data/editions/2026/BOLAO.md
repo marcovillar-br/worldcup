@@ -19,13 +19,13 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   (J1–J8 já registrados antes; J5–J8 manualmente via web search.)
 - Próxima rodada a palpitar: 2026-06-15 (J13–J16): Bélgica×Egito, Irã×Nova Zelândia,
   Arábia Saudita×Uruguai, Espanha×Cabo Verde. Nenhum palpite ousado (⚡) — todos seguem o favorito.
-- Favorito ao título: **Espanha (18,4%)**, seguido de Argentina (14,4%), Inglaterra (12,5%),
-  Portugal (9,6%), França (7,1%) e Brasil (7,0%).
-- **Repalpitado em 2026-06-15 com o modelo corrigido (ENG-16, gradiente analítico):** o fit antes
-  não convergia e inflava Argentina/Brasil. Com o fit convergido, Espanha assume a ponta e
-  Argentina cai de 23,2%→14,4%. Os placares de hoje não mudaram (1x0/1x0/0x1/3x0), mas as
-  probabilidades firmaram — Irã×N.Zelândia passou de 48% para 59% de vitória do Irã. O snapshot
-  versionado de hoje foi regravado com o modelo corrigido.
+- Favorito ao título: **Argentina (17,0%)**, seguido de Espanha (16,1%), Inglaterra (12,5%),
+  Portugal (8,8%) e França (6,5%).
+- **Repalpitado 2x em 2026-06-15:** (1) ENG-16 — gradiente analítico fez o fit convergir (antes
+  inflava Argentina/Brasil); (2) ENG-17 — defaults recalibrados (meia-vida 2,5→2,0, ridge
+  0,05→0,10, +9,2% de pontos no backtest LOO). O shrinkage maior reaproximou Argentina/Espanha na
+  ponta. Placares de hoje inalterados (1x0/1x0/0x1/3x0). Snapshot do dia regravado com o modelo
+  final (ENG-16+17).
 - Palpites vigentes gerados com configuração padrão: `risk 0.5`, Sistema I conforme
   `scoring.toml` (sem customização do admin do bolão até agora).
 - Nota operacional: martj42 tem latência de 1-2 dias; quando atrasada, buscar placares via

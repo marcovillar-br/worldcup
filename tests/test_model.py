@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -12,16 +13,20 @@ from worldcup.scoring import outcome_probs_from_matrix
 
 
 def _synthetic_matches() -> pd.DataFrame:
-    """Liga sintética: A (forte) > B (médio) > C (fraco), repetida várias vezes."""
+    """Liga sintética: A (forte) > B (médio) > C (fraco), repetida várias vezes.
+
+    Os mandantes marcam consistentemente mais que os visitantes (jogos com mando,
+    `neutral=False`), de modo que o fit convergido estima `home_adv > 0` — sem esse sinal,
+    o ótimo verdadeiro tem mando ~0 e os testes de mando ficariam no fio da navalha (ENG-16)."""
     rows = []
     base = pd.Timestamp("2024-01-01")
     scripted = [
-        ("A", "B", 2, 0),
-        ("A", "C", 3, 0),
-        ("B", "C", 2, 1),
-        ("B", "A", 0, 2),
-        ("C", "A", 0, 3),
-        ("C", "B", 1, 2),
+        ("A", "B", 3, 0),  # mandante marca mais nas duas orientações de cada confronto
+        ("A", "C", 4, 0),
+        ("B", "C", 3, 0),
+        ("B", "A", 1, 2),
+        ("C", "A", 1, 3),
+        ("C", "B", 1, 1),
     ]
     for k in range(12):
         for i, (h, a, hs, as_) in enumerate(scripted):
@@ -118,3 +123,74 @@ def test_unknown_team_falls_back_to_average():
 def test_tournament_weight_ordering():
     assert tournament_weight("FIFA World Cup") > tournament_weight("Friendly")
     assert tournament_weight("FIFA World Cup qualification") > tournament_weight("Friendly")
+
+
+def _low_score_matches() -> pd.DataFrame:
+    """Liga sintética só com placares baixos — exercita todos os ramos da correção
+    Dixon-Coles (tau): 0x0, 1x0, 0x1 e 1x1, cujas derivadas o gradiente analítico precisa cobrir."""
+    rows = []
+    base = pd.Timestamp("2024-01-01")
+    scripted = [
+        ("A", "B", 1, 0),  # m10
+        ("A", "C", 1, 1),  # m11
+        ("B", "C", 0, 0),  # m00
+        ("B", "A", 0, 1),  # m01
+        ("C", "A", 1, 2),
+        ("C", "B", 2, 1),
+        ("A", "B", 2, 1),
+        ("B", "C", 1, 0),  # m10
+        ("C", "A", 0, 0),  # m00
+        ("A", "C", 0, 1),  # m01
+    ]
+    for k in range(4):
+        for i, (h, a, hs, as_) in enumerate(scripted):
+            rows.append(
+                {
+                    "date": base + pd.Timedelta(days=k * 30 + i),
+                    "home_team": h,
+                    "away_team": a,
+                    "home_score": hs,
+                    "away_score": as_,
+                    "tournament": "FIFA World Cup qualification",
+                    "neutral": False,
+                }
+            )
+    return pd.DataFrame(rows)
+
+
+def _central_grad(fun, x, h=1e-5):
+    """Gradiente por diferenças centrais (truncamento O(h²)) — referência p/ checar o analítico."""
+    g = np.zeros_like(x)
+    for i in range(len(x)):
+        xp, xm = x.copy(), x.copy()
+        xp[i] += h
+        xm[i] -= h
+        g[i] = (fun(xp) - fun(xm)) / (2 * h)
+    return g
+
+
+def test_fit_uses_analytic_gradient_matching_numeric(monkeypatch):
+    # Regressão ENG-16: o fit deve passar um jac analítico ao otimizador, e esse gradiente
+    # deve casar com o numérico — senão o L-BFGS-B converge para o ótimo errado (ou esgota o
+    # maxfun do scipy estimando o gradiente por diferenças finitas e nem converge).
+    import worldcup.model as model_mod
+
+    captured: dict[str, Any] = {}
+    real_minimize = model_mod.minimize
+
+    def spy(fun, x0, jac=None, **kwargs):
+        assert jac is not None, "fit deve passar um gradiente analítico (jac) ao minimize"
+        errs = [
+            float(np.max(np.abs(jac(x0 + delta) - _central_grad(fun, x0 + delta))))
+            for delta in (0.0, 0.2, -0.25)  # x0 e pontos perturbados (rho != 0 ativa o tau)
+        ]
+        captured["max_err"] = max(errs)
+        res = real_minimize(fun, x0, jac=jac, **kwargs)
+        captured["success"] = bool(res.success)
+        return res
+
+    monkeypatch.setattr(model_mod, "minimize", spy)
+    DixonColesModel().fit(_low_score_matches())
+
+    assert captured["max_err"] < 1e-5  # analítico == numérico
+    assert captured["success"]  # com o jac correto, o fit converge dentro do maxiter

@@ -124,25 +124,69 @@ class DixonColesModel:
         # vetor de parâmetros: [attack(n), defense(n), home_adv, rho, base]
         x0 = np.concatenate([np.zeros(n), np.zeros(n), [0.25, 0.0, base0]])
         ridge = self.config.ridge
+        logmx = np.log(self.config.max_xg)
+        # máscaras de placar baixo usadas na correção Dixon–Coles (tau) e na sua derivada
+        m00 = (hg == 0) & (ag == 0)
+        m01 = (hg == 0) & (ag == 1)
+        m10 = (hg == 1) & (ag == 0)
+        m11 = (hg == 1) & (ag == 1)
+
+        def _rates(x: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+            """λ/μ (pós-clip) e as máscaras da região não-clipada (onde dλ/dη = λ)."""
+            att, dfn = x[:n], x[n : 2 * n]
+            home_adv, base = x[2 * n], x[2 * n + 2]
+            eta_l = base + att[hi] - dfn[ai] + home_adv * home_flag
+            eta_m = base + att[ai] - dfn[hi]
+            lam = np.exp(np.clip(eta_l, -3, logmx))
+            mu = np.exp(np.clip(eta_m, -3, logmx))
+            unclipped_l = (eta_l > -3) & (eta_l < logmx)
+            unclipped_m = (eta_m > -3) & (eta_m < logmx)
+            return lam, mu, unclipped_l, unclipped_m
 
         def neg_ll(x: np.ndarray) -> float:
-            att = x[:n]
-            dfn = x[n : 2 * n]
-            home_adv, rho, base = x[2 * n], x[2 * n + 1], x[2 * n + 2]
-            lam = np.exp(np.clip(base + att[hi] - dfn[ai] + home_adv * home_flag, -3, np.log(self.config.max_xg)))
-            mu = np.exp(np.clip(base + att[ai] - dfn[hi], -3, np.log(self.config.max_xg)))
+            att, dfn = x[:n], x[n : 2 * n]
+            rho = x[2 * n + 1]
+            lam, mu, _, _ = _rates(x)
             ll = hg * np.log(lam) - lam + ag * np.log(mu) - mu
             tau = _tau(hg, ag, lam, mu, rho)
             ll = ll + np.log(np.clip(tau, 1e-9, None))
             penalty = ridge * (np.sum(att**2) + np.sum(dfn**2))
             return -np.sum(weights * ll) + penalty
 
+        def grad(x: np.ndarray) -> np.ndarray:
+            """Gradiente analítico de neg_ll. Sem ele, o gradiente numérico custa ~2n
+            avaliações por iteração e esgota o maxfun do scipy antes de convergir (ENG-16)."""
+            att, dfn = x[:n], x[n : 2 * n]
+            rho = x[2 * n + 1]
+            lam, mu, unclipped_l, unclipped_m = _rates(x)
+            tau = np.clip(_tau(hg, ag, lam, mu, rho), 1e-9, None)
+            # derivadas de tau (não-nulas só nos placares baixos)
+            dtau_dlam = np.where(m00, -mu * rho, np.where(m01, rho, 0.0))
+            dtau_dmu = np.where(m00, -lam * rho, np.where(m10, rho, 0.0))
+            dtau_drho = np.where(m00, -lam * mu, np.where(m01, lam, np.where(m10, mu, np.where(m11, -1.0, 0.0))))
+            # d(ll)/d(eta) por jogo, já ponderado e mascarado na região clipada (onde dλ/dη = 0)
+            g_l = weights * unclipped_l * ((hg - lam) + (lam / tau) * dtau_dlam)
+            g_m = weights * unclipped_m * ((ag - mu) + (mu / tau) * dtau_dmu)
+            g_rho = weights * (1.0 / tau) * dtau_drho
+            g = np.zeros_like(x)
+            np.add.at(g[:n], hi, -g_l)  # att entra em λ via mandante, em μ via visitante
+            np.add.at(g[:n], ai, -g_m)
+            np.add.at(g[n : 2 * n], ai, g_l)  # dfn entra com sinal negativo em λ/μ
+            np.add.at(g[n : 2 * n], hi, g_m)
+            g[2 * n] = -np.sum(g_l * home_flag)  # home_adv
+            g[2 * n + 1] = -np.sum(g_rho)  # rho
+            g[2 * n + 2] = -np.sum(g_l + g_m)  # base
+            g[:n] += 2 * ridge * att  # derivada do ridge
+            g[n : 2 * n] += 2 * ridge * dfn
+            return g
+
         bounds = [(-3, 3)] * (2 * n) + [(-1.0, 1.0), (-0.2, 0.2), (-2.0, 2.0)]
-        res = minimize(neg_ll, x0, method="L-BFGS-B", bounds=bounds, options={"maxiter": self.config.maxiter})
+        res = minimize(neg_ll, x0, jac=grad, method="L-BFGS-B", bounds=bounds, options={"maxiter": self.config.maxiter})
 
         if not res.success:
             # fit não-convergido gera forças ruins sem sinal; avisa (não interrompe — res.x é o
-            # melhor ponto alcançado). Considerar subir maxiter quando a base crescer.
+            # melhor ponto alcançado). Com o gradiente analítico (jac=grad) o fit converge bem
+            # dentro de maxiter; um aviso aqui agora indica um problema real a investigar.
             logger.warning("ajuste do modelo não convergiu (maxiter=%d): %s", self.config.maxiter, res.message)
         if not np.all(np.isfinite(res.x)):
             logger.warning("ajuste do modelo produziu parâmetros não-finitos; previsões podem ser inválidas")

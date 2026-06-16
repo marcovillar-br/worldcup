@@ -1,8 +1,9 @@
-"""Testes do backtest — foco no mando do anfitrião (ENG-2)."""
+"""Testes do backtest — mando do anfitrião (ENG-2) e calibração probabilística (ENG-18)."""
 
 from __future__ import annotations
 
 import pandas as pd
+import pytest
 
 from conftest import make_model
 from worldcup import backtest as bt
@@ -48,3 +49,52 @@ def test_backtest_applies_host_advantage(monkeypatch):
 
     # o anfitrião como visitante recebe o mando (host_away), como no caminho real do app
     assert seen["host_away"] is True
+
+
+# --------------------------------------------------------------- calibração (ENG-18)
+
+
+def test_multiclass_brier_perfect_is_zero():
+    # previsão determinística e correta em todo jogo -> Brier 0
+    probs = [(1.0, 0.0, 0.0), (0.0, 0.0, 1.0), (0.0, 1.0, 0.0)]
+    outcomes = [0, 2, 1]
+    assert bt.multiclass_brier(probs, outcomes) == pytest.approx(0.0)
+
+
+def test_multiclass_brier_uniform_closed_form():
+    # palpite uniforme (1/3,1/3,1/3): Σ_k (1/3 - 1{k=real})² = 4/9 + 1/9 + 1/9 = 2/3, qualquer real
+    u = (1 / 3, 1 / 3, 1 / 3)
+    assert bt.multiclass_brier([u, u, u], [0, 1, 2]) == pytest.approx(2 / 3)
+
+
+def test_multiclass_brier_worst_case():
+    # determinística e errada -> (1-0)²+(0-1)² = 2 por jogo
+    assert bt.multiclass_brier([(1.0, 0.0, 0.0)], [2]) == pytest.approx(2.0)
+
+
+def test_multiclass_brier_empty():
+    assert bt.multiclass_brier([], []) == 0.0
+
+
+def test_reliability_curve_bins_and_freq():
+    # probs em 3 faixas distintas (n_bins=10): 0.05->[0,10%), 0.55->[50,60%), 0.95->[90,100%]
+    # hits escolhidos para dar freq observada conhecida em cada faixa
+    pred = [0.05, 0.05, 0.55, 0.95, 0.95]
+    hits = [False, True, True, True, False]  # faixa0: 1/2=50%; faixa5: 1/1=100%; faixa9: 1/2=50%
+    bins = bt.reliability_curve(pred, hits, n_bins=10)
+    # só 3 faixas não-vazias, em ordem crescente
+    assert [(round(b.lo, 1), b.count) for b in bins] == [(0.0, 2), (0.5, 1), (0.9, 2)]
+    by_lo = {round(b.lo, 1): b for b in bins}
+    assert by_lo[0.0].mean_pred == pytest.approx(0.05)
+    assert by_lo[0.0].obs_freq == pytest.approx(0.5)
+    assert by_lo[0.5].obs_freq == pytest.approx(1.0)
+    assert by_lo[0.9].mean_pred == pytest.approx(0.95)
+    assert by_lo[0.9].obs_freq == pytest.approx(0.5)
+
+
+def test_reliability_curve_p_one_lands_in_last_bin():
+    # p=1.0 não pode estourar o índice; cai na última faixa [90,100%]
+    bins = bt.reliability_curve([1.0], [True], n_bins=10)
+    assert len(bins) == 1
+    assert bins[0].lo == pytest.approx(0.9)
+    assert bins[0].count == 1

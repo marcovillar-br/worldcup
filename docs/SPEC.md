@@ -423,6 +423,17 @@ conservadora (`0.0`) numa Copa cheia de zebras — coerente com "azarão vale ma
 menos o 1×2 (32.8% vs 43.8%). (Uma Copa só; não generalizar cegamente. Números com a régua de pontos
 calibrada ao app — §4.1.)
 
+**Calibração probabilística (ENG-18).** Além dos pontos e do acerto de 1×2 (métricas de
+*classificação*, via argmax), o backtest reporta a **calibração** do modelo — se as probabilidades
+batem com as frequências reais, métrica *de probabilidade*, independente do `risk`: **Brier
+multiclasse** (`multiclass_brier`; 0 = perfeito, 0,667 = uniforme) e a **curva de confiabilidade**
+da classe empate (`reliability_curve`). Veredito agregado nas 4 Copas (2010/14/18/22, 256 jogos,
+`pooled_draw_calibration`): Brier **0,578** (< 0,667, tem resolução) e P(empate) prevista média
+**27,9%** vs. frequência real **22,3%** — o modelo **não** subestima empates; se algo, os
+**superestima** levemente (a correção Dixon-Coles `rho` já puxa para cima). Conclusão: o baixo
+acerto de empates num punhado de jogos (ex.: início da Copa 2026) é **variância**, não
+miscalibração — não há ajuste de modelo a fazer.
+
 ### 9.2 Limitações conhecidas
 
 _Fonte canônica das limitações do projeto. O `README.md` resume para o usuário; o `AGENTS.md` aponta para cá._

@@ -4,11 +4,19 @@ Treina o modelo só com jogos **anteriores** ao início da Copa-alvo e "palpita"
 daquela Copa, somando os pontos do bolão (Sistema I) que o app teria feito. Compara estratégias
 de risco diferentes — a seleção do placar usa o risco testado, mas os pontos são sempre concedidos
 pela fórmula fiel (risk=0.5), como o app faria.
+
+Além dos pontos e do **acerto de 1×2** (métricas de classificação, via argmax), mede a
+**calibração probabilística** do modelo (ENG-18): se P(mandante)/P(empate)/P(visitante) batem com
+as frequências reais. São coisas independentes — dá para acertar muito 1×2 com P(empate)
+sistematicamente baixa. Métricas: **Brier multiclasse** (calibração+resolução num número) e
+**curva de confiabilidade** da classe empate (a suspeita levantada na Copa 2026). A calibração é
+propriedade do modelo, não da estratégia — independe de `risk`.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 import pandas as pd
 
@@ -18,6 +26,9 @@ from .format_engine import MatrixCache
 from .model import DixonColesModel, FitConfig
 from .scoring import Scorer, outcome_probs_from_matrix
 from .teams import canonical
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 # Início aproximado de cada Copa (para cortar o treino antes do torneio).
 _WORLD_CUP_START = {2010: "2010-06-11", 2014: "2014-06-12", 2018: "2018-06-14", 2022: "2022-11-20"}
@@ -29,33 +40,109 @@ _WORLD_CUP_HOSTS = {2010: ("South Africa",), 2014: ("Brazil",), 2018: ("Russia",
 
 
 @dataclass
+class ReliabilityBin:
+    """Uma faixa da curva de confiabilidade: prob prevista média vs. frequência observada."""
+
+    lo: float
+    hi: float
+    count: int
+    mean_pred: float
+    obs_freq: float
+
+
+@dataclass
 class BacktestResult:
     year: int
     n_matches: int
     by_risk: dict[float, dict[str, float]]
+    # calibração (risk-independente): Brier multiclasse e confiabilidade da classe empate
+    brier: float = 0.0
+    reliability_draw: list[ReliabilityBin] = field(default_factory=list)
 
 
-def _award_scorer() -> Scorer:
-    """Pontuação fiel (risk=0.5) usada para conceder pontos, independente da estratégia."""
-    cfg = ScoringConfig(system="sistema_i", risk=0.5)
-    return Scorer(cfg)
+def _outcome_index(home_score: int, away_score: int) -> int:
+    """0 = vitória mandante, 1 = empate, 2 = vitória visitante (mesma ordem de `outcome_probs`)."""
+    r = (home_score > away_score) - (home_score < away_score)
+    return 0 if r > 0 else 1 if r == 0 else 2
+
+
+def multiclass_brier(probs: Sequence[tuple[float, float, float]], outcomes: Sequence[int]) -> float:
+    """Brier multiclasse médio: `mean_jogos Σ_k (p_k − 1{real==k})²` sobre (mandante, empate, visitante).
+
+    0 = previsão determinística e correta; 2/3 ≈ 0,667 = palpite uniforme (1/3,1/3,1/3); 2 = pior
+    caso (determinística e errada). Mais baixo é melhor.
+    """
+    if not probs:
+        return 0.0
+    total = 0.0
+    for p, o in zip(probs, outcomes, strict=True):
+        total += sum((p[k] - (1.0 if k == o else 0.0)) ** 2 for k in range(3))
+    return total / len(probs)
+
+
+def reliability_curve(pred_probs: Sequence[float], hits: Sequence[bool], n_bins: int = 10) -> list[ReliabilityBin]:
+    """Curva de confiabilidade de uma classe: agrupa os jogos por prob prevista em `n_bins` faixas
+    iguais de [0,1] e devolve só as faixas **não-vazias** com (prob média prevista, freq observada).
+
+    Bem calibrado ⇒ `mean_pred ≈ obs_freq` em toda faixa. `hits[i]` é True quando aquela classe foi
+    o resultado real do jogo `i`.
+    """
+    sums = [0.0] * n_bins  # soma das probs previstas na faixa
+    obs = [0] * n_bins  # quantos jogos da faixa tiveram a classe como resultado
+    cnt = [0] * n_bins
+    for p, hit in zip(pred_probs, hits, strict=True):
+        b = min(n_bins - 1, int(p * n_bins))  # p=1.0 cai na última faixa
+        sums[b] += p
+        obs[b] += 1 if hit else 0
+        cnt[b] += 1
+    out: list[ReliabilityBin] = []
+    for b in range(n_bins):
+        if cnt[b] == 0:
+            continue
+        out.append(
+            ReliabilityBin(
+                lo=b / n_bins,
+                hi=(b + 1) / n_bins,
+                count=cnt[b],
+                mean_pred=sums[b] / cnt[b],
+                obs_freq=obs[b] / cnt[b],
+            )
+        )
+    return out
+
+
+def _prepare(year: int, df: pd.DataFrame) -> tuple[DixonColesModel, MatrixCache, pd.DataFrame]:
+    """Treina o modelo com jogos anteriores à Copa `year` e devolve (modelo, cache de mando, teste)."""
+    start = _WORLD_CUP_START[year]
+    train = df[df["date"] < pd.Timestamp(start)].copy()
+    test = df[(df["tournament"] == "FIFA World Cup") & (df["date"].dt.year == year)].copy()
+    if test.empty:
+        raise ValueError(f"Nenhum jogo da Copa {year} no histórico (rode fetch-data?).")
+    model = DixonColesModel(FitConfig()).fit(train, ref_date=pd.Timestamp(start))
+    cache = MatrixCache(model, _WORLD_CUP_HOSTS.get(year, ()))
+    return model, cache, test
+
+
+def _calibration_inputs(cache: MatrixCache, test: pd.DataFrame) -> tuple[list[tuple[float, float, float]], list[int]]:
+    """Probabilidades (mandante, empate, visitante) e índice do resultado real de cada jogo de teste.
+
+    Base risk-independente da calibração — usada por `run_backtest` e pelo pooling entre Copas.
+    """
+    probs: list[tuple[float, float, float]] = []
+    outcomes: list[int] = []
+    for _, m in test.iterrows():
+        mat = cache.matrix(canonical(m["home_team"]), canonical(m["away_team"]), bool(m["neutral"]))
+        probs.append(outcome_probs_from_matrix(mat))
+        outcomes.append(_outcome_index(int(m["home_score"]), int(m["away_score"])))
+    return probs, outcomes
 
 
 def run_backtest(year: int = 2022, risks: tuple[float, ...] = (0.0, 0.5, 1.0), n_sims: int = 0) -> BacktestResult:
     if year not in _WORLD_CUP_START:
         raise ValueError(f"Sem data de início cadastrada para {year}. Opções: {sorted(_WORLD_CUP_START)}")
-    start = _WORLD_CUP_START[year]
     df = load_historical()
-
-    train = df[df["date"] < pd.Timestamp(start)].copy()
-    test = df[(df["tournament"] == "FIFA World Cup") & (df["date"].dt.year == year)].copy()
-    if test.empty:
-        raise ValueError(f"Nenhum jogo da Copa {year} no histórico (rode fetch-data?).")
-
-    model = DixonColesModel(FitConfig()).fit(train, ref_date=pd.Timestamp(start))
+    _model, cache, test = _prepare(year, df)
     award = _award_scorer()
-    # mesma lógica de mando da produção (anfitrião joga em casa mesmo listado como visitante).
-    cache = MatrixCache(model, _WORLD_CUP_HOSTS.get(year, ()))
 
     by_risk: dict[float, dict[str, float]] = {}
     for risk in risks:
@@ -83,9 +170,44 @@ def run_backtest(year: int = 2022, risks: tuple[float, ...] = (0.0, 0.5, 1.0), n
             "result_pct": 100 * correct / n,
         }
 
-    result = BacktestResult(year=year, n_matches=len(test), by_risk=by_risk)
+    # calibração (uma vez; não depende do risco)
+    probs_all, outcomes_all = _calibration_inputs(cache, test)
+    brier = multiclass_brier(probs_all, outcomes_all)
+    reliability_draw = reliability_curve([p[1] for p in probs_all], [o == 1 for o in outcomes_all])
+
+    result = BacktestResult(
+        year=year,
+        n_matches=len(test),
+        by_risk=by_risk,
+        brier=brier,
+        reliability_draw=reliability_draw,
+    )
     _print_report(result)
     return result
+
+
+def pooled_draw_calibration(
+    years: tuple[int, ...] = (2010, 2014, 2018, 2022),
+) -> tuple[float, list[ReliabilityBin], int]:
+    """Calibração agregada nas Copas dadas: (Brier multiclasse, curva de confiabilidade do empate,
+    nº de jogos). Pooling dá faixas com mais jogos — base estatística para o veredito do ENG-18."""
+    df = load_historical()
+    all_probs: list[tuple[float, float, float]] = []
+    all_outcomes: list[int] = []
+    for year in years:
+        _, cache, test = _prepare(year, df)
+        probs, outcomes = _calibration_inputs(cache, test)
+        all_probs.extend(probs)
+        all_outcomes.extend(outcomes)
+    brier = multiclass_brier(all_probs, all_outcomes)
+    reliability = reliability_curve([p[1] for p in all_probs], [o == 1 for o in all_outcomes])
+    return brier, reliability, len(all_probs)
+
+
+def _award_scorer() -> Scorer:
+    """Pontuação fiel (risk=0.5) usada para conceder pontos, independente da estratégia."""
+    cfg = ScoringConfig(system="sistema_i", risk=0.5)
+    return Scorer(cfg)
 
 
 def _print_report(r: BacktestResult) -> None:
@@ -98,3 +220,14 @@ def _print_report(r: BacktestResult) -> None:
             f"{s['result_pct']:>10.1f}% | {s['exact_pct']:>13.1f}%"
         )
     print("\n(% resultado = acertou vencedor/empate; % placar exato = cravou o placar.)")
+
+    # calibração do modelo (independe do risco)
+    print(f"\n🎯 Calibração (modelo) — Brier multiclasse = {r.brier:.4f}  (0 = perfeito, 0,667 = uniforme)")
+    if r.reliability_draw:
+        print("   Confiabilidade do empate (prob prevista → freq observada):")
+        print(f"   {'faixa':>11} | {'jogos':>5} | {'previsto':>8} | {'observado':>9}")
+        for b in r.reliability_draw:
+            print(
+                f"   {int(b.lo * 100):>3}–{int(b.hi * 100):>3}% | {b.count:>5} | "
+                f"{b.mean_pred * 100:>7.1f}% | {b.obs_freq * 100:>8.1f}%"
+            )

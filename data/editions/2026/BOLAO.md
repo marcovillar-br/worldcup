@@ -11,16 +11,17 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-15)
+## Estado atual (atualizado em 2026-06-16)
 
-- A Copa começou em 2026-06-11. 12 de 104 jogos disputados e registrados (J1–J12).
-  J9–J12 (2026-06-14) entraram via `sync-results` (fonte pública): Alemanha 7×1 Curaçao,
-  Costa do Marfim 1×0 Equador, Holanda 2×2 Japão, Suécia 5×1 Tunísia.
-  (J1–J8 já registrados antes; J5–J8 manualmente via web search.)
-- Próxima rodada a palpitar: 2026-06-15 (J13–J16): Bélgica×Egito, Irã×Nova Zelândia,
-  Arábia Saudita×Uruguai, Espanha×Cabo Verde. Nenhum palpite ousado (⚡) — todos seguem o favorito.
-- Favorito ao título: **Argentina (17,0%)**, seguido de Espanha (16,1%), Inglaterra (12,5%),
-  Portugal (8,8%) e França (6,5%).
+- A Copa começou em 2026-06-11. 16 de 104 jogos disputados e registrados (J1–J16).
+  J13–J16 (2026-06-15) entraram **manualmente via web search** (martj42 ainda em 12 jogos):
+  **rodada de empates** — Bélgica 1×1 Egito, Irã 2×2 Nova Zelândia, Arábia Saudita 1×1 Uruguai,
+  Espanha 0×0 Cabo Verde (zebra: estreante segurou um favorito ao título).
+  (J9–J12 via `sync-results`; J1–J8 antes; J5–J8 manualmente.)
+- Próxima rodada a palpitar: 2026-06-16 (J17–J20): Argentina×Argélia, Áustria×Jordânia,
+  França×Senegal, Iraque×Noruega. Nenhum palpite ousado (⚡) — todos seguem o favorito.
+- Favorito ao título: **Argentina (17,5%)**, seguido de Espanha (13,9%), Inglaterra (11,9%),
+  Portugal (9,4%) e França (6,0%). O 0×0 derrubou a Espanha de 16,1%→13,9%.
 - **Repalpitado 2x em 2026-06-15:** (1) ENG-16 — gradiente analítico fez o fit convergir (antes
   inflava Argentina/Brasil); (2) ENG-17 — defaults recalibrados (meia-vida 2,5→2,0, ridge
   0,05→0,10, +9,2% de pontos no backtest LOO). O shrinkage maior reaproximou Argentina/Espanha na

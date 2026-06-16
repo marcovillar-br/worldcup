@@ -31,7 +31,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-15](#eng-15) | P2 | fetch_data | ✅ | `sync-results` depende de fonte única (martj42) sem fallback |
 | [ENG-16](#eng-16) | P2 | model | ✅ | Fit do Dixon-Coles não converge em `maxiter=500` com a base atual |
 | [ENG-17](#eng-17) | P2 | model | ✅ | Defaults do `FitConfig` (meia-vida/ridge) subótimos no backtest |
-| [ENG-18](#eng-18) | P2 | backtest | 🔴 | Backtest mede só acerto de 1×2, não calibração probabilística (Brier/reliability) |
+| [ENG-18](#eng-18) | P2 | backtest | ✅ | Backtest mede só acerto de 1×2, não calibração probabilística (Brier/reliability) |
 
 ---
 
@@ -331,7 +331,7 @@ prototipado e **revertido** (config morta — ENG-11). Os defaults do 57bb420 fi
 **Commit:** 57bb420
 
 ## ENG-18
-**Backtest mede só acerto de 1×2, não calibração probabilística** · P2 · `backtest.py` · 🔴 todo
+**Backtest mede só acerto de 1×2, não calibração probabilística** · P2 · `backtest.py` · ✅ feito
 
 `backtest.run_backtest` reporta `result_pct` (acertou vencedor/empate) e `exact_pct` (cravou o
 placar), mas **não mede se as probabilidades P(mandante)/P(empate)/P(visitante) são calibradas** —
@@ -363,4 +363,17 @@ Reportar no `_print_report`. Independe de `risk` (é do modelo, não da estraté
 reliability; (2) rodar o diagnóstico nas 4 Copas e **registrar aqui** o veredito — P(empate) é
 calibrada ou não? — fechando a dúvida levantada na Copa 2026. Se miscalibrada, abrir item-filho
 para o ajuste do modelo (não fazê-lo neste item — aqui é só medição).
-**Commit:** —
+**Evidência (veredito, 256 jogos · 2010/14/18/22 · `pooled_draw_calibration`):** Brier multiclasse
+**0,578** (< 0,667 uniforme → o modelo tem resolução). Confiabilidade do empate, faixas povoadas:
+20–30% (144 jogos) previsto 26,4% vs observado 20,8%; 30–40% (92 jogos) previsto 32,5% vs observado
+26,1%. Global: P(empate) prevista média **27,9%** vs. frequência real **22,3%**. **Veredito: o
+modelo NÃO subestima empates — se algo, os superestima levemente** (a correção Dixon-Coles `rho`,
+hoje ≈−0,078, já puxa a massa para cima). Logo o 0/8 em empates no início da Copa 2026 (P(empate)
+média de 25,8% naqueles 16 jogos vs 50% observado) é **variância**, não miscalibração. **Não há
+ajuste de modelo a fazer; nenhum item-filho aberto.** O diagnóstico fica como métrica permanente do
+backtest para reabrir a questão com base estatística, não com punhado de jogos.
+**Resolução (8652360):** `multiclass_brier` + `reliability_curve` (puras, testadas),
+`pooled_draw_calibration` agrega as 4 Copas; `BacktestResult` ganha `brier`/`reliability_draw` e o
+`_print_report` os exibe. Testes de regressão cobrem caso determinístico (0), uniforme (2/3), pior
+caso (2), atribuição de bins e o limite `p=1.0`. SPEC §9.1 registra a métrica e o veredito.
+**Commit:** 8652360

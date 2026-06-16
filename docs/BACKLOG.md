@@ -31,6 +31,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-15](#eng-15) | P2 | fetch_data | ✅ | `sync-results` depende de fonte única (martj42) sem fallback |
 | [ENG-16](#eng-16) | P2 | model | ✅ | Fit do Dixon-Coles não converge em `maxiter=500` com a base atual |
 | [ENG-17](#eng-17) | P2 | model | ✅ | Defaults do `FitConfig` (meia-vida/ridge) subótimos no backtest |
+| [ENG-18](#eng-18) | P2 | backtest | 🔴 | Backtest mede só acerto de 1×2, não calibração probabilística (Brier/reliability) |
 
 ---
 
@@ -328,3 +329,38 @@ gamma=1.0 (identidade) ótimo, afiar/achatar pesos de torneio não ganha nada; o
 já estão bem calibrados. Ótimo é interior na grade (não é borda). O hook `tournament_gamma` foi
 prototipado e **revertido** (config morta — ENG-11). Os defaults do 57bb420 ficam confirmados.
 **Commit:** 57bb420
+
+## ENG-18
+**Backtest mede só acerto de 1×2, não calibração probabilística** · P2 · `backtest.py` · 🔴 todo
+
+`backtest.run_backtest` reporta `result_pct` (acertou vencedor/empate) e `exact_pct` (cravou o
+placar), mas **não mede se as probabilidades P(mandante)/P(empate)/P(visitante) são calibradas** —
+i.e., se em jogos a que o modelo deu ~30% de empate, ~30% de fato empatam. Acerto de 1×2 é uma
+métrica de classificação (depende do argmax); calibração é uma métrica de probabilidade
+(depende da massa). São independentes: o modelo pode acertar 56% dos resultados com P(empate)
+sistematicamente baixa, e isso enviesaria a régua de pontos base (que escala com `1/p`), as
+sims de campeão/avanço e a própria decisão de quando vale arriscar.
+
+Surgiu da análise dos 16 primeiros jogos da Copa 2026: 8/16 empates reais (50%) vs. P(empate)
+média de 25,8% que o modelo atribuiu, e 0/16 empates palpitados. Em 16 jogos isso é variância
+(~2σ; o backtest de 256 jogos fixa o acerto de 1×2 em ~56%), **não** evidência de defeito —
+mas é exatamente a pergunta que um diagnóstico de calibração responde com base estatística, em
+vez de reagir a uma amostra pequena. Decide, com evidência, se há algo a corrigir (ex.: limite do
+`rho` da correção Dixon-Coles, hoje `model.rho`≈−0,078, ou termo específico de empate) ou se a
+calibração já está boa e os 38% de 2026 são só azar.
+
+**Correção proposta:** estender `backtest.run_backtest`/`BacktestResult` para computar, sobre os
+jogos de teste (agregável nas 4 Copas via `_WORLD_CUP_START`), a partir do `outcome_probs_from_matrix`
+de cada confronto:
+- **Brier score multiclasse** sobre o vetor (P_mandante, P_empate, P_visitante) vs. o resultado
+  one-hot — métrica única de calibração+resolução;
+- **curva de confiabilidade** por faixa de probabilidade prevista (bins, ex.: 0–10%,…,90–100%):
+  frequência observada vs. prevista, **por classe de resultado** (com foco no empate, a suspeita).
+Reportar no `_print_report`. Independe de `risk` (é do modelo, não da estratégia de escolha).
+
+**Aceite:** (1) teste de regressão valida o Brier num caso sintético de probabilidade conhecida
+(ex.: previsão determinística certa → 0; uniforme → valor fechado) e a atribuição de bins da
+reliability; (2) rodar o diagnóstico nas 4 Copas e **registrar aqui** o veredito — P(empate) é
+calibrada ou não? — fechando a dúvida levantada na Copa 2026. Se miscalibrada, abrir item-filho
+para o ajuste do modelo (não fazê-lo neste item — aqui é só medição).
+**Commit:** —

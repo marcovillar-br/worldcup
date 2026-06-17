@@ -411,16 +411,26 @@ código agnóstico à edição (odds entram como **dados** por jogo, não hardco
   `fixtures.csv` ou arquivo `odds.csv` paralelo); ausência de odds ⇒ cai para DC-only (degradação
   graciosa, sem travar a Copa).
 
-**Aceite:** com odds históricas das 4 Copas do backtest (ou subconjunto), o blend reduz o **Brier
-multiclasse** vs. o baseline DC-only (0,578), com `w` escolhido por **leave-one-World-Cup-out**
-(não pode ser overfit in-sample — mesma disciplina do ENG-17); teste de regressão cobre o
-des-vigamento (margem conhecida → probabilidades normalizadas) e o blend (`w=0` ⇒ idêntico ao
-modelo; `w=1` ⇒ idêntico ao mercado). `pytest` verde.
-**Bloqueado por (dados):** obter **odds históricas de jogos de seleção** das Copas 2010–2022 para
-validar — não trivial (football-data.co.uk cobre ligas de clubes; para seleção, avaliar
-oddsportal/Kaggle/API paga). Sem isso, dá para implementar o mecanismo e validar só com odds da
-Copa 2026 ao vivo, mas a evidência LOO-CV (o critério forte) fica pendente da fonte. Definir a fonte
-antes de começar.
+**Aceite (revisado 2026-06-17 — o LOO-CV multi-Copa original era inviável por falta de dados, ver Decisão):**
+três gates; teste de regressão sempre verde.
+- *Gate 1 — mecanismo + testes unitários:* devig/pool/rescale/blend + carga de `odds.csv`, com
+  `w=0`⇒modelo e `w=1`⇒mercado. **✅ (a26cfa8).**
+- *Gate 2 — default de `w` por prior de princípio:* `blend_weight` default documentado (~0,6,
+  ancorado na calibração quase-ótima de odds de fechamento na literatura), **não** tunado em dados
+  de seleção (que não existem grátis). Teste trava o default.
+- *Gate 3 — validação prospectiva 2026:* harness que, com odds em `odds.csv` por rodada, compara o
+  **Brier multiclasse** do blend(`w`) vs. modelo-puro (as-of) nos jogos disputados, acumulando um
+  tally; `w` **pré-registrado** ⇒ out-of-sample por construção. Veredito registrado no `BOLAO.md`
+  conforme acumula; re-tunar `w` se 2026 discordar forte.
+
+**Decisão (2026-06-17 — fonte de dados):** pesquisa de fontes confirmou que **odds 1X2 de jogos de
+seleção das Copas 2010–2018, grátis e legais, não existem** (só scraping de OddsPortal/checkbestodds
+contra o ToS; The Odds API cobre só 2022, pago ~$29–99/mês; football-data.co.uk é só ligas de
+clube). Logo o **LOO-CV histórico multi-Copa foi descartado**. Alternativas avaliadas e preteridas:
+(a) tunar em ligas de clube e transferir — esforço alto (ingestão + desligar o filtro FIFA) + gap
+clube→seleção; (b) comprar odds da Copa 2022 — 1 torneio, sem fold para tunar, custa. **Escolhido**
+(decisão do usuário): **prior de princípio + tracking prospectivo** — mais barato e a evidência
+in-domain (jogos de seleção reais) acumula sozinha ao longo da própria Copa 2026.
 **Progresso (a26cfa8):** **mecanismo implementado e testado**, item segue 🟡 só pela validação
 empírica. Novo `blend.py` puro: `devig` (des-vig proporcional) → `log_opinion_pool` (média
 geométrica ponderada, peso `w`) → `rescale_matrix` (reescala a matriz ao 1×2-alvo preservando a
@@ -431,6 +441,7 @@ poluir o arquivo canônico/hook de sync), opção **reescalar a matriz** (não s
 aplica só nos jogos com odds; sim de campeão/avanço segue DC-only. Ausência de odds ou `w=0` ⇒
 intacto. 13 testes (devig margem/erro, pool `w=0/1/0.5`, rescale alvo/massa/forma, blend e2e
 `w=0/1/parcial`, carga de `odds.csv` + ausência graciosa); e2e manual confirmou o shift dos palpites
-(J21 50→55% mandante; J24 14→32% após odds equilibradas). **Falta para ✅:** odds históricas
-2010–2022 + harness LOO-CV reaproveitando `multiclass_brier` para mostrar Brier < 0,578.
+(J21 50→55% mandante; J24 14→32% após odds equilibradas). **Falta para ✅ (Gates 2–3):** fixar o
+prior `w≈0,6` no `scoring.toml` (documentado, com teste) + harness de tracking prospectivo 2026
+(Brier do blend vs. modelo as-of, reaproveitando `backtest.multiclass_brier`).
 **Commit:** —

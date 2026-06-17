@@ -26,9 +26,15 @@ def test_as_of_does_not_mutate_original():
     assert played_before == played_after  # original inalterado
 
 
-def test_odds_absent_is_graceful():
-    # a edição 2026 não tem odds.csv -> dict vazio (blend desligado), sem erro
-    assert load_edition(2026).odds == {}
+def test_2026_odds_well_formed():
+    # odds.csv (se presente) carrega como {match_id válido: (home,draw,away)} de odds decimais > 1.0;
+    # robusto a quais jogos/valores e à ausência do arquivo (dict vazio passa trivialmente)
+    ed = load_edition(2026)
+    valid_ids = {f.match_id for f in ed.fixtures}
+    for mid, odds in ed.odds.items():
+        assert mid in valid_ids
+        assert len(odds) == 3
+        assert all(o > 1.0 for o in odds)
 
 
 def test_load_odds_parses_and_skips_blanks(tmp_path):

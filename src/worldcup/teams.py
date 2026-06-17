@@ -16,6 +16,7 @@ _ALIASES: dict[str, str] = {
     "Korea Republic": "South Korea",
     "Republic of Korea": "South Korea",
     "USA": "United States",
+    "Bosnia & Herzegovina": "Bosnia and Herzegovina",  # forma com & (The Odds API)
     "Côte d'Ivoire": "Ivory Coast",
     "Cote d'Ivoire": "Ivory Coast",
     "Cabo Verde": "Cape Verde",

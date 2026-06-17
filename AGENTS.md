@@ -84,8 +84,9 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `scoring.toml` — sistema de pontos + pesos por fase (default: Sistema I + Equilíbrio gradual).
   Também `blend_weight` (peso do mercado no blend com odds; default 0 = só modelo).
 - `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, por jogo. Ausente ⇒
-  blend desligado. Preencha só os jogos da próxima rodada; linhas em branco são ignoradas. **Gerado/
-  efêmero, não versionar odds inventadas** — é dado externo de mercado.
+  blend desligado. **Acrescente** os jogos de cada rodada (não sobrescreva — o `blend-track` acumula
+  o tally); linhas em branco são ignoradas. Odds **reais** coletadas valem versionar (reprodutibilidade
+  do veredito de blend); **nunca versione odds inventadas/de teste**.
 - `BOLAO.md` — **memória de campanha** do bolão (agnóstica a ferramenta): decisões vivas que não
   são rederiváveis de dados/código (`risk` escolhido, situação no ranking, regras do bolão).
   **Leia no início da sessão e atualize quando uma decisão de campanha acontecer.**

@@ -33,10 +33,11 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   `scoring.toml` (sem customização do admin do bolão até agora).
 - **Alavanca de acurácia armada (ENG-19, 2026-06-17):** `blend_weight = 0.6` no `scoring.toml` —
   o blend com odds de mercado está ligado, mas **dorme até existir `odds.csv`**. Para usar (única
-  alavanca que sobe o ranking, ver Decisões vivas): a cada rodada, registre as odds em
-  `data/editions/2026/odds.csv` (`match_id,home,draw,away`, decimais) antes de palpitar; depois dos
-  resultados, rode `worldcup blend-track` para ver se o blend está ganhando do modelo (Brier) e
-  anote o veredito aqui. Sem `odds.csv`, os palpites seguem 100% modelo.
+  alavanca que sobe o ranking, ver Decisões vivas): a cada rodada, **acrescente** (não sobrescreva)
+  as odds em `data/editions/2026/odds.csv` (`match_id,home,draw,away`, decimais) antes de palpitar;
+  depois dos resultados, rode `worldcup blend-track` para ver se o blend está ganhando do modelo
+  (Brier) e anote o veredito aqui. Sem `odds.csv`, os palpites seguem 100% modelo. Fonte de odds em
+  uso: **The Odds API** (free tier, `soccer_fifa_world_cup`); a chave é segredo (não versionar).
 - Nota operacional: martj42 tem latência de 1-2 dias; quando atrasada, buscar placares via
   web search e registrar com `worldcup record`. Rotina: `sync-results --archive` → se 0 jogos
   novos, buscar manualmente → `predict --archive`.

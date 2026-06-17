@@ -56,7 +56,8 @@ porque, depois que novos resultados entram e o modelo reajusta, o palpite de um 
 reproduzível.
 
 **Blend com odds de mercado (opcional):** crie `data/editions/<edição>/odds.csv` com
-`match_id,home,draw,away` em odds decimais (preencha só os jogos da próxima rodada). A ferramenta
+`match_id,home,draw,away` em odds decimais (**acrescente** os jogos de cada rodada — não
+sobrescreva: o `blend-track` acumula o tally sobre todos os jogos passados com odds). A ferramenta
 tira a margem da casa, combina as odds com as probabilidades do modelo (média geométrica ponderada,
 peso `blend_weight`) e ajusta o palpite. A edição 2026 já vem com `blend_weight = 0.6` no
 `scoring.toml` (prior de princípio: odds de fechamento são bem calibradas); `--blend-weight 0` ou a

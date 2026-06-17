@@ -32,7 +32,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-16](#eng-16) | P2 | model | ✅ | Fit do Dixon-Coles não converge em `maxiter=500` com a base atual |
 | [ENG-17](#eng-17) | P2 | model | ✅ | Defaults do `FitConfig` (meia-vida/ridge) subótimos no backtest |
 | [ENG-18](#eng-18) | P2 | backtest | ✅ | Backtest mede só acerto de 1×2, não calibração probabilística (Brier/reliability) |
-| [ENG-19](#eng-19) | P2 | model | 🔴 | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
+| [ENG-19](#eng-19) | P2 | model | 🟡 | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
 
 ---
 
@@ -380,7 +380,7 @@ caso (2), atribuição de bins e o limite `p=1.0`. SPEC §9.1 registra a métric
 **Commit:** 8652360
 
 ## ENG-19
-**Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas)** · P2 · `model`/`scoring` · 🔴 todo
+**Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas)** · P2 · `model`/`scoring` · 🟡 fazendo
 
 O modelo é puramente estatístico: ajusta forças a partir de resultados passados e é **cego a
 escalações, lesões, suspensões, motivação e dinheiro**. As **odds de fechamento** de uma casa
@@ -421,4 +421,16 @@ validar — não trivial (football-data.co.uk cobre ligas de clubes; para seleç
 oddsportal/Kaggle/API paga). Sem isso, dá para implementar o mecanismo e validar só com odds da
 Copa 2026 ao vivo, mas a evidência LOO-CV (o critério forte) fica pendente da fonte. Definir a fonte
 antes de começar.
+**Progresso (a26cfa8):** **mecanismo implementado e testado**, item segue 🟡 só pela validação
+empírica. Novo `blend.py` puro: `devig` (des-vig proporcional) → `log_opinion_pool` (média
+geométrica ponderada, peso `w`) → `rescale_matrix` (reescala a matriz ao 1×2-alvo preservando a
+forma condicional e a massa total — `best_prediction`/bônus intactos). Decisões tomadas: odds em
+`odds.csv` paralelo (`match_id,home,draw,away`, decimais; **não** em `fixtures.csv` para não
+poluir o arquivo canônico/hook de sync), opção **reescalar a matriz** (não só o 1×2), `w` via
+`scoring.toml::blend_weight` + override `--blend-weight` (espelha o padrão do `risk`). `pipeline.run`
+aplica só nos jogos com odds; sim de campeão/avanço segue DC-only. Ausência de odds ou `w=0` ⇒
+intacto. 13 testes (devig margem/erro, pool `w=0/1/0.5`, rescale alvo/massa/forma, blend e2e
+`w=0/1/parcial`, carga de `odds.csv` + ausência graciosa); e2e manual confirmou o shift dos palpites
+(J21 50→55% mandante; J24 14→32% após odds equilibradas). **Falta para ✅:** odds históricas
+2010–2022 + harness LOO-CV reaproveitando `multiclass_brier` para mostrar Brier < 0,578.
 **Commit:** —

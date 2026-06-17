@@ -32,6 +32,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-16](#eng-16) | P2 | model | ✅ | Fit do Dixon-Coles não converge em `maxiter=500` com a base atual |
 | [ENG-17](#eng-17) | P2 | model | ✅ | Defaults do `FitConfig` (meia-vida/ridge) subótimos no backtest |
 | [ENG-18](#eng-18) | P2 | backtest | ✅ | Backtest mede só acerto de 1×2, não calibração probabilística (Brier/reliability) |
+| [ENG-19](#eng-19) | P2 | model | 🔴 | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
 
 ---
 
@@ -377,3 +378,47 @@ backtest para reabrir a questão com base estatística, não com punhado de jogo
 `_print_report` os exibe. Testes de regressão cobrem caso determinístico (0), uniforme (2/3), pior
 caso (2), atribuição de bins e o limite `p=1.0`. SPEC §9.1 registra a métrica e o veredito.
 **Commit:** 8652360
+
+## ENG-19
+**Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas)** · P2 · `model`/`scoring` · 🔴 todo
+
+O modelo é puramente estatístico: ajusta forças a partir de resultados passados e é **cego a
+escalações, lesões, suspensões, motivação e dinheiro**. As **odds de fechamento** de uma casa
+sharp (ex.: Pinnacle) são o melhor preditor público *calibrado* de resultado justamente porque
+incorporam essa informação. Diagnóstico que motivou o item (2026-06-17, 20 jogos): a eficiência do
+palpiteiro já é **100% do tool** (seguir o `best_prediction` rende exatamente os mesmos 44 pts que o
+usuário fez) — ou seja, **não há ganho a extrair jogando diferente sobre este modelo**; o teto de
+acurácia é o do próprio modelo. Para subir o teto, a alavanca de maior valor é uma **fonte de
+probabilidade externa** blendada, não um refino interno (ver ENG-17: afiar pesos de torneio não
+ganhou nada; o `rho` da correção Dixon-Coles já calibra empate — ENG-18). **Não é** sobre "prever
+mais empates" (o modelo já os superestima levemente no agregado — ENG-18); é sobre probabilidades
+melhores em todos os resultados.
+
+**Refs:** `scoring.outcome_probs_from_matrix` (saída P(mandante/empate/visitante) do modelo, hoje
+única fonte), `pipeline.run`/`MatrixCache.matrix` (onde a matriz de placares é consumida),
+`backtest.multiclass_brier`/`pooled_draw_calibration` (a régua de validação do ENG-18, baseline
+DC-only = **Brier 0,578**).
+
+**Correção proposta:** introduzir uma fonte de odds e um *blend* de probabilidades, mantendo o
+código agnóstico à edição (odds entram como **dados** por jogo, não hardcode):
+- des-vigar as odds (remover a margem da casa → probabilidades implícitas normalizadas);
+- combinar com as do modelo via *logarithmic opinion pool* (média geométrica ponderada renormalizada)
+  ou média linear; peso `w∈[0,1]` entre modelo e mercado como único hiperparâmetro;
+- o blend produz a tripla (mandante/empate/visitante); decidir se ele **reescala a matriz de
+  placares** (preserva o `best_prediction`/bônus de placar exato) ou só substitui o 1×2. Preferir
+  reescalar a matriz para não quebrar a camada de scoring.
+- onde armazenar as odds por jogo no modelo de dados da edição (ex.: coluna opcional em
+  `fixtures.csv` ou arquivo `odds.csv` paralelo); ausência de odds ⇒ cai para DC-only (degradação
+  graciosa, sem travar a Copa).
+
+**Aceite:** com odds históricas das 4 Copas do backtest (ou subconjunto), o blend reduz o **Brier
+multiclasse** vs. o baseline DC-only (0,578), com `w` escolhido por **leave-one-World-Cup-out**
+(não pode ser overfit in-sample — mesma disciplina do ENG-17); teste de regressão cobre o
+des-vigamento (margem conhecida → probabilidades normalizadas) e o blend (`w=0` ⇒ idêntico ao
+modelo; `w=1` ⇒ idêntico ao mercado). `pytest` verde.
+**Bloqueado por (dados):** obter **odds históricas de jogos de seleção** das Copas 2010–2022 para
+validar — não trivial (football-data.co.uk cobre ligas de clubes; para seleção, avaliar
+oddsportal/Kaggle/API paga). Sem isso, dá para implementar o mecanismo e validar só com odds da
+Copa 2026 ao vivo, mas a evidência LOO-CV (o critério forte) fica pendente da fonte. Definir a fonte
+antes de começar.
+**Commit:** —

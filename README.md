@@ -55,9 +55,11 @@ snapshot imutável e **versionado** em `data/editions/<edição>/history/<data>.
 porque, depois que novos resultados entram e o modelo reajusta, o palpite de um dia não é mais
 reproduzível.
 
-**Blend com odds de mercado (opcional):** crie `data/editions/<edição>/odds.csv` com
-`match_id,home,draw,away` em odds decimais (**acrescente** os jogos de cada rodada — não
-sobrescreva: o `blend-track` acumula o tally sobre todos os jogos passados com odds). A ferramenta
+**Blend com odds de mercado (opcional):** `data/editions/<edição>/odds.csv` com
+`match_id,home,draw,away` em odds decimais. A forma prática de preencher é
+`uv run python scripts/fetch_odds.py` (busca a The Odds API com a chave em `.env` e **mescla** no
+`odds.csv`, preservando os jogos já disputados — o `blend-track` acumula o tally sobre todos eles).
+Para editar à mão, **acrescente** os jogos de cada rodada (não sobrescreva). A ferramenta
 tira a margem da casa, combina as odds com as probabilidades do modelo (média geométrica ponderada,
 peso `blend_weight`) e ajusta o palpite. A edição 2026 já vem com `blend_weight = 0.6` no
 `scoring.toml` (prior de princípio: odds de fechamento são bem calibradas); `--blend-weight 0` ou a

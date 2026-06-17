@@ -36,10 +36,9 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   em `out/` já saem **blendados** (peso 0.6). Efeito notável da 1ª carga: J32 EUA×Austrália virou
   (modelo 29/30/41 → blend 47/26/27, palpite 0x1→1x0); J24/J25/J28 ficaram mais firmes no favorito.
   (J21/J23 sem odds — já tinham começado quando a chave entrou.) **Rotina a cada rodada** (única
-  alavanca que sobe o ranking, ver Decisões vivas): re-buscar odds e **acrescentar/atualizar** (NÃO
-  sobrescrever — jogos já disputados precisam manter a odds, senão o `blend-track` perde o tally) em
-  `data/editions/2026/odds.csv`; palpitar; depois dos resultados rodar `worldcup blend-track` e
-  anotar aqui se o blend está ganhando do modelo (Brier). Fonte de odds em
+  alavanca que sobe o ranking, ver Decisões vivas): `uv run python scripts/fetch_odds.py` (busca +
+  mescla as odds, preservando jogos já disputados); palpitar; depois dos resultados rodar
+  `worldcup blend-track` e anotar aqui se o blend está ganhando do modelo (Brier). Fonte de odds em
   uso: **The Odds API** (free tier, `soccer_fifa_world_cup`); a chave é segredo (não versionar).
 - Nota operacional: martj42 tem latência de 1-2 dias; quando atrasada, buscar placares via
   web search e registrar com `worldcup record`. Rotina: `sync-results --archive` → se 0 jogos

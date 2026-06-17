@@ -212,8 +212,11 @@ em três passos puros antes de virar palpite:
 
 Aplicado em `pipeline.run` só na geração do palpite dos jogos com odds; a simulação de campeão/avanço
 (§7) segue só com o modelo (odds em geral só existem para a rodada iminente). Sem odds ou `w=0` ⇒
-matriz intacta (degradação graciosa). **Calibração de `w` pendente** de odds históricas das Copas
-de backtest (validação LOO-CV via Brier multiclasse, §9.1) — ver ENG-19 no backlog.
+matriz intacta (degradação graciosa). **Calibração de `w`:** o LOO-CV histórico multi-Copa é inviável
+(não há odds de seleção 2010–2018 grátis/legais), então adota-se um **prior de princípio** `w≈0,6`
+(odds de fechamento são quase-otimamente calibradas) e valida-se **prospectivamente** na própria Copa
+2026 — `backtest.prospective_blend_report` compara o Brier multiclasse do blend vs. o do modelo-puro
+(as-of) nos jogos já disputados com odds (CLI `blend-track`). Ver ENG-19 no backlog.
 
 ---
 

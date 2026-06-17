@@ -31,6 +31,12 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   final (ENG-16+17).
 - Palpites vigentes gerados com configuração padrão: `risk 0.5`, Sistema I conforme
   `scoring.toml` (sem customização do admin do bolão até agora).
+- **Alavanca de acurácia armada (ENG-19, 2026-06-17):** `blend_weight = 0.6` no `scoring.toml` —
+  o blend com odds de mercado está ligado, mas **dorme até existir `odds.csv`**. Para usar (única
+  alavanca que sobe o ranking, ver Decisões vivas): a cada rodada, registre as odds em
+  `data/editions/2026/odds.csv` (`match_id,home,draw,away`, decimais) antes de palpitar; depois dos
+  resultados, rode `worldcup blend-track` para ver se o blend está ganhando do modelo (Brier) e
+  anote o veredito aqui. Sem `odds.csv`, os palpites seguem 100% modelo.
 - Nota operacional: martj42 tem latência de 1-2 dias; quando atrasada, buscar placares via
   web search e registrar com `worldcup record`. Rotina: `sync-results --archive` → se 0 jogos
   novos, buscar manualmente → `predict --archive`.

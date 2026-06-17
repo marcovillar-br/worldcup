@@ -7,6 +7,9 @@ import pytest
 
 from conftest import make_model
 from worldcup import backtest as bt
+from worldcup.edition import PROJECT_ROOT, load_edition
+
+_HISTORICAL = PROJECT_ROOT / "data" / "historical_results.csv"
 
 
 def test_world_cup_hosts_cover_all_backtest_years():
@@ -98,3 +101,24 @@ def test_reliability_curve_p_one_lands_in_last_bin():
     assert len(bins) == 1
     assert bins[0].lo == pytest.approx(0.9)
     assert bins[0].count == 1
+
+
+# --------------------------------------------------------- tracking prospectivo do blend (ENG-19)
+def test_prospective_blend_empty_without_odds():
+    # sem odds.csv -> n=0 e nada a reportar (retorna antes de carregar histórico/ajustar)
+    res = bt.prospective_blend_report(load_edition(2026))
+    assert res.n == 0
+    assert res.delta == 0.0
+
+
+@pytest.mark.skipif(not _HISTORICAL.exists(), reason="historical_results.csv ausente (rode fetch-data)")
+def test_prospective_blend_weight_zero_equals_model():
+    # w=0 => blend idêntico ao modelo => Brier igual (invariante de wiring, em dados reais)
+    ed = load_edition(2026)
+    played = [f for f in ed.fixtures if f.is_group and f.played][:2]
+    for f in played:
+        ed.odds[f.match_id] = (2.0, 3.3, 3.7)
+    res = bt.prospective_blend_report(ed, weight=0.0)
+    assert res.n == len(played)
+    assert res.brier_blend == pytest.approx(res.brier_model)
+    assert res.delta == pytest.approx(0.0)

@@ -191,6 +191,26 @@ def cmd_backtest(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_blend_track(args: argparse.Namespace) -> int:
+    from .backtest import prospective_blend_report
+
+    edition = load_edition(args.edition)
+    res = prospective_blend_report(edition, args.blend_weight)
+    if res.n == 0:
+        print(
+            "ℹ️  Nenhum jogo disputado com odds em odds.csv. Registre as odds da rodada em "
+            f"data/editions/{args.edition}/odds.csv (match_id,home,draw,away) + os resultados, "
+            "depois rode de novo."
+        )
+        return 0
+    better = "blend MELHOR" if res.delta > 0 else "modelo MELHOR" if res.delta < 0 else "empate"
+    print(f"📈 Tracking prospectivo do blend (w={res.weight:.2f}) — {res.n} jogo(s) com odds:")
+    print(f"   Brier modelo-puro : {res.brier_model:.4f}")
+    print(f"   Brier blend       : {res.brier_blend:.4f}")
+    print(f"   Δ = {res.delta:+.4f}  ({better}; menor Brier é melhor)")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="worldcup", description="Gerador de palpites de bolão da Copa")
     p.add_argument(
@@ -283,6 +303,17 @@ def build_parser() -> argparse.ArgumentParser:
     bt.add_argument("--edition", type=int, default=2022)
     bt.add_argument("--sims", type=int, default=2000)
     bt.set_defaults(func=cmd_backtest)
+
+    blt = sub.add_parser("blend-track", help="Brier do blend vs modelo nos jogos com odds (ENG-19)")
+    blt.add_argument("--edition", type=int, default=2026)
+    blt.add_argument(
+        "--blend-weight",
+        type=float,
+        default=None,
+        metavar="W",
+        help="peso do mercado a avaliar (0..1; default: o da edição)",
+    )
+    blt.set_defaults(func=cmd_blend_track)
 
     return p
 

@@ -47,3 +47,8 @@ def test_load_odds_parses_and_skips_blanks(tmp_path):
 
 def test_load_odds_missing_file_is_empty(tmp_path):
     assert _load_odds(tmp_path / "nope.csv") == {}
+
+
+def test_2026_blend_weight_prior():
+    # prior de princípio do ENG-19 (Gate 2): w≈0.6 travado — mudar deve ser deliberado
+    assert load_edition(2026).scoring.blend_weight == 0.6

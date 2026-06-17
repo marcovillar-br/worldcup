@@ -31,6 +31,7 @@ uv run worldcup sync-results --edition 2026   # baixa os resultados reais da int
 uv run worldcup predict --edition 2026 --archive   # +snapshot versionado do dia (history/)
 uv run worldcup record --edition 2026 --match <id> --home 2 --away 1   # registra um placar manualmente
 uv run worldcup backtest --edition 2022       # valida o modelo numa Copa passada
+uv run worldcup blend-track --edition 2026     # Brier do blend vs modelo nos jogos com odds (ENG-19)
 uv run pytest        # testes
 uv run ruff check .  # lint
 ```
@@ -55,11 +56,14 @@ porque, depois que novos resultados entram e o modelo reajusta, o palpite de um 
 reproduzível.
 
 **Blend com odds de mercado (opcional):** crie `data/editions/<edição>/odds.csv` com
-`match_id,home,draw,away` em odds decimais (preencha só os jogos da próxima rodada) e rode com
-`predict --blend-weight 0.6` (ou fixe `blend_weight` no `scoring.toml`). A ferramenta tira a margem
-da casa, combina as odds com as probabilidades do modelo (média geométrica ponderada) e ajusta o
-palpite. `--blend-weight 0` (default) ou a ausência de `odds.csv` ⇒ só o modelo, sem mudança.
-Por que ajuda: o modelo é estatístico e cego a escalações/lesões/motivação, que as odds capturam.
+`match_id,home,draw,away` em odds decimais (preencha só os jogos da próxima rodada). A ferramenta
+tira a margem da casa, combina as odds com as probabilidades do modelo (média geométrica ponderada,
+peso `blend_weight`) e ajusta o palpite. A edição 2026 já vem com `blend_weight = 0.6` no
+`scoring.toml` (prior de princípio: odds de fechamento são bem calibradas); `--blend-weight 0` ou a
+ausência de `odds.csv` ⇒ só o modelo, sem mudança. Por que ajuda: o modelo é estatístico e cego a
+escalações/lesões/motivação, que as odds capturam. Para medir se o blend está de fato ajudando,
+rode `worldcup blend-track` conforme registra odds + resultados — compara o Brier do blend vs. o do
+modelo-puro nos jogos já disputados com odds.
 
 Para **reconstruir** a visão de um dia passado, use `predict --as-of AAAA-MM-DD`: reajusta o modelo
 usando só os resultados conhecidos até a véspera daquela data e grava

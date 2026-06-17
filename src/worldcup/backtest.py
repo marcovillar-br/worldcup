@@ -30,6 +30,8 @@ from .teams import canonical
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from .edition import Edition
+
 # Início aproximado de cada Copa (para cortar o treino antes do torneio).
 _WORLD_CUP_START = {2010: "2010-06-11", 2014: "2014-06-12", 2018: "2018-06-14", 2022: "2022-11-20"}
 
@@ -202,6 +204,70 @@ def pooled_draw_calibration(
     brier = multiclass_brier(all_probs, all_outcomes)
     reliability = reliability_curve([p[1] for p in all_probs], [o == 1 for o in all_outcomes])
     return brier, reliability, len(all_probs)
+
+
+@dataclass
+class BlendTracking:
+    """Tally prospectivo do blend vs. modelo-puro (Brier multiclasse) — Gate 3 do ENG-19."""
+
+    weight: float
+    n: int
+    brier_model: float
+    brier_blend: float
+
+    @property
+    def delta(self) -> float:
+        """Brier do modelo − Brier do blend. Positivo ⇒ blend melhor (Brier menor é melhor)."""
+        return self.brier_model - self.brier_blend
+
+
+def prospective_blend_report(edition: Edition, weight: float | None = None) -> BlendTracking:
+    """Valida o blend prospectivamente nos jogos de grupo já disputados que têm odds (ENG-19, Gate 3).
+
+    Para cada jogo, reajusta o modelo **as-of** (só com o conhecido até a véspera, via `Edition.as_of`)
+    e compara o **Brier multiclasse** das probabilidades do modelo-puro vs. do blend(`weight`) com o
+    resultado real. Como `weight` é pré-registrado (não ajustado nesses jogos), é out-of-sample por
+    construção — ao contrário de um backtest histórico, que aqui é inviável por falta de odds de
+    seleção. Sem jogos-com-odds ⇒ tudo zero (nada a reportar ainda; registre odds em `odds.csv`).
+    """
+    from collections import defaultdict
+
+    from .blend import devig, log_opinion_pool
+    from .pipeline import build_training_frame
+
+    w = edition.scoring.blend_weight if weight is None else weight
+    played = [f for f in edition.fixtures if f.is_group and f.played and f.match_id in edition.odds]
+    if not played:
+        return BlendTracking(weight=w, n=0, brier_model=0.0, brier_blend=0.0)
+
+    historical = load_historical()
+    by_date: dict[str, list] = defaultdict(list)
+    for f in played:
+        by_date[f.date].append(f)
+
+    model_probs: list[tuple[float, float, float]] = []
+    blend_probs: list[tuple[float, float, float]] = []
+    outcomes: list[int] = []
+    for d in sorted(by_date):
+        as_of = edition.as_of(d)
+        model = DixonColesModel(FitConfig()).fit(build_training_frame(as_of, historical), ref_date=pd.Timestamp(d))
+        cache = MatrixCache(model, edition.hosts)
+        for f in by_date[d]:
+            hg, ag = f.home_goals, f.away_goals
+            if hg is None or ag is None:  # garantido por f.played; narrowing p/ o type checker
+                continue
+            mat = cache.matrix(f.home, f.away, f.neutral)
+            mp = outcome_probs_from_matrix(mat)
+            model_probs.append(mp)
+            blend_probs.append(log_opinion_pool(mp, devig(edition.odds[f.match_id]), w))
+            outcomes.append(_outcome_index(hg, ag))
+
+    return BlendTracking(
+        weight=w,
+        n=len(outcomes),
+        brier_model=multiclass_brier(model_probs, outcomes),
+        brier_blend=multiclass_brier(blend_probs, outcomes),
+    )
 
 
 def _award_scorer() -> Scorer:

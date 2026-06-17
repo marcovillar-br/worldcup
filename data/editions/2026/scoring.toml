@@ -11,6 +11,12 @@ system = "sistema_i"
 # ranking quando está atrás); <0.5 = conservador (tende ao favorito). Default fiel = 0.5.
 risk = 0.5
 
+# Peso do mercado no blend com odds.csv (ENG-19). Prior de princípio ~0.6: odds de fechamento
+# des-vigadas são preditor quase-otimamente calibrado, então confiamos um pouco mais no mercado
+# que no modelo quando há odds. Efetivo SÓ nos jogos presentes em odds.csv (ausente ⇒ só modelo).
+# Acompanhe o ganho real com `worldcup blend-track` conforme registrar odds + resultados.
+blend_weight = 0.6
+
 # Peso por fase (Equilíbrio gradual): grupos 1x, eliminatórias 2x, final 4x.
 # Não muda o placar ótimo de um jogo isolado, mas indica onde arriscar mais decide o ranking.
 [phase_weights]

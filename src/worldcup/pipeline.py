@@ -7,11 +7,13 @@ grupos; 3 camadas para o mata-mata). Retorna linhas prontas para CSV e a tabela 
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import pandas as pd
 
+from .blend import blend_matrix_with_odds
 from .fetch_data import load_historical
 from .format_engine import MatrixCache, deterministic_bracket, monte_carlo
 from .knockout import predict_knockout
@@ -20,7 +22,11 @@ from .scoring import Scorer
 from .teams import display
 
 if TYPE_CHECKING:
+    import numpy as np
+
     from .edition import Edition
+
+logger = logging.getLogger(__name__)
 
 # Peso extra dado aos jogos já disputados da própria Copa (realimentação).
 CURRENT_EDITION_BOOST = 6.0
@@ -96,6 +102,21 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
     sim = monte_carlo(edition, model, cache, n_sims=n_sims, seed=seed)
     bracket = {rm.fixture.match_id: rm for rm in deterministic_bracket(edition, sim, cache)}
 
+    # Blend com odds de mercado (ENG-19): aplicado só na geração do palpite dos jogos que têm odds;
+    # a simulação de campeão/avanço segue só com o modelo (odds em geral só existem para a rodada
+    # iminente). weight=0 ou sem odds ⇒ matriz do modelo intacta.
+    blend_weight = edition.scoring.blend_weight
+    blended_games = 0
+
+    def _matrix(home: str, away: str, fixture) -> np.ndarray:
+        nonlocal blended_games
+        mat = cache.matrix(home, away, fixture.neutral)
+        odds = edition.odds.get(fixture.match_id)
+        if odds is not None and blend_weight > 0.0:
+            blended_games += 1
+            return blend_matrix_with_odds(mat, odds, blend_weight)
+        return mat
+
     rows: list[dict] = []
     for f in sorted(edition.fixtures, key=lambda x: x.match_id):
         home: str | None
@@ -132,7 +153,7 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
             row["palpite"] = f"{f.home_goals}x{f.away_goals}"
 
         if home and away and not f.played:
-            mat = cache.matrix(home, away, f.neutral)
+            mat = _matrix(home, away, f)
             if f.is_group:
                 p = scorer.best_prediction(mat)
                 ph, pd_, pa = _pct_round(p.p_home, p.p_draw, p.p_away)
@@ -155,6 +176,9 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
                     avanca=display(kp.advancer),
                 )
         rows.append(row)
+
+    if blend_weight > 0.0:
+        logger.info("blend com odds (peso %.2f) aplicado a %d jogo(s)", blend_weight, blended_games)
 
     return PredictionRun(
         rows=rows,

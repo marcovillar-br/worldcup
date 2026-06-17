@@ -65,6 +65,8 @@ class Fixture(BaseModel):
 class ScoringConfig(BaseModel):
     system: str = "sistema_i"
     risk: float = Field(default=0.6, ge=0.0, le=1.0)
+    # peso do mercado no blend com odds (ENG-19): 0 = só modelo (default), 1 = só mercado.
+    blend_weight: float = Field(default=0.0, ge=0.0, le=1.0)
     phase_weights: dict[str, float] = Field(default_factory=dict)
     sistema_i: dict[str, float] = Field(default_factory=dict)
     simplificado: dict[str, float] = Field(default_factory=dict)
@@ -85,6 +87,9 @@ class Edition(BaseModel):
     fixtures: list[Fixture]
     scoring: ScoringConfig
     directory: Path
+    # odds de mercado opcionais por jogo (match_id -> odds decimais mandante/empate/visitante).
+    # Carregadas de odds.csv se existir; ausência ⇒ blend desligado para o jogo (ENG-19).
+    odds: dict[int, tuple[float, float, float]] = Field(default_factory=dict)
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -193,6 +198,24 @@ def _load_fixtures(path: Path) -> list[Fixture]:
     return fixtures
 
 
+def _load_odds(path: Path) -> dict[int, tuple[float, float, float]]:
+    """Lê `odds.csv` (opcional): `match_id,home,draw,away` em odds decimais. Ausente ⇒ vazio.
+
+    Linhas com odds em branco são ignoradas (permite preencher só os jogos da próxima rodada).
+    """
+    if not path.exists():
+        return {}
+    odds: dict[int, tuple[float, float, float]] = {}
+    with path.open(newline="") as fh:
+        for row in csv.DictReader(fh):
+            cells = [(row.get(k) or "").strip() for k in ("home", "draw", "away")]
+            if not all(cells):
+                continue
+            h, d, a = (float(c) for c in cells)
+            odds[int(row["match_id"])] = (h, d, a)
+    return odds
+
+
 def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
     """Carrega e valida a edição `year` a partir de `data/editions/<year>/`."""
     directory = base_dir / str(year)
@@ -203,4 +226,5 @@ def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
     scoring = ScoringConfig(**_read_toml(directory / "scoring.toml"))
     groups = _load_groups(directory / "groups.csv")
     fixtures = _load_fixtures(directory / "fixtures.csv")
-    return Edition(spec=spec, groups=groups, fixtures=fixtures, scoring=scoring, directory=directory)
+    odds = _load_odds(directory / "odds.csv")
+    return Edition(spec=spec, groups=groups, fixtures=fixtures, scoring=scoring, directory=directory, odds=odds)

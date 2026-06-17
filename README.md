@@ -54,6 +54,13 @@ snapshot imutável e **versionado** em `data/editions/<edição>/history/<data>.
 porque, depois que novos resultados entram e o modelo reajusta, o palpite de um dia não é mais
 reproduzível.
 
+**Blend com odds de mercado (opcional):** crie `data/editions/<edição>/odds.csv` com
+`match_id,home,draw,away` em odds decimais (preencha só os jogos da próxima rodada) e rode com
+`predict --blend-weight 0.6` (ou fixe `blend_weight` no `scoring.toml`). A ferramenta tira a margem
+da casa, combina as odds com as probabilidades do modelo (média geométrica ponderada) e ajusta o
+palpite. `--blend-weight 0` (default) ou a ausência de `odds.csv` ⇒ só o modelo, sem mudança.
+Por que ajuda: o modelo é estatístico e cego a escalações/lesões/motivação, que as odds capturam.
+
 Para **reconstruir** a visão de um dia passado, use `predict --as-of AAAA-MM-DD`: reajusta o modelo
 usando só os resultados conhecidos até a véspera daquela data e grava
 `history/<data>.reconstruido.{csv,md}` (marcado como reconstruído, com aviso), **sem tocar em

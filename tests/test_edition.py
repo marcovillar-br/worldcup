@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from worldcup.edition import load_edition
+from worldcup.edition import _load_odds, load_edition
 
 
 def test_as_of_clears_results_from_cutoff_onward():
@@ -24,3 +24,26 @@ def test_as_of_does_not_mutate_original():
     ed.as_of("2026-06-11")  # zera tudo na cópia
     played_after = [f.match_id for f in ed.fixtures if f.played]
     assert played_before == played_after  # original inalterado
+
+
+def test_odds_absent_is_graceful():
+    # a edição 2026 não tem odds.csv -> dict vazio (blend desligado), sem erro
+    assert load_edition(2026).odds == {}
+
+
+def test_load_odds_parses_and_skips_blanks(tmp_path):
+    path = tmp_path / "odds.csv"
+    path.write_text(
+        "match_id,home,draw,away\n"
+        "21,1.90,3.40,4.20\n"
+        "22,,,\n"  # linha em branco: ignorada (jogo sem odds ainda)
+        "23,2.10,3.30,3.60\n",
+        encoding="utf-8",
+    )
+    odds = _load_odds(path)
+    assert set(odds) == {21, 23}
+    assert odds[21] == (1.90, 3.40, 4.20)
+
+
+def test_load_odds_missing_file_is_empty(tmp_path):
+    assert _load_odds(tmp_path / "nope.csv") == {}

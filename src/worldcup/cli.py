@@ -109,6 +109,8 @@ def cmd_predict(args: argparse.Namespace) -> int:
     edition = load_edition(args.edition)
     if args.risk is not None:
         edition.scoring.risk = args.risk
+    if getattr(args, "blend_weight", None) is not None:
+        edition.scoring.blend_weight = args.blend_weight
 
     as_of = getattr(args, "as_of", None)
     if as_of is not None:
@@ -216,6 +218,13 @@ def build_parser() -> argparse.ArgumentParser:
     pr.add_argument("--seed", type=int, default=12345)
     pr.add_argument("--risk", type=float, default=None, help="sobrescreve o risco (0..1)")
     pr.add_argument(
+        "--blend-weight",
+        type=float,
+        default=None,
+        metavar="W",
+        help="peso do mercado no blend com odds.csv (0..1; 0=só modelo, default da edição)",
+    )
+    pr.add_argument(
         "--archive",
         nargs="?",
         const="@today",
@@ -245,6 +254,13 @@ def build_parser() -> argparse.ArgumentParser:
     sr.add_argument("--sims", type=int, default=5000)
     sr.add_argument("--seed", type=int, default=12345)
     sr.add_argument("--risk", type=float, default=None)
+    sr.add_argument(
+        "--blend-weight",
+        type=float,
+        default=None,
+        metavar="W",
+        help="peso do mercado no blend com odds.csv (0..1; 0=só modelo, default da edição)",
+    )
     sr.add_argument("--no-predict", action="store_true", help="só sincroniza, não repalpita")
     sr.add_argument(
         "--source-url",

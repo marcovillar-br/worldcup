@@ -57,6 +57,10 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `scoring.py` — `Scorer`: pontos do Sistema I + `best_prediction()` (maximiza pontos esperados);
   `risk` controla a ousadia (0.5 = fiel; >0.5 arrisca mais zebras).
 - `knockout.py` — `predict_knockout()`: 3 camadas (placar 90', prorrogação, pênaltis) + quem avança.
+- `blend.py` — blend com odds de mercado (ENG-19): `devig` (tira a margem da casa) → `log_opinion_pool`
+  (média geométrica ponderada modelo×mercado, peso `blend_weight`) → `rescale_matrix` (ajusta a matriz
+  de placares ao 1×2-alvo preservando a forma condicional). Aplicado em `pipeline.run` só nos jogos com
+  odds; sem odds ou `blend_weight=0` ⇒ matriz do modelo intacta (degradação graciosa).
 - `format_engine.py` — simulação genérica: standings, Monte Carlo, chaveamento determinístico.
 - `sync.py` — resolve o bracket só com resultados reais e preenche `fixtures.csv`.
 - `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites.
@@ -78,6 +82,10 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   oficial da FIFA — não coincidem (ex.: jogo `50` aqui = *Match 51* FIFA). Ao cruzar com a escala
   oficial, guie-se pelos **nomes das seleções**, nunca pelo número.
 - `scoring.toml` — sistema de pontos + pesos por fase (default: Sistema I + Equilíbrio gradual).
+  Também `blend_weight` (peso do mercado no blend com odds; default 0 = só modelo).
+- `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, por jogo. Ausente ⇒
+  blend desligado. Preencha só os jogos da próxima rodada; linhas em branco são ignoradas. **Gerado/
+  efêmero, não versionar odds inventadas** — é dado externo de mercado.
 - `BOLAO.md` — **memória de campanha** do bolão (agnóstica a ferramenta): decisões vivas que não
   são rederiváveis de dados/código (`risk` escolhido, situação no ranking, regras do bolão).
   **Leia no início da sessão e atualize quando uma decisão de campanha acontecer.**

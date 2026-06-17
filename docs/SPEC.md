@@ -192,6 +192,29 @@ P(mandante) = Σ_{i>j} P(i,j)   P(empate) = Σ_i P(i,i)   P(visitante) = Σ_{i<j
 
 (`scoring.outcome_probs_from_matrix` faz isso via `tril/trace/triu`.)
 
+### 3.5 Blend com odds de mercado (opcional, `blend.py`, ENG-19)
+
+O modelo é estatístico e cego a escalações, lesões, suspensões e motivação — informação que as
+**odds de fechamento** de uma casa de apostas incorporam e que as torna um preditor público bem
+calibrado. Quando há `odds.csv` para um jogo e `blend_weight = w > 0`, a matriz do modelo é ajustada
+em três passos puros antes de virar palpite:
+
+1. **Des-vig** (`devig`): odds decimais `o_k` → probabilidade implícita `1/o_k`, normalizada pela
+   soma (a soma > 1 é a margem/overround da casa). Des-vig **proporcional**, o baseline padrão.
+2. **Pool logarítmico** (`log_opinion_pool`): combina as triplas do modelo `m_k` e do mercado `q_k`
+   por média geométrica ponderada, `p_k ∝ m_k^{1−w} · q_k^{w}`, renormalizada. `w=0` ⇒ só modelo;
+   `w=1` ⇒ só mercado. Forma canônica de fundir opiniões probabilísticas (afia a massa quando as
+   fontes concordam).
+3. **Reescala da matriz** (`rescale_matrix`): multiplica cada célula pelo fator `p_classe-alvo /
+   massa-atual-da-classe` (mandante = abaixo da diagonal, empate = diagonal, visitante = acima).
+   Bate o 1×2-alvo **preservando** a distribuição condicional dos placares dentro de cada classe e a
+   massa total — assim `best_prediction` (§5) e os bônus de placar exato seguem coerentes.
+
+Aplicado em `pipeline.run` só na geração do palpite dos jogos com odds; a simulação de campeão/avanço
+(§7) segue só com o modelo (odds em geral só existem para a rodada iminente). Sem odds ou `w=0` ⇒
+matriz intacta (degradação graciosa). **Calibração de `w` pendente** de odds históricas das Copas
+de backtest (validação LOO-CV via Brier multiclasse, §9.1) — ver ENG-19 no backlog.
+
 ---
 
 ## 4. Pontuação (Sistema I)

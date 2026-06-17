@@ -37,17 +37,34 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Decisões vivas
 
-- `risk = 0.5` (default, maximiza pontos esperados). **Reafirmado em 2026-06-13** após revisão
-  explícita (pós-recalibração ENG-14): é cedo (jogo 5/104), variância domina, e `0.5` é o caminho
-  de maior valor acumulado ao longo de ~100 jogos restantes; o "+28%" da estratégia agressiva no
-  backtest 2022 é uma Copa só, não vantagem confiável. **Antes de mexer no risco, seguir o E-max do
-  tool de forma consistente** — os zeros de J3/J4 vieram de não acompanhar o palpite, não de risco
-  baixo. **Gatilho de revisão:** se ainda claramente atrás ao fim da fase de grupos, subir o risco
-  **seletivamente nos jogos de peso alto** (mata-mata 2×, final 4×), não global — não no 5º jogo.
+- `risk = 0.5` **definitivo** — ótimo para a média **e** para o ranking. **Revisado em 2026-06-17**
+  com modelagem do trade-off de ranking (substitui o gatilho "subir risco se atrás", que partia de
+  premissa errada): o botão de risco **não é instrumento de variância** neste sistema de pontos. Nos
+  52 jogos de grupo restantes, o SD do total fica travado em ~33 em qualquer risco, enquanto o E[pts]
+  desaba (191→120 de 0.5 a 0.8) — **até a cauda otimista (p95) piora** com risco alto. Na simulação
+  de campo (60 jogadores, líder 80, você 44 ≈ mediana), subir o risco **reduz** P(vencer) e P(top-10)
+  — inclusive para o objetivo mais agressivo. Causa: o Sistema I já recompensa zebra acertada
+  (base→13), então o E-max (0.5) já pega as apostas boas; cranquear só força EV ruim que zera.
+  **A única alavanca que sobe o ranking é acurácia, não ousadia:** +20 pts de edge de EV ao longo do
+  torneio levam P(top-10) de 8%→42%; risco leva a 0,1%. Daí o [ENG-19] (blend com odds) ser a aposta
+  de maior retorno. **Regra:** manter 0.5 sempre; subida vem de acurácia (ENG-19) + da variância
+  natural (~50/50 de melhorar, de graça). A hipótese do mata-mata (pesos 2×/4×) ainda não foi
+  testada numericamente, mas a mecânica (botão ≠ variância) deve valer lá também.
 - Execução **sob demanda**: o usuário prefere rodar os comandos manualmente; não propor
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-17 — **Trade-off de ranking modelado: risco NÃO é alavanca; acurácia é.** Estado: 44 pts,
+  32º de 60, líder 80 (gap +36 = +2,4σ; você ≈ mediana do campo, média≈45/σ≈15). (1) Eficiência
+  medida = **100%**: os palpites as-of do tool (risk 0.5) renderiam exatamente os mesmos 44 pts —
+  não há ganho jogando diferente sobre este modelo; o teto é o do modelo. (2) Botão de risco ≠
+  variância: nos 52 jogos de grupo restantes, SD travado em ~33 em todo risco, E[pts] desaba
+  191→120 (0.5→0.8), p95 também cai. (3) Simulação de campo (60 jog., 40k sims): P(vencer)~0–1%,
+  P(top-10) ~2–13% (depende de quão diverso o campo palpita — chalk trava o ranking), P(melhorar do
+  32º)~50%. Subir SEU risco reduz P(vencer) e P(top-10). (4) Acurácia é a alavanca: +20 pts de edge
+  de EV → P(top-10) 8%→42%. **Decisão revisada (ver Decisões vivas): manter 0.5 definitivo; subida =
+  ENG-19 (blend odds) + variância natural.** Premissa antiga ("subir risco se atrás") era falsa.
 
 - 2026-06-17 — **Diagnóstico de calibração (ENG-18) nos 20 jogos disputados: variância, sem ação.**
   Brier multiclasse 2026 = **0,637** (≈ uniforme 0,667) vs **0,578** nas 4 Copas passadas (256 jogos).

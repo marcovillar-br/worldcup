@@ -48,8 +48,13 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   **A única alavanca que sobe o ranking é acurácia, não ousadia:** +20 pts de edge de EV ao longo do
   torneio levam P(top-10) de 8%→42%; risco leva a 0,1%. Daí o [ENG-19] (blend com odds) ser a aposta
   de maior retorno. **Regra:** manter 0.5 sempre; subida vem de acurácia (ENG-19) + da variância
-  natural (~50/50 de melhorar, de graça). A hipótese do mata-mata (pesos 2×/4×) ainda não foi
-  testada numericamente, mas a mecânica (botão ≠ variância) deve valer lá também.
+  natural (~50/50 de melhorar, de graça). **Mata-mata testado (2026-06-17): mesma conclusão.** O
+  risco só mexe na camada de 90' do palpite de KO (prorrogação/pênaltis são determinísticas em
+  `knockout.py`); medido nos 32 jogos do chaveamento, SD ponderado travado em ~58 e E[pts] desaba
+  (236→179 de 0.5 a 0.8). O KO é onde a variância vive (SD 58 vs 33 dos grupos, pelos pesos 2×/4×),
+  mas você a captura em 0.5 — subir o risco no KO derruba P(top-10) 13,6%→7,8% (0.7)→0% (0.8).
+  Restam ~427 pts (SD 67) contra gap de 36 ao líder: posição atual não é destino, mas a alavanca é
+  acurácia, não risco.
 - Execução **sob demanda**: o usuário prefere rodar os comandos manualmente; não propor
   cron/agendamento.
 

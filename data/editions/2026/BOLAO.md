@@ -13,17 +13,22 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Estado atual (atualizado em 2026-06-17)
 
-- A Copa começou em 2026-06-11. **20 de 104 jogos disputados e registrados (J1–J20).**
+- A Copa começou em 2026-06-11. **22 de 104 jogos disputados e registrados (J1–J21, J23).**
+  J21/J23 (2026-06-17) entraram **manualmente via web search** (martj42 ainda em 20): Inglaterra
+  **4×2** Croácia e Portugal **1×1** RD Congo (1º ponto da história da RDC em Copas). O palpite do
+  tool acertou o lado em J21 (1×0→4×2, ~3 pts) e **zerou J23** (2×0→empate — mais um empate que o
+  modelo não chama). Faltam J22/J24 da rodada (jogam à noite, têm odds).
   J17–J20 (2026-06-16) entraram via `sync-results`.
   J13–J16 (2026-06-15) entraram **manualmente via web search** (martj42 ainda em 12 jogos):
   **rodada de empates** — Bélgica 1×1 Egito, Irã 2×2 Nova Zelândia, Arábia Saudita 1×1 Uruguai,
   Espanha 0×0 Cabo Verde (zebra: estreante segurou um favorito ao título).
   (J9–J12 via `sync-results`; J1–J8 antes; J5–J8 manualmente.)
-- Próxima rodada a palpitar: 2026-06-17 (J21–J24): Inglaterra×Croácia, Gana×Panamá,
-  Portugal×RD Congo, Uzbequistão×Colômbia. **Um palpite ousado (⚡): Gana 0×1 Panamá**
-  (jogo aberto, 36%/31%/33% — modelo crava a leve vantagem do visitante).
-- Favorito ao título: **Argentina (32,6%)** — saltou de 17,5%, confirmou favoritismo na 2ª rodada.
-  Seguida de Espanha (11,5%), Inglaterra (9,8%), França (7,7%) e Portugal (7,4%).
+- Jogos abertos hoje (com odds, palpite blendado): **J22 Gana 1×1 Panamá** (blend vê empate como
+  modal, 32/36/32 — modelo cravava Panamá) e **J24 Uzbequistão 0×1 Colômbia** (12/23/65).
+- **`blend-track` ainda n=0**: J21/J23 não tinham odds (já tinham começado quando a chave entrou),
+  então não entram no tally. O primeiro veredito Brier (blend vs. modelo) sai com J22/J24.
+- Favorito ao título: **Argentina (34,6%)**. Espanha 12,1%; **Inglaterra caiu para 7,8%** mesmo
+  vencendo (4×2 com 2 sofridos mexeu na defesa no refit).
 - **Repalpitado 2x em 2026-06-15:** (1) ENG-16 — gradiente analítico fez o fit convergir (antes
   inflava Argentina/Brasil); (2) ENG-17 — defaults recalibrados (meia-vida 2,5→2,0, ridge
   0,05→0,10, +9,2% de pontos no backtest LOO). O shrinkage maior reaproximou Argentina/Espanha na

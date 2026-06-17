@@ -32,7 +32,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-16](#eng-16) | P2 | model | ✅ | Fit do Dixon-Coles não converge em `maxiter=500` com a base atual |
 | [ENG-17](#eng-17) | P2 | model | ✅ | Defaults do `FitConfig` (meia-vida/ridge) subótimos no backtest |
 | [ENG-18](#eng-18) | P2 | backtest | ✅ | Backtest mede só acerto de 1×2, não calibração probabilística (Brier/reliability) |
-| [ENG-19](#eng-19) | P2 | model | 🟡 | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
+| [ENG-19](#eng-19) | P2 | model | ✅ | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
 
 ---
 
@@ -380,7 +380,7 @@ caso (2), atribuição de bins e o limite `p=1.0`. SPEC §9.1 registra a métric
 **Commit:** 8652360
 
 ## ENG-19
-**Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas)** · P2 · `model`/`scoring` · 🟡 fazendo
+**Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas)** · P2 · `model`/`scoring` · ✅ feito
 
 O modelo é puramente estatístico: ajusta forças a partir de resultados passados e é **cego a
 escalações, lesões, suspensões, motivação e dinheiro**. As **odds de fechamento** de uma casa
@@ -441,7 +441,17 @@ poluir o arquivo canônico/hook de sync), opção **reescalar a matriz** (não s
 aplica só nos jogos com odds; sim de campeão/avanço segue DC-only. Ausência de odds ou `w=0` ⇒
 intacto. 13 testes (devig margem/erro, pool `w=0/1/0.5`, rescale alvo/massa/forma, blend e2e
 `w=0/1/parcial`, carga de `odds.csv` + ausência graciosa); e2e manual confirmou o shift dos palpites
-(J21 50→55% mandante; J24 14→32% após odds equilibradas). **Falta para ✅ (Gates 2–3):** fixar o
-prior `w≈0,6` no `scoring.toml` (documentado, com teste) + harness de tracking prospectivo 2026
-(Brier do blend vs. modelo as-of, reaproveitando `backtest.multiclass_brier`).
+(J21 50→55% mandante; J24 14→32% após odds equilibradas).
+**Resolução (7124554) — Gates 2–3:** *Gate 2:* `blend_weight = 0.6` no `scoring.toml` da 2026
+(prior de princípio), travado por `test_2026_blend_weight_prior`. *Gate 3:*
+`backtest.prospective_blend_report(edition, w)` + CLI `worldcup blend-track` — para cada jogo de
+grupo já disputado com odds, reajusta o modelo **as-of** e compara o Brier multiclasse do
+modelo-puro vs. do blend(`w`); `w` pré-registrado ⇒ out-of-sample. Degradação graciosa (n=0 sem
+`odds.csv`). Testes: empty path (roda em CI) + invariante `w=0 ⇒ Brier(blend)==Brier(modelo)` (skipif
+sem `historical_results.csv`, roda local). Docs: README (`blend-track` + prior), SPEC §3.5
+(validação prospectiva substitui o LOO-CV), BOLAO (alavanca armada, dorme até `odds.csv`).
+**Operacional, não bloqueia o ✅:** o veredito empírico só acumula quando houver `odds.csv` + jogos
+disputados (hoje n=0); registrar no BOLAO conforme rodar `blend-track`. Re-tunar `w` se 2026
+discordar forte do prior.
+**Commit:** 7124554
 **Commit:** —

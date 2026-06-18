@@ -11,24 +11,25 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-17)
+## Estado atual (atualizado em 2026-06-18)
 
-- A Copa começou em 2026-06-11. **22 de 104 jogos disputados e registrados (J1–J21, J23).**
-  J21/J23 (2026-06-17) entraram **manualmente via web search** (martj42 ainda em 20): Inglaterra
-  **4×2** Croácia e Portugal **1×1** RD Congo (1º ponto da história da RDC em Copas). O palpite do
-  tool acertou o lado em J21 (1×0→4×2, ~3 pts) e **zerou J23** (2×0→empate — mais um empate que o
-  modelo não chama). Faltam J22/J24 da rodada (jogam à noite, têm odds).
-  J17–J20 (2026-06-16) entraram via `sync-results`.
-  J13–J16 (2026-06-15) entraram **manualmente via web search** (martj42 ainda em 12 jogos):
-  **rodada de empates** — Bélgica 1×1 Egito, Irã 2×2 Nova Zelândia, Arábia Saudita 1×1 Uruguai,
-  Espanha 0×0 Cabo Verde (zebra: estreante segurou um favorito ao título).
+- A Copa começou em 2026-06-11. **24 de 104 jogos disputados e registrados (J1–J24).**
+  J22 (Gana **1×0** Panamá — zebra, Gana venceu) e J24 (Uzbequistão **1×3** Colômbia) entraram via
+  `sync-results` (martj42 alcançou). J21/J23 (2026-06-17) entraram manualmente: Inglaterra **4×2**
+  Croácia e Portugal **1×1** RD Congo (1º ponto da RDC em Copas). Na rodada J21–J24 o tool acertou
+  o lado em J21 e J24, e **zerou J22 (zebra do Gana) e J23 (empate)** — padrão de zebra/empate
+  seguindo a punir.
+  J17–J20 (2026-06-16) via `sync-results`; J13–J16 (2026-06-15) manualmente (rodada de empates:
+  Bélgica 1×1 Egito, Irã 2×2 Nova Zelândia, Arábia Saudita 1×1 Uruguai, Espanha 0×0 Cabo Verde).
   (J9–J12 via `sync-results`; J1–J8 antes; J5–J8 manualmente.)
-- Jogos abertos hoje (com odds, palpite blendado): **J22 Gana 1×1 Panamá** (blend vê empate como
-  modal, 32/36/32 — modelo cravava Panamá) e **J24 Uzbequistão 0×1 Colômbia** (12/23/65).
-- **`blend-track` ainda n=0**: J21/J23 não tinham odds (já tinham começado quando a chave entrou),
-  então não entram no tally. O primeiro veredito Brier (blend vs. modelo) sai com J22/J24.
-- Favorito ao título: **Argentina (34,6%)**. Espanha 12,1%; **Inglaterra caiu para 7,8%** mesmo
-  vencendo (4×2 com 2 sofridos mexeu na defesa no refit).
+- Rodada de hoje (J25–J28, 18/06): todos favoritos, blend e modelo concordam — Canadá 2×0 Catar
+  (70%), Tchéquia 1×0 África do Sul (52%), México 1×0 Coreia do Sul (47%), Suíça 1×0 Bósnia (59%).
+- **1º veredito do `blend-track` (n=2, J22+J24):** Brier modelo **0,441** vs blend **0,465** —
+  modelo levemente melhor (Δ −0,024), mas **n=2 é ruído**. Detalhe: blend ganhou no J24 (mais
+  confiante na Colômbia, certo), perdeu no J22 (puxou pro empate, mas Gana venceu). Acompanhar até
+  ~20 jogos pra ler sinal. (Nota: o J22 que o usuário não conseguiu retravar não custou ponto — Gana
+  venceu, modelo e blend zerariam igual.)
+- Favorito ao título: **Argentina (35,5%)**. Espanha 11,7%; Inglaterra 8,5%; França 8,0%.
 - **Repalpitado 2x em 2026-06-15:** (1) ENG-16 — gradiente analítico fez o fit convergir (antes
   inflava Argentina/Brasil); (2) ENG-17 — defaults recalibrados (meia-vida 2,5→2,0, ridge
   0,05→0,10, +9,2% de pontos no backtest LOO). O shrinkage maior reaproximou Argentina/Espanha na

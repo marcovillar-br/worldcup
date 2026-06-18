@@ -33,6 +33,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-17](#eng-17) | P2 | model | ✅ | Defaults do `FitConfig` (meia-vida/ridge) subótimos no backtest |
 | [ENG-18](#eng-18) | P2 | backtest | ✅ | Backtest mede só acerto de 1×2, não calibração probabilística (Brier/reliability) |
 | [ENG-19](#eng-19) | P2 | model | ✅ | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
+| [ENG-20](#eng-20) | P2 | tests/ci | 🔴 | Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%) |
+| [ENG-21](#eng-21) | P3 | processo | 🔴 | Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11) |
 
 ---
 
@@ -454,4 +456,47 @@ sem `historical_results.csv`, roda local). Docs: README (`blend-track` + prior),
 disputados (hoje n=0); registrar no BOLAO conforme rodar `blend-track`. Re-tunar `w` se 2026
 discordar forte do prior.
 **Commit:** 7124554
+
+## ENG-20
+**Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%)** · P2 · `tests`/`ci` · 🔴 todo
+
+A cobertura agregada (77%) esconde que os módulos de **orquestração e correção** mais arriscados são
+os menos testados: `sync.py` **34%**, `pipeline.py` **43%** — contra `model` 96%, `scoring` 93%,
+`blend` 98%. Pior: o único teste que exercita o caminho real `fit→monte_carlo→deterministic_bracket→
+predict` é `skipif`-guardado por `historical_results.csv` (gerado, gitignored, **ausente no CI**), então
+o **CI nunca roda o pipeline de ponta a ponta**. Uma regressão na fiação de `pipeline.run` ou na
+resolução de bracket de `sync` passaria **verde** no CI — e foi justamente `sync` o [ENG-1] (placar
+trocado, sem teste à época). É o ponto cego que separa o projeto de uma nota mais alta.
+
+**Refs:** `pipeline.run`, `sync.sync_results`/`sync._edition_results`, `format_engine.deterministic_bracket`,
+e os `skipif` de `historical` em `tests/test_backtest.py`/`tests/test_blend.py`.
+**Correção proposta:** versionar um **fixture histórico mínimo/sintético** (subconjunto pequeno ou
+gerado) em `tests/fixtures/`, suficiente para ajustar o modelo de uma edição reduzida. Com ele:
+(a) **teste e2e de fumaça** que roda `pipeline.run` numa edição-fixture e afirma invariantes (nº de
+linhas = nº de jogos; P(mandante)+P(empate)+P(visitante)=100; todo jogo previsto tem placar; o KO
+resolve `avanca`); (b) testes de integração direcionados de `sync` (resolução de bracket por resultados
+reais, incluindo o caso do [ENG-1]) e de `pipeline` (realimentação; blend só onde há odds). Remover o
+`skipif` desses caminhos para rodarem no CI.
+**Aceite:** `sync` e `pipeline` ≥ ~75% de cobertura; o caminho e2e do `predict` roda no CI (sem
+`skipif`); CI verde em Python 3.11 e 3.13.
+**Commit:** —
+
+## ENG-21
+**Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11)** · P3 · processo · 🔴 todo
+
+O [ENG-11] é o item recorrente de proporcionalidade doc/código ("reabrir a cada salto de doc"). O
+trabalho do [ENG-19] nesta sessão foi um salto: blend + odds + tracking adicionaram material em
+`README`/`AGENTS`/`SPEC §3.5`/`BOLAO`, um script novo (`scripts/fetch_odds.py`) e várias entradas de
+`BOLAO`. A camada meta (~1.210 linhas md + backlog + skills + hooks) está em ~44% das ~2.772 LOC de
+`src` — para um mantenedor único, o andaime arrisca custar mais que a casa. Não é bug; é dívida de
+proporcionalidade a revisar.
+
+**Refs:** `README.md`, `AGENTS.md`, `docs/SPEC.md`, `data/editions/2026/BOLAO.md`, `.claude/skills/`.
+**Correção proposta:** revisar a sobreposição introduzida pelo ENG-19 — a explicação do blend aparece
+em README, AGENTS, SPEC §3.5 **e** BOLAO; confirmar que cada uma serve audiência distinta e declarar um
+canônico (como o ENG-11 fez para "limitações → SPEC §9.2"); consolidar o que duplicou; podar entradas
+obsoletas do BOLAO (a memória higieniza-se por revisão). Preferir **consolidar a adicionar**.
+**Aceite:** revisão de sobreposição registrada (canônico por assunto declarado para o material de
+blend/odds); nenhuma seção duplicada sem canônico; `BOLAO` sem entradas obsoletas. (Vigilância
+recorrente — fechar quando a revisão for feita; reabrir a cada novo salto, como o ENG-11.)
 **Commit:** —

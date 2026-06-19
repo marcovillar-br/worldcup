@@ -1,10 +1,17 @@
-"""Testes dos helpers puros de sincronização de resultados."""
+"""Testes dos helpers puros de sincronização de resultados + integração (ENG-20)."""
 
 from __future__ import annotations
 
+import shutil
+
+import pandas as pd
 import pytest
 
-from worldcup.sync import _result_for, _winner, write_fixtures_atomic
+from worldcup import sync
+from worldcup.edition import EDITIONS_DIR, load_edition
+from worldcup.sync import _resolve_real_bracket, _result_for, _winner, write_fixtures_atomic
+
+_EMPTY_SHOOTOUTS = pd.DataFrame(columns=["date", "home_team", "away_team", "winner"])
 
 
 def test_result_for_handles_orientation():
@@ -68,3 +75,93 @@ def test_write_fixtures_atomic_preserves_original_on_failure(tmp_path):
     # o original (spec versionada) fica intacto e o temporário é removido
     assert path.read_text() == original
     assert [p.name for p in path.parent.iterdir() if p.name.startswith(".fixtures-")] == []
+
+
+# --------------------------------------------- integração de sync (ENG-20)
+def test_resolve_real_bracket_round_of_32(monkeypatch):
+    """Com todos os grupos completos, o chaveamento real resolve a 1ª rodada de KO (R32)
+    com seleções reais — exercita _resolve_real_bracket (standings + thirds + slots)."""
+    ed = load_edition(2026)
+    # placar sintético: mandante vence 1x0 em todo jogo de grupo (grupos completos)
+    scores = {(f.home, f.away): [(f.date, 1, 0)] for f in ed.group_fixtures()}
+    resolved = _resolve_real_bracket(ed, scores, {})
+
+    teams = set(ed.teams)
+    assert resolved, "nenhum confronto de KO resolvido"
+    assert all(h in teams and a in teams for h, a in resolved.values())  # só seleções reais
+    # a 1ª rodada de KO (slots de grupo, não W##) deve estar toda resolvida
+    r1 = [f for f in ed.knockout_fixtures() if not (f.home.startswith(("W", "L")) or f.away.startswith(("W", "L")))]
+    assert {f.match_id for f in r1} <= set(resolved)
+
+
+def test_sync_results_fills_unplayed_group_games(tmp_path, monkeypatch):
+    """sync_results preenche jogos de grupo ainda em aberto a partir de resultados sintéticos,
+    sem tocar nos já preenchidos — exercita o caminho de IO completo num clone temporário."""
+    shutil.copytree(EDITIONS_DIR / "2026", tmp_path / "2026")
+    ed = load_edition(2026, base_dir=tmp_path)
+    unplayed = [f for f in ed.group_fixtures() if not f.played][:2]
+    assert len(unplayed) == 2
+
+    res_df = pd.DataFrame(
+        [
+            {
+                "tournament": "FIFA World Cup",
+                "date": f.date,
+                "home_team": f.home,
+                "away_team": f.away,
+                "home_score": 2,
+                "away_score": 1,
+            }
+            for f in unplayed
+        ]
+    )
+    monkeypatch.setattr(sync, "download_from_urls", lambda urls: res_df)
+    monkeypatch.setattr(sync, "download_shootouts", lambda: _EMPTY_SHOOTOUTS)
+
+    counts = sync.sync_results(2026, base_dir=tmp_path)
+    assert counts["group"] == 2
+
+    reloaded = load_edition(2026, base_dir=tmp_path)
+    for f in unplayed:
+        got = next(x for x in reloaded.fixtures if x.match_id == f.match_id)
+        assert (got.home_goals, got.away_goals) == (2, 1)
+
+
+def test_edition_results_lists_rematch_and_filters_non_wc(monkeypatch):
+    """_edition_results: ignora jogos não-Copa, guarda reencontro como lista (não sobrescreve)
+    e lê o vencedor de pênaltis dos shootouts."""
+    res_df = pd.DataFrame(
+        [
+            {
+                "tournament": "FIFA World Cup",
+                "date": "2026-06-19",
+                "home_team": "Brazil",
+                "away_team": "Haiti",
+                "home_score": 3,
+                "away_score": 0,
+            },
+            {
+                "tournament": "FIFA World Cup",
+                "date": "2026-07-05",
+                "home_team": "Brazil",
+                "away_team": "Haiti",
+                "home_score": 1,
+                "away_score": 1,
+            },  # reencontro no KO
+            {
+                "tournament": "Friendly",
+                "date": "2026-01-01",
+                "home_team": "Brazil",
+                "away_team": "Haiti",
+                "home_score": 5,
+                "away_score": 0,
+            },  # não-Copa: ignorado
+        ]
+    )
+    so_df = pd.DataFrame([{"date": "2026-07-05", "home_team": "Brazil", "away_team": "Haiti", "winner": "Brazil"}])
+    monkeypatch.setattr(sync, "download_from_urls", lambda urls: res_df)
+    monkeypatch.setattr(sync, "download_shootouts", lambda: so_df)
+
+    scores, shootouts = sync._edition_results(2026)
+    assert len(scores[("Brazil", "Haiti")]) == 2  # reencontro vira lista, não sobrescreve
+    assert shootouts[frozenset({"Brazil", "Haiti"})] == "Brazil"

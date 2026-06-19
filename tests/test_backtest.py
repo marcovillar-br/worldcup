@@ -5,11 +5,9 @@ from __future__ import annotations
 import pandas as pd
 import pytest
 
-from conftest import make_model
+from conftest import make_model, mini_historical
 from worldcup import backtest as bt
-from worldcup.edition import PROJECT_ROOT, load_edition
-
-_HISTORICAL = PROJECT_ROOT / "data" / "historical_results.csv"
+from worldcup.edition import load_edition
 
 
 def test_world_cup_hosts_cover_all_backtest_years():
@@ -105,16 +103,19 @@ def test_reliability_curve_p_one_lands_in_last_bin():
 
 # --------------------------------------------------------- tracking prospectivo do blend (ENG-19)
 def test_prospective_blend_empty_without_odds():
-    # sem odds.csv -> n=0 e nada a reportar (retorna antes de carregar histórico/ajustar)
-    res = bt.prospective_blend_report(load_edition(2026))
+    # sem odds -> n=0 e nada a reportar (retorna antes de carregar histórico/ajustar)
+    ed = load_edition(2026)
+    ed.odds.clear()  # ignora o odds.csv versionado: o teste controla as odds
+    res = bt.prospective_blend_report(ed)
     assert res.n == 0
     assert res.delta == 0.0
 
 
-@pytest.mark.skipif(not _HISTORICAL.exists(), reason="historical_results.csv ausente (rode fetch-data)")
-def test_prospective_blend_weight_zero_equals_model():
-    # w=0 => blend idêntico ao modelo => Brier igual (invariante de wiring, em dados reais)
+def test_prospective_blend_weight_zero_equals_model(monkeypatch):
+    # w=0 => blend idêntico ao modelo => Brier igual (invariante de wiring); histórico sintético (CI)
+    monkeypatch.setattr(bt, "load_historical", mini_historical)
     ed = load_edition(2026)
+    ed.odds.clear()  # controla as odds do teste (ignora o odds.csv versionado)
     played = [f for f in ed.fixtures if f.is_group and f.played][:2]
     for f in played:
         ed.odds[f.match_id] = (2.0, 3.3, 3.7)

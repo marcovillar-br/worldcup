@@ -61,6 +61,6 @@ source = ["worldcup"]
 
 [tool.coverage.report]
 show_missing = true
-# Piso conservador (cobertura medida ~70%): pega regressões grandes sem ser frágil a oscilações
-# pequenas. Subir conforme a cobertura dos caminhos de orquestração (sync/pipeline) crescer.
-fail_under = 65
+# Piso (cobertura medida ~86% após ENG-20: e2e do pipeline + integração de sync rodam no CI).
+# 80 trava o ganho com folga p/ oscilações pequenas; era 65 quando sync/pipeline estavam em 34%/43%.
+fail_under = 80

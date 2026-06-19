@@ -33,7 +33,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-17](#eng-17) | P2 | model | ✅ | Defaults do `FitConfig` (meia-vida/ridge) subótimos no backtest |
 | [ENG-18](#eng-18) | P2 | backtest | ✅ | Backtest mede só acerto de 1×2, não calibração probabilística (Brier/reliability) |
 | [ENG-19](#eng-19) | P2 | model | ✅ | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
-| [ENG-20](#eng-20) | P2 | tests/ci | 🔴 | Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%) |
+| [ENG-20](#eng-20) | P2 | tests/ci | ✅ | Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%) |
 | [ENG-21](#eng-21) | P3 | processo | 🔴 | Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11) |
 | [ENG-22](#eng-22) | P3 | backtest | 🔴 | Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo) |
 
@@ -459,7 +459,7 @@ discordar forte do prior.
 **Commit:** 7124554
 
 ## ENG-20
-**Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%)** · P2 · `tests`/`ci` · 🔴 todo
+**Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%)** · P2 · `tests`/`ci` · ✅ feito
 
 A cobertura agregada (77%) esconde que os módulos de **orquestração e correção** mais arriscados são
 os menos testados: `sync.py` **34%**, `pipeline.py` **43%** — contra `model` 96%, `scoring` 93%,
@@ -480,7 +480,18 @@ reais, incluindo o caso do [ENG-1]) e de `pipeline` (realimentação; blend só 
 `skipif` desses caminhos para rodarem no CI.
 **Aceite:** `sync` e `pipeline` ≥ ~75% de cobertura; o caminho e2e do `predict` roda no CI (sem
 `skipif`); CI verde em Python 3.11 e 3.13.
-**Commit:** —
+**Resolução (3372d97):** `conftest.mini_historical` gera um histórico **sintético** (round-robin
+ida/volta entre 14 seleções reais da 2026, competitivo p/ passar o filtro do fit) — destrava o
+caminho real sem o `historical_results.csv` (gitignored). Testes novos: **e2e** `test_pipeline_run_e2e_invariants`
+(injeta o fixture, roda `pipeline.run` pré-torneio, afirma 104 linhas, P(1×2) somam 100, todo grupo
+tem placar, KO resolve `avanca`, título normaliza); **integração de sync** — `_resolve_real_bracket`
+resolve a R32 com seleções reais, `sync_results` preenche jogos num **clone temp** da edição (sem
+tocar no real), `_edition_results` guarda reencontro como lista e filtra não-Copa + lê pênaltis.
+Removidos todos os `skipif` de `historical` (o blend e2e do ENG-19 agora roda no CI). **Cobertura:
+`pipeline` 43%→90%, `sync` 34%→90%, total 86%**; piso `fail_under` 65→80 (trava o ganho — fecha o
+gancho deixado no ENG-8). Decisão: fixture **gerado em código** (não CSV versionado) — sem arquivo
+binário a envelhecer.
+**Commit:** 3372d97
 
 ## ENG-21
 **Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11)** · P3 · processo · 🔴 todo

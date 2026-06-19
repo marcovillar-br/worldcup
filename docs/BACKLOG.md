@@ -35,7 +35,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-19](#eng-19) | P2 | model | ✅ | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
 | [ENG-20](#eng-20) | P2 | tests/ci | ✅ | Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%) |
 | [ENG-21](#eng-21) | P3 | processo | ✅ | Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11) |
-| [ENG-22](#eng-22) | P3 | backtest | 🔴 | Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo) |
+| [ENG-22](#eng-22) | P3 | backtest | ✅ | Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo) |
 
 ---
 
@@ -527,7 +527,7 @@ próximo salto de doc/skill.**
 **Commit:** 7540ab7
 
 ## ENG-22
-**Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo)** · P3 · `backtest` · 🔴 todo
+**Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo)** · P3 · `backtest` · ✅ feito
 
 Dados da Copa 2026 até J28 (medido com o modelo as-of): **10 de 28 jogos de grupo foram empates
 (36%)** contra ~26% que o modelo espera (~1,2σ binomial — variância, não sinal, coerente com o
@@ -552,4 +552,13 @@ empate passa a ser justificado por dados — e aí abre-se um **item-filho** par
 roda sobre os jogos da 2026 e reporta observado/esperado/z; documenta o gatilho de 2σ e a postura
 "não agir sobre variância". A correção em si **não** entra aqui (medição-só, como o ENG-18) — vira
 item-filho se e quando o gatilho disparar.
-**Commit:** —
+**Resolução (f1c0da6):** `backtest.draw_regime_report(edition)` → `DrawRegime(n, observed, expected, z)`
+com `.significant` (|z|≥2σ). A estatística pura `draw_regime_stats(p_draws, is_draw)` calcula o
+z-score **Poisson-binomial** `(observado − Σp)/sqrt(Σ p(1−p))` (cada jogo é um Bernoulli com seu
+P(empate)). Surge no CLI `blend-track` (sobre **todos** os jogos de grupo disputados, não só os com
+odds), com veredito "variância (não agir)" vs "⚠️ SINAL ≥2σ — abrir item-filho de tilt". O loop as-of
+foi extraído para `_as_of_group_matrices` (helper compartilhado com `prospective_blend_report` — dedup,
+no espírito do ENG-21). 4 testes (z conhecido = 1,549; gatilho >2σ; vazio; report na 2026 com
+`observed` = empates reais). **Veredito ao vivo (28 jogos): 10 obs vs 7,3 esp, z=+1,19 → variância,
+não agir** — confirma o ENG-18. O item-filho de correção só abre se o z cruzar 2σ até o fim dos grupos.
+**Commit:** f1c0da6

@@ -221,46 +221,54 @@ class BlendTracking:
         return self.brier_model - self.brier_blend
 
 
-def prospective_blend_report(edition: Edition, weight: float | None = None) -> BlendTracking:
-    """Valida o blend prospectivamente nos jogos de grupo já disputados que têm odds (ENG-19, Gate 3).
+def _as_of_group_matrices(edition: Edition, historical: pd.DataFrame):
+    """Itera `(fixture, matriz as-of)` dos jogos de grupo já disputados, reajustando o modelo por dia.
 
-    Para cada jogo, reajusta o modelo **as-of** (só com o conhecido até a véspera, via `Edition.as_of`)
-    e compara o **Brier multiclasse** das probabilidades do modelo-puro vs. do blend(`weight`) com o
-    resultado real. Como `weight` é pré-registrado (não ajustado nesses jogos), é out-of-sample por
-    construção — ao contrário de um backtest histórico, que aqui é inviável por falta de odds de
-    seleção. Sem jogos-com-odds ⇒ tudo zero (nada a reportar ainda; registre odds em `odds.csv`).
+    Base comum dos diagnósticos da **edição viva** (blend — ENG-19; regime de empates — ENG-22): cada
+    jogo usa o modelo ajustado só com o conhecido até a véspera (`Edition.as_of`), agrupando por data
+    para 1 fit por dia (out-of-sample por construção).
     """
     from collections import defaultdict
 
-    from .blend import devig, log_opinion_pool
     from .pipeline import build_training_frame
 
-    w = edition.scoring.blend_weight if weight is None else weight
-    played = [f for f in edition.fixtures if f.is_group and f.played and f.match_id in edition.odds]
-    if not played:
-        return BlendTracking(weight=w, n=0, brier_model=0.0, brier_blend=0.0)
-
-    historical = load_historical()
     by_date: dict[str, list] = defaultdict(list)
-    for f in played:
-        by_date[f.date].append(f)
+    for f in edition.fixtures:
+        if f.is_group and f.played:
+            by_date[f.date].append(f)
+    for d in sorted(by_date):
+        model = DixonColesModel(FitConfig()).fit(
+            build_training_frame(edition.as_of(d), historical), ref_date=pd.Timestamp(d)
+        )
+        cache = MatrixCache(model, edition.hosts)
+        for f in by_date[d]:
+            yield f, cache.matrix(f.home, f.away, f.neutral)
+
+
+def prospective_blend_report(edition: Edition, weight: float | None = None) -> BlendTracking:
+    """Valida o blend prospectivamente nos jogos de grupo já disputados que têm odds (ENG-19, Gate 3).
+
+    Compara o **Brier multiclasse** do modelo-puro vs. do blend(`weight`) com o resultado real, usando
+    o modelo **as-of** de cada jogo (`_as_of_group_matrices`). Como `weight` é pré-registrado, é
+    out-of-sample. Sem jogos-com-odds ⇒ tudo zero (registre odds em `odds.csv`).
+    """
+    from .blend import devig, log_opinion_pool
+
+    w = edition.scoring.blend_weight if weight is None else weight
+    if not any(f.is_group and f.played and f.match_id in edition.odds for f in edition.fixtures):
+        return BlendTracking(weight=w, n=0, brier_model=0.0, brier_blend=0.0)
 
     model_probs: list[tuple[float, float, float]] = []
     blend_probs: list[tuple[float, float, float]] = []
     outcomes: list[int] = []
-    for d in sorted(by_date):
-        as_of = edition.as_of(d)
-        model = DixonColesModel(FitConfig()).fit(build_training_frame(as_of, historical), ref_date=pd.Timestamp(d))
-        cache = MatrixCache(model, edition.hosts)
-        for f in by_date[d]:
-            hg, ag = f.home_goals, f.away_goals
-            if hg is None or ag is None:  # garantido por f.played; narrowing p/ o type checker
-                continue
-            mat = cache.matrix(f.home, f.away, f.neutral)
-            mp = outcome_probs_from_matrix(mat)
-            model_probs.append(mp)
-            blend_probs.append(log_opinion_pool(mp, devig(edition.odds[f.match_id]), w))
-            outcomes.append(_outcome_index(hg, ag))
+    for f, mat in _as_of_group_matrices(edition, load_historical()):
+        hg, ag = f.home_goals, f.away_goals
+        if f.match_id not in edition.odds or hg is None or ag is None:
+            continue
+        mp = outcome_probs_from_matrix(mat)
+        model_probs.append(mp)
+        blend_probs.append(log_opinion_pool(mp, devig(edition.odds[f.match_id]), w))
+        outcomes.append(_outcome_index(hg, ag))
 
     return BlendTracking(
         weight=w,
@@ -268,6 +276,55 @@ def prospective_blend_report(edition: Edition, weight: float | None = None) -> B
         brier_model=multiclass_brier(model_probs, outcomes),
         brier_blend=multiclass_brier(blend_probs, outcomes),
     )
+
+
+@dataclass
+class DrawRegime:
+    """Regime de empates da edição viva: observados vs. esperados pelo modelo, com z-score (ENG-22)."""
+
+    n: int
+    observed: int
+    expected: float
+    z: float
+
+    @property
+    def significant(self) -> bool:
+        """|z| ≥ 2σ: o desvio deixa de ser explicável por variância — gatilho para abrir a correção."""
+        return abs(self.z) >= 2.0
+
+
+def draw_regime_stats(p_draws: Sequence[float], is_draw: Sequence[bool]) -> DrawRegime:
+    """z-score do nº de empates: `(observado − Σp) / sqrt(Σ p(1−p))` — soma de Bernoulli (Poisson-binomial).
+
+    Cada jogo é um Bernoulli com seu próprio P(empate); a média é `Σp` e a variância `Σ p(1−p)`.
+    Positivo = mais empates que o modelo esperava. Mede regime vs. ruído, não calibra nada.
+    """
+    n = len(p_draws)
+    observed = sum(is_draw)
+    expected = float(sum(p_draws))
+    var = sum(p * (1.0 - p) for p in p_draws)
+    z = (observed - expected) / var**0.5 if var > 0 else 0.0
+    return DrawRegime(n=n, observed=observed, expected=expected, z=z)
+
+
+def draw_regime_report(edition: Edition) -> DrawRegime:
+    """Aplica `draw_regime_stats` aos jogos de grupo já disputados (modelo as-of) — monitor do ENG-22.
+
+    **Só medição**: um veredito `significant` (≥2σ) é o **gatilho** para abrir um item-filho de correção
+    (tilt de empate), nunca para agir automático — forçar empates baixa os pontos esperados se o desvio
+    for variância (ver ENG-18: o modelo é bem calibrado em empate no agregado).
+    """
+    if not any(f.is_group and f.played for f in edition.fixtures):
+        return DrawRegime(n=0, observed=0, expected=0.0, z=0.0)
+    p_draws: list[float] = []
+    is_draw: list[bool] = []
+    for f, mat in _as_of_group_matrices(edition, load_historical()):
+        hg, ag = f.home_goals, f.away_goals
+        if hg is None or ag is None:
+            continue
+        p_draws.append(outcome_probs_from_matrix(mat)[1])
+        is_draw.append(hg == ag)
+    return draw_regime_stats(p_draws, is_draw)
 
 
 def _award_scorer() -> Scorer:

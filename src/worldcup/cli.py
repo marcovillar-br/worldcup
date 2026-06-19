@@ -192,22 +192,36 @@ def cmd_backtest(args: argparse.Namespace) -> int:
 
 
 def cmd_blend_track(args: argparse.Namespace) -> int:
-    from .backtest import prospective_blend_report
+    from .backtest import draw_regime_report, prospective_blend_report
 
     edition = load_edition(args.edition)
+
     res = prospective_blend_report(edition, args.blend_weight)
     if res.n == 0:
         print(
             "ℹ️  Nenhum jogo disputado com odds em odds.csv. Registre as odds da rodada em "
-            f"data/editions/{args.edition}/odds.csv (match_id,home,draw,away) + os resultados, "
-            "depois rode de novo."
+            f"data/editions/{args.edition}/odds.csv (match_id,home,draw,away) + os resultados."
         )
-        return 0
-    better = "blend MELHOR" if res.delta > 0 else "modelo MELHOR" if res.delta < 0 else "empate"
-    print(f"📈 Tracking prospectivo do blend (w={res.weight:.2f}) — {res.n} jogo(s) com odds:")
-    print(f"   Brier modelo-puro : {res.brier_model:.4f}")
-    print(f"   Brier blend       : {res.brier_blend:.4f}")
-    print(f"   Δ = {res.delta:+.4f}  ({better}; menor Brier é melhor)")
+    else:
+        better = "blend MELHOR" if res.delta > 0 else "modelo MELHOR" if res.delta < 0 else "empate"
+        print(f"📈 Tracking prospectivo do blend (w={res.weight:.2f}) — {res.n} jogo(s) com odds:")
+        print(f"   Brier modelo-puro : {res.brier_model:.4f}")
+        print(f"   Brier blend       : {res.brier_blend:.4f}")
+        print(f"   Δ = {res.delta:+.4f}  ({better}; menor Brier é melhor)")
+
+    # Monitor de regime de empates (ENG-22) — sobre todos os jogos de grupo disputados.
+    draw = draw_regime_report(edition)
+    if draw.n:
+        verdict = (
+            "⚠️ SINAL ≥2σ — reconsiderar tilt de empate (abrir item-filho)"
+            if draw.significant
+            else "variância (gatilho ≥2σ não atingido — não agir)"
+        )
+        print(
+            f"📊 Regime de empates ({draw.n} jogos): observados {draw.observed} "
+            f"({100 * draw.observed / draw.n:.0f}%) vs esperados {draw.expected:.1f} "
+            f"({100 * draw.expected / draw.n:.0f}%) — z={draw.z:+.2f} → {verdict}"
+        )
     return 0
 
 

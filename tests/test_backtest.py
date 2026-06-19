@@ -123,3 +123,41 @@ def test_prospective_blend_weight_zero_equals_model(monkeypatch):
     assert res.n == len(played)
     assert res.brier_blend == pytest.approx(res.brier_model)
     assert res.delta == pytest.approx(0.0)
+
+
+# ------------------------------------------------ monitor de regime de empates (ENG-22)
+def test_draw_regime_stats_known_z():
+    # 20 jogos, P(empate)=0.25 cada, 8 empates: E=5, Var=20*0.25*0.75=3.75, z=3/sqrt(3.75)
+    dr = bt.draw_regime_stats([0.25] * 20, [True] * 8 + [False] * 12)
+    assert dr.n == 20
+    assert dr.observed == 8
+    assert dr.expected == pytest.approx(5.0)
+    assert dr.z == pytest.approx(1.5492, abs=1e-3)
+    assert not dr.significant  # ~1,5σ é variância
+
+
+def test_draw_regime_stats_significant_above_2sigma():
+    # muitos empates além do esperado -> |z| >= 2 dispara o gatilho
+    dr = bt.draw_regime_stats([0.2] * 30, [True] * 15 + [False] * 15)
+    assert dr.significant
+    assert dr.z > 2.0
+
+
+def test_draw_regime_stats_empty_is_safe():
+    dr = bt.draw_regime_stats([], [])
+    assert dr.n == 0
+    assert dr.z == 0.0
+    assert not dr.significant
+
+
+def test_draw_regime_report_on_2026(monkeypatch):
+    # observados = empates REAIS (independe do modelo); n = jogos de grupo disputados
+    monkeypatch.setattr(bt, "load_historical", mini_historical)
+    ed = load_edition(2026)
+    played = [f for f in ed.fixtures if f.is_group and f.played]
+    real_draws = sum(1 for f in played if f.home_goals == f.away_goals)
+    dr = bt.draw_regime_report(ed)
+    assert dr.n == len(played)
+    assert dr.observed == real_draws
+    assert 0.0 <= dr.expected <= dr.n
+    assert isinstance(dr.z, float)

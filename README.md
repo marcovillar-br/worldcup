@@ -31,7 +31,7 @@ uv run worldcup sync-results --edition 2026   # baixa os resultados reais da int
 uv run worldcup predict --edition 2026 --archive   # +snapshot versionado do dia (history/)
 uv run worldcup record --edition 2026 --match <id> --home 2 --away 1   # registra um placar manualmente
 uv run worldcup backtest --edition 2022       # valida o modelo numa Copa passada
-uv run worldcup blend-track --edition 2026     # Brier do blend vs modelo nos jogos com odds (ENG-19)
+uv run worldcup blend-track --edition 2026     # Brier blend vs modelo (ENG-19) + monitor de empates (ENG-22)
 uv run pytest        # testes
 uv run ruff check .  # lint
 ```

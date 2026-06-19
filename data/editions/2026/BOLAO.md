@@ -13,66 +13,41 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Estado atual (atualizado em 2026-06-19)
 
-- A Copa começou em 2026-06-11. **28 de 104 jogos disputados e registrados (J1–J28).**
-  J25–J28 (18/06) via `sync-results`: Canadá **6×0** Catar, Tchéquia **1×1** África do Sul (empate),
-  México **1×0** Coreia do Sul, Suíça **4×1** Bósnia. O tool acertou o lado em 3 e **cravou o placar
-  exato do J27 (México 1×0, ~14 pts)**; zerou só o J26 (mais um empate). Antes: J22 Gana **1×0**
-  Panamá (zebra), J24 Uzbequistão **1×3** Colômbia, J21 Inglaterra **4×2** Croácia, J23 Portugal
-  **1×1** RD Congo. Empates/zebras seguem sendo os zeros recorrentes.
-  J13–J16 (15/06) foi a "rodada de empates" (4 empates, registrados manualmente). Histórico de carga
-  em `git log`; martj42 agora acompanha com ~1 dia de atraso.
-- Rodada de hoje (J29–J32, 19/06): Brasil 2×0 Haiti (86%), Escócia 0×1 Marrocos (53%), Turquia 2×1
-  Paraguai (46%). **J32 EUA×Austrália: blend discorda do modelo** — modelo crava Austrália (39%), o
-  mercado dá EUA favorito (48%), palpite vivo **1×0 EUA** (caso recorrente: mercado vê os EUA mais
-  fortes que o modelo). Única divergência acionável do dia.
-- **`blend-track` n=6 (J22,J24,J25–J28):** Brier modelo **0,441** vs blend **0,430** — **blend
-  passou à frente** (Δ +0,011) ao somar J25–J28; inverteu o n=2 (que dava modelo). Ainda ruído, mas
-  na direção certa. Acompanhar até ~20 jogos.
-- Favorito ao título: **Argentina (35,2%)**. Espanha 11,8%; Inglaterra 7,8%; França 7,6%; Brasil 5,0%.
-- **Repalpitado 2x em 2026-06-15:** (1) ENG-16 — gradiente analítico fez o fit convergir (antes
-  inflava Argentina/Brasil); (2) ENG-17 — defaults recalibrados (meia-vida 2,5→2,0, ridge
-  0,05→0,10, +9,2% de pontos no backtest LOO). O shrinkage maior reaproximou Argentina/Espanha na
-  ponta. Placares de hoje inalterados (1x0/1x0/0x1/3x0). Snapshot do dia regravado com o modelo
-  final (ENG-16+17).
-- Palpites vigentes gerados com configuração padrão: `risk 0.5`, Sistema I conforme
-  `scoring.toml` (sem customização do admin do bolão até agora).
-- **Alavanca de acurácia ATIVA (ENG-19, 2026-06-17):** `blend_weight = 0.6` no `scoring.toml` e
-  `odds.csv` com odds **Pinnacle** (via The Odds API) de **50 jogos de grupo** — os palpites vigentes
-  em `out/` já saem **blendados** (peso 0.6). Efeito notável da 1ª carga: J32 EUA×Austrália virou
-  (modelo 29/30/41 → blend 47/26/27, palpite 0x1→1x0); J24/J25/J28 ficaram mais firmes no favorito.
-  (J21/J23 sem odds — já tinham começado quando a chave entrou.) **Rotina a cada rodada** (única
-  alavanca que sobe o ranking, ver Decisões vivas): `uv run python scripts/fetch_odds.py` (busca +
-  mescla as odds, preservando jogos já disputados); palpitar; depois dos resultados rodar
-  `worldcup blend-track` e anotar aqui se o blend está ganhando do modelo (Brier). Fonte de odds em
-  uso: **The Odds API** (free tier, `soccer_fifa_world_cup`); a chave é segredo (não versionar).
-- Nota operacional: martj42 tem latência de 1-2 dias; quando atrasada, buscar placares via
-  web search e registrar com `worldcup record`. Rotina: `sync-results --archive` → se 0 jogos
-  novos, buscar manualmente → `predict --archive`.
+- **28 de 104 jogos disputados (J1–J28).** Resultados moram no `fixtures.csv`; carga rastreada em
+  `git log`. martj42 atrasa ~1 dia (quando atrasa, buscar via web e `worldcup record`).
+- **Desempenho do tool até aqui (não-derivável):** ~54% de acerto de 1×2, **46% de zeros — e os zeros
+  são quase todos empates** (10 empates reais, 0 palpitados; em jogo decidido acerta 80–100% o lado).
+  É a fraqueza estrutural da Copa, majoritariamente variância (ver Histórico 2026-06-19 e ENG-22).
+- Rodada de hoje (J29–J32, 19/06): Brasil 2×0 Haiti, Escócia 0×1 Marrocos, Turquia 2×1 Paraguai;
+  **J32 EUA×Austrália é a divergência do dia** — modelo crava Austrália (39%), mercado dá EUA (48%),
+  palpite vivo **1×0 EUA**.
+- **`blend-track` n=6:** Brier modelo **0,441** vs blend **0,430** — blend à frente (inverteu o n=2);
+  ainda ruído, acompanhar até ~20 jogos.
+- Favorito ao título: **Argentina (35,2%)**; Espanha 11,8%, Inglaterra 7,8%, França 7,6%, Brasil 5,0%.
+- **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds Pinnacle **ATIVO** — ENG-19);
+  admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do `odds.csv`: no
+  README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API vive no `.env`.
 
 ## Decisões vivas
 
-- `risk = 0.5` **definitivo** — ótimo para a média **e** para o ranking. **Revisado em 2026-06-17**
-  com modelagem do trade-off de ranking (substitui o gatilho "subir risco se atrás", que partia de
-  premissa errada): o botão de risco **não é instrumento de variância** neste sistema de pontos. Nos
-  52 jogos de grupo restantes, o SD do total fica travado em ~33 em qualquer risco, enquanto o E[pts]
-  desaba (191→120 de 0.5 a 0.8) — **até a cauda otimista (p95) piora** com risco alto. Na simulação
-  de campo (60 jogadores, líder 80, você 44 ≈ mediana), subir o risco **reduz** P(vencer) e P(top-10)
-  — inclusive para o objetivo mais agressivo. Causa: o Sistema I já recompensa zebra acertada
-  (base→13), então o E-max (0.5) já pega as apostas boas; cranquear só força EV ruim que zera.
-  **A única alavanca que sobe o ranking é acurácia, não ousadia:** +20 pts de edge de EV ao longo do
-  torneio levam P(top-10) de 8%→42%; risco leva a 0,1%. Daí o [ENG-19] (blend com odds) ser a aposta
-  de maior retorno. **Regra:** manter 0.5 sempre; subida vem de acurácia (ENG-19) + da variância
-  natural (~50/50 de melhorar, de graça). **Mata-mata testado (2026-06-17): mesma conclusão.** O
-  risco só mexe na camada de 90' do palpite de KO (prorrogação/pênaltis são determinísticas em
-  `knockout.py`); medido nos 32 jogos do chaveamento, SD ponderado travado em ~58 e E[pts] desaba
-  (236→179 de 0.5 a 0.8). O KO é onde a variância vive (SD 58 vs 33 dos grupos, pelos pesos 2×/4×),
-  mas você a captura em 0.5 — subir o risco no KO derruba P(top-10) 13,6%→7,8% (0.7)→0% (0.8).
-  Restam ~427 pts (SD 67) contra gap de 36 ao líder: posição atual não é destino, mas a alavanca é
-  acurácia, não risco.
+- `risk = 0.5` **definitivo** — ótimo para a média **e** para o ranking. O botão de risco **não é
+  instrumento de variância** neste sistema de pontos: subir o risco baixa o E[pts] sem aumentar o SD
+  e, na simulação de campo, **reduz** P(vencer)/P(top-10) — inclusive no mata-mata (pesos 2×/4×).
+  **A única alavanca de ranking é acurácia (ENG-19), não ousadia.** Substitui o gatilho antigo
+  "subir risco se atrás" (premissa falsa). Modelagem completa (campo de 60, KO, números) na entrada
+  **2026-06-17** do Histórico.
 - Execução **sob demanda**: o usuário prefere rodar os comandos manualmente; não propor
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-19 — **Lição dos 28 jogos: empate é a fraqueza, não a falta de placar exato.** Acerto de
+  1×2 = **54%** (15/28); zeros = **46%** (13/28), dos quais **10 são empates** (10 empates reais, 0
+  palpitados; em jogo decidido o tool acerta 80–100% o lado). Cravar placar (7%, 2/28) dá os maiores
+  pontos por jogo, mas é evento de ~10% que o `best_prediction` **já otimiza dentro do EV** — não é
+  alavanca. A alavanca é **não-zerar** (acertar o lado), e os zeros são empates — majoritariamente
+  variância (ENG-18: modelo calibrado; 36% vs ~26% = ~1,2σ). **Não forçar empates** (baixa o EV);
+  monitorar via [ENG-22]. A acurácia (blend, ENG-19) é a única melhoria real.
 
 - 2026-06-17 — **Trade-off de ranking modelado: risco NÃO é alavanca; acurácia é.** Estado: 44 pts,
   32º de 60, líder 80 (gap +36 = +2,4σ; você ≈ mediana do campo, média≈45/σ≈15). (1) Eficiência

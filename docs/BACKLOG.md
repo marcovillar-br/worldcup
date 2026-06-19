@@ -34,7 +34,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-18](#eng-18) | P2 | backtest | ✅ | Backtest mede só acerto de 1×2, não calibração probabilística (Brier/reliability) |
 | [ENG-19](#eng-19) | P2 | model | ✅ | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
 | [ENG-20](#eng-20) | P2 | tests/ci | ✅ | Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%) |
-| [ENG-21](#eng-21) | P3 | processo | 🔴 | Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11) |
+| [ENG-21](#eng-21) | P3 | processo | ✅ | Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11) |
 | [ENG-22](#eng-22) | P3 | backtest | 🔴 | Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo) |
 
 ---
@@ -494,7 +494,7 @@ binário a envelhecer.
 **Commit:** 3372d97
 
 ## ENG-21
-**Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11)** · P3 · processo · 🔴 todo
+**Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11)** · P3 · processo · ✅ feito
 
 O [ENG-11] é o item recorrente de proporcionalidade doc/código ("reabrir a cada salto de doc"). O
 trabalho do [ENG-19] nesta sessão foi um salto: blend + odds + tracking adicionaram material em
@@ -511,7 +511,20 @@ obsoletas do BOLAO (a memória higieniza-se por revisão). Preferir **consolidar
 **Aceite:** revisão de sobreposição registrada (canônico por assunto declarado para o material de
 blend/odds); nenhuma seção duplicada sem canônico; `BOLAO` sem entradas obsoletas. (Vigilância
 recorrente — fechar quando a revisão for feita; reabrir a cada novo salto, como o ENG-11.)
-**Commit:** —
+**Resolução (7540ab7):** **Canônicos do material de blend/odds declarados por audiência** (estende o
+esquema do [ENG-11]): *uso/como-fazer* (formato do `odds.csv`, `fetch_odds.py`, `blend-track`,
+`blend_weight`) → **README**; *arquitetura/dados/convenções* (módulo `blend.py`, data-model do
+`odds.csv`, "acrescentar não sobrescrever", não versionar odds falsas, chave no `.env`) → **AGENTS**;
+*metodologia/matemática* (des-vig → pool log → reescala) → **SPEC §3.5**; *registro de engenharia* →
+**ENG-19**; *estado de campanha* (config ativa, veredito do tracking) → **BOLAO** (só estado, sem
+how-to). As três aparições do "porquê o blend ajuda" (README/SPEC/ENG-19) são **audiências
+distintas**, não duplicação — cada uma é canônica no seu doc. **Poda do `BOLAO` (112→79 linhas):**
+"Estado atual" deixou de ser log de resultados (deriváveis do `fixtures.csv`) e virou snapshot; o
+how-to do blend saiu (aponta p/ README); a decisão de risco foi condensada (modelagem completa só no
+Histórico, sem duplicar); menções a martj42 unificadas; a lição dos empates foi para o Histórico
+(lugar canônico). Nenhuma decisão/fato não-derivável perdido. **Vigilância recorrente: reabrir ao
+próximo salto de doc/skill.**
+**Commit:** 7540ab7
 
 ## ENG-22
 **Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo)** · P3 · `backtest` · 🔴 todo

@@ -82,7 +82,8 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   oficial da FIFA — não coincidem (ex.: jogo `50` aqui = *Match 51* FIFA). Ao cruzar com a escala
   oficial, guie-se pelos **nomes das seleções**, nunca pelo número.
 - `scoring.toml` — sistema de pontos + pesos por fase (default: Sistema I + Equilíbrio gradual).
-  Também `blend_weight` (peso do mercado no blend com odds; default 0 = só modelo).
+  Também `blend_weight` (peso do mercado no blend com odds; `0` = só modelo, ausência do campo ⇒ 0;
+  **a edição 2026 usa `0.6`** — ENG-19).
 - `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, por jogo. Ausente ⇒
   blend desligado. Preenchido por `scripts/fetch_odds.py` (busca The Odds API + **mescla**, preservando
   jogos já disputados — o `blend-track` acumula o tally; à mão, **acrescente**, não sobrescreva).

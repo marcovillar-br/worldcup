@@ -41,12 +41,25 @@ das seleções). Então:
 ```bash
 uv run worldcup record --edition 2026 --match <ID> --home <gols_mandante> --away <gols_visitante>
 ```
-⚠️ **`--home`/`--away` são posicionais** e seguem a ordem `mandante,visitante` **do fixture**, que
+⚠️ **`--home`/`--away` seguem a ordem `mandante,visitante` do fixture**, que
 nem sempre é a intuitiva: a escala oficial lista o anfitrião como *visitante* em alguns jogos no
 estádio dele (ex.: o fixture do jogo 60 é `Turkey × United States`, não `EUA × Turquia`). **Confira a
 ordem do fixture antes de registrar** e mapeie o placar ditado para ela — senão grava invertido.
 Para mata-mata empatado nos 90'/prorrogação, acrescente `--ko-winner "<Seleção em inglês>"`
 (ex.: `--ko-winner Brazil`). Nomes canônicos em inglês — veja `data/editions/2026/groups.csv`.
+
+### 2.5 Atualizar odds de mercado (blend, ENG-19)
+Antes de palpitar a próxima rodada, atualize as odds (a edição 2026 já roda blendada,
+`blend_weight = 0.6`):
+```bash
+uv run python scripts/fetch_odds.py --edition 2026   # busca The Odds API + mescla no odds.csv
+```
+Mescla preservando jogos já disputados (a chave vive no `.env`). Sem `odds.csv`, os palpites saem
+100% modelo. **Depois dos resultados da rodada**, rode o tracking (Brier blend-vs-modelo + monitor
+de regime de empates) e anote o veredito no `BOLAO.md`:
+```bash
+uv run worldcup blend-track --edition 2026
+```
 
 ### 3. Gerar/atualizar os palpites
 ```bash
@@ -54,11 +67,13 @@ uv run worldcup predict --edition 2026
 ```
 Isso reajusta o modelo (dando peso alto aos jogos já registrados), refaz a simulação e grava
 `out/palpites-2026.csv` e `out/palpites-2026.md`. Jogos já disputados saem como `FINAL`; só os
-que faltam recebem palpite.
+que faltam recebem palpite. Com `odds.csv`, o palpite já sai blendado a `blend_weight`.
 
 Opções úteis:
-- `--risk 0.7` → mais agressivo (arrisca mais zebras; útil para diferenciar e subir no ranking
-  quando se está atrás). `--risk 0.3` → mais conservador. Default 0.5 (maximiza pontos esperados).
+- `--risk 0.7` → mais agressivo (arrisca mais zebras). **No Sistema I, subir o risco NÃO melhora o
+  ranking** — testado (ver `BOLAO.md`); a alavanca de ranking é acurácia (blend), não ousadia.
+  `--risk 0.3` → conservador. Default 0.5 (maximiza pontos esperados).
+- `--blend-weight W` → sobrescreve o peso do mercado no blend (0 = só modelo).
 - `--sims 10000` → mais simulações (probabilidades mais estáveis, roda um pouco mais devagar).
 
 ### 4. Apresentar ao usuário

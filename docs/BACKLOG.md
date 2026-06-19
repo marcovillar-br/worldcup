@@ -35,6 +35,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-19](#eng-19) | P2 | model | ✅ | Blendar probabilidades do Dixon-Coles com odds de mercado (des-vigadas) |
 | [ENG-20](#eng-20) | P2 | tests/ci | 🔴 | Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%) |
 | [ENG-21](#eng-21) | P3 | processo | 🔴 | Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11) |
+| [ENG-22](#eng-22) | P3 | backtest | 🔴 | Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo) |
 
 ---
 
@@ -499,4 +500,32 @@ obsoletas do BOLAO (a memória higieniza-se por revisão). Preferir **consolidar
 **Aceite:** revisão de sobreposição registrada (canônico por assunto declarado para o material de
 blend/odds); nenhuma seção duplicada sem canônico; `BOLAO` sem entradas obsoletas. (Vigilância
 recorrente — fechar quando a revisão for feita; reabrir a cada novo salto, como o ENG-11.)
+**Commit:** —
+
+## ENG-22
+**Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo)** · P3 · `backtest` · 🔴 todo
+
+Dados da Copa 2026 até J28 (medido com o modelo as-of): **10 de 28 jogos de grupo foram empates
+(36%)** contra ~26% que o modelo espera (~1,2σ binomial — variância, não sinal, coerente com o
+veredito do [ENG-18] de que o modelo é **bem calibrado** em empates sobre 256 jogos, até os
+superestima). Sob E-max + Sistema I o `best_prediction` **nunca palpita empate** (palpitou 0 em 28),
+então **todo empate real zera** — **10 dos 13 zeros são empates**; é a fraqueza dominante (em jogo
+decidido o tool acerta 80%/100% o lado). Risco dos dois lados: **agir agora** (forçar empates) é
+overfit à variância e baixa os pontos esperados; **não ter detector** deixaria passar um regime real
+de empates se ele existir. Falta um monitor que separe os dois com base estatística, não com punhado
+de jogos — exatamente o espírito do ENG-18, mas na **edição viva**.
+
+**Refs:** `backtest.prospective_blend_report` (irmão: diagnóstico as-of na edição viva),
+`backtest.multiclass_brier`/`reliability_curve`, `scoring.outcome_probs_from_matrix`; veredito do
+[ENG-18] (modelo calibrado em empate; `model.rho`≈−0,078 já puxa massa pra empate).
+**Correção proposta:** função (vizinha de `prospective_blend_report`) que, sobre os jogos de grupo já
+disputados, compara a **frequência observada de empates** com a **soma das P(empate) do modelo
+as-of** e devolve o desvio padronizado (z-score binomial / p-valor). Expor via CLI (ou no
+`blend-track`). **Gatilho de ação:** só quando o desvio for **≥2σ sustentado** é que um *tilt* de
+empate passa a ser justificado por dados — e aí abre-se um **item-filho** para a correção do modelo
+(ex.: termo específico de empate ou ajuste do `rho` para a edição). Até lá: **reportar e não agir**.
+**Aceite:** função + teste em caso sintético (probabilidades/resultados conhecidos → z fechado);
+roda sobre os jogos da 2026 e reporta observado/esperado/z; documenta o gatilho de 2σ e a postura
+"não agir sobre variância". A correção em si **não** entra aqui (medição-só, como o ENG-18) — vira
+item-filho se e quando o gatilho disparar.
 **Commit:** —

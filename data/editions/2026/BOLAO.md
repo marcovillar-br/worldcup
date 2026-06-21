@@ -11,22 +11,15 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-19)
+## Estado atual (atualizado em 2026-06-21)
 
-- **28 de 104 jogos disputados (J1–J28).** Resultados moram no `fixtures.csv`; carga rastreada em
-  `git log`. martj42 atrasa ~1 dia (quando atrasa, buscar via web e `worldcup record`).
-- **Desempenho do tool até aqui (não-derivável):** ~54% de acerto de 1×2, **46% de zeros — e os zeros
-  são quase todos empates** (10 empates reais, 0 palpitados; em jogo decidido acerta 80–100% o lado).
-  É a fraqueza estrutural da Copa, majoritariamente variância (ver Histórico 2026-06-19 e ENG-22).
-- Rodada de hoje (J29–J32, 19/06): Brasil 2×0 Haiti, Escócia 0×1 Marrocos, Turquia 2×1 Paraguai;
-  **J32 EUA×Austrália é a divergência do dia** — modelo crava Austrália (39%), mercado dá EUA (48%),
-  palpite vivo **1×0 EUA**.
-- **`blend-track` n=6:** Brier modelo **0,441** vs blend **0,430** — blend à frente (inverteu o n=2);
-  ainda ruído, acompanhar até ~20 jogos.
-- Favorito ao título: **Argentina (35,2%)**; Espanha 11,8%, Inglaterra 7,8%, França 7,6%, Brasil 5,0%.
-- **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds Pinnacle **ATIVO** — ENG-19);
-  admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do `odds.csv`: no
-  README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API vive no `.env`.
+- **36 de 104 jogos disputados (J1–J36).** Fase de grupos rodada 3 começa hoje (J37–J40 em 21/06).
+- **`blend-track` n=13:** Brier modelo **0,506** vs blend **0,466** — Δ=**+0,041**; blend
+  segue melhor. Regime de empates: 11/36 (31%) z=+0,73 — variância, sem ação.
+- Favorito ao título: **Argentina (36,0%)**; Espanha 9,3%, **Brasil 7,0%**, Inglaterra 6,5%, França 5,6%.
+- **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds Pinnacle **ATIVO** — ENG-19; 40 odds
+  atualizadas em 20/06); admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
+  `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API vive no `.env`.
 
 ## Decisões vivas
 
@@ -40,6 +33,22 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-21 — **Rodada J33–J36 fechada; 36 jogos disputados.** blend-track n=13: Brier modelo
+  0,506 vs blend 0,466 (Δ+0,041, blend à frente). Empates 11/36 (31%) z=+0,73 — variância.
+  Argentina 36,0%, Espanha 9,3%, Brasil 7,0%. Última rodada de grupos começa hoje (J37–J40).
+
+- 2026-06-20 — **J35 Holanda 5×1 Suécia:** acertamos o lado ✅, palpitamos 2×1 (goleada inesperada). odds pós-jogo capturadas com valor inválido (1.0) → linha removida do odds.csv; J35 ficará fora do blend-track. Favoritos: Argentina 37,1%, Espanha 10,4%, Brasil 7,9%.
+
+- 2026-06-19 (noite) — **Rodada J29–J32 completa.** 2 placares exatos: Brasil 3×0 Haiti ✅ e Escócia
+  0×1 Marrocos ✅. EUA 2×0 Austrália: acertamos o lado (1×0 palpitado). Turquia 0×1 Paraguai: zebra —
+  palpitamos Turquia 2×1. blend-track n=10: Brier modelo 0,467 vs blend 0,419 (Δ+0,048, delta
+  crescendo — blend cada vez mais sólido). Argentina sobe para 37,3%; Brasil volta ao top-3 (8,5%).
+
+- 2026-06-19 (tarde) — **J30 Escócia 0×1 Marrocos: palpite exato ✅.** blend-track n=7: Brier modelo
+  0,441 vs blend 0,416 (Δ+0,025, blend à frente). Regime de empates: 10/29 (34%) z=+1,01 — variância,
+  sem ação. Marrocos entra no top-5 de campeão (5,1%); Brasil sai. Palpite de Brasil×Haiti atualizado
+  de 2×0 para 3×0 após reajuste do modelo com o novo resultado.
 
 - 2026-06-19 — **Lição dos 28 jogos: empate é a fraqueza, não a falta de placar exato.** Acerto de
   1×2 = **54%** (15/28); zeros = **46%** (13/28), dos quais **10 são empates** (10 empates reais, 0

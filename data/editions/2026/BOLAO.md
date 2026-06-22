@@ -11,14 +11,14 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-21)
+## Estado atual (atualizado em 2026-06-22)
 
-- **36 de 104 jogos disputados (J1–J36).** Fase de grupos rodada 3 começa hoje (J37–J40 em 21/06).
-- **`blend-track` n=13:** Brier modelo **0,506** vs blend **0,466** — Δ=**+0,041**; blend
-  segue melhor. Regime de empates: 11/36 (31%) z=+0,73 — variância, sem ação.
-- Favorito ao título: **Argentina (36,0%)**; Espanha 9,3%, **Brasil 7,0%**, Inglaterra 6,5%, França 5,6%.
-- **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds Pinnacle **ATIVO** — ENG-19; 40 odds
-  atualizadas em 20/06); admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
+- **40 de 104 jogos disputados (J1–J40).** Fase de grupos rodada 3 em andamento (J41–J44 hoje, 22/06).
+- **`blend-track` n=17:** Brier modelo **0,479** vs blend **0,456** — Δ=**+0,023**; blend
+  segue melhor. Regime de empates: 13/40 (32%) z=+1,06 — variância, sem ação.
+- Favorito ao título: **Argentina (36,2%)**; **Espanha sobe a 18,4%** (4×0 na A. Saudita), França 5,5%, Alemanha 5,3%, Brasil 5,1%.
+- **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds Pinnacle **ATIVO** — ENG-19; odds
+  refrescadas em 22/06: 32 jogos atualizados, 49 no total); admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
   `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API vive no `.env`.
 
 ## Decisões vivas
@@ -33,6 +33,12 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-22 — **Rodada J37–J40 fechada; 40 jogos disputados.** Os dois zeros foram empates de
+  novo (padrão persistente): J37 Bélgica 0×0 Irã e J40 Uruguai 2×2 Cabo Verde (era o único ⚡).
+  Acertamos o lado em J38 (Egito 3×1) e J39 (Espanha 4×0 — goleada maior que o 2×0 palpitado).
+  blend-track n=17: Brier modelo 0,479 vs blend 0,456 (Δ+0,023, blend à frente). Empates 13/40
+  (32%) z=+1,06 — variância. **Espanha dispara a 18,4%** no título após o 4×0; Argentina 36,2%.
 
 - 2026-06-21 — **Rodada J33–J36 fechada; 36 jogos disputados.** blend-track n=13: Brier modelo
   0,506 vs blend 0,466 (Δ+0,041, blend à frente). Empates 11/36 (31%) z=+0,73 — variância.

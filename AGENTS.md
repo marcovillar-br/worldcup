@@ -94,8 +94,10 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, por jogo. Ausente ⇒
   blend desligado. Preenchido por `scripts/fetch_odds.py` (busca The Odds API + **mescla**, preservando
   jogos já disputados — o `blend-track` acumula o tally; à mão, **acrescente**, não sobrescreva).
-  Linhas em branco são ignoradas. Odds **reais** coletadas valem versionar (reprodutibilidade do
-  veredito de blend); **nunca versione odds inventadas/de teste** nem a chave (vive no `.env`).
+  Linhas em branco são ignoradas. **`odds.csv` é gitignored** — o ToS da The Odds API não permite
+  redistribuir odds em repo público (ver `docs/DATA.md` §6); vive só local, e o veredito de blend é
+  reproduzível localmente. Mantenha o arquivo (não o apague); **nunca** versione odds nem a chave
+  (que vive no `.env`).
 - `BOLAO.md` — **memória de campanha** do bolão (agnóstica a ferramenta): decisões vivas que não
   são rederiváveis de dados/código (`risk` escolhido, situação no ranking, regras do bolão).
   **Leia no início da sessão e atualize quando uma decisão de campanha acontecer.**
@@ -116,10 +118,11 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   de quem está em `tournament.toml::hosts`, **não** necessariamente da coluna `home`: a escala oficial
   pode listar o anfitrião como visitante num jogo no estádio dele (Copa 2026, jogos 50/51/60), e a
   vantagem segue o anfitrião. Regra centralizada em `MatrixCache._host_away` → `score_matrix(host_away=…)`.
-- **Gerados (no .gitignore)**: `out/`, `data/historical_results.csv`, caches. Versionar só
-  specs de edição, código, testes e a skill. **Exceção deliberada:** os runs **reais** em
-  `data/editions/<ano>/history/` são versionados — snapshots imutáveis e não-reprodutíveis
-  (ver acima); os `*.reconstruido.*` ficam no `.gitignore` (regeneráveis via `--as-of`).
+- **Gerados (no .gitignore)**: `out/`, `data/historical_results.csv`, caches, **`data/editions/*/odds.csv`**
+  (odds reais — gitignored por ToS, ver `docs/DATA.md` §6). Versionar só specs de edição, código,
+  testes e a skill. **Exceção deliberada:** os runs **reais** em `data/editions/<ano>/history/` são
+  versionados — snapshots imutáveis e não-reprodutíveis (ver acima); os `*.reconstruido.*` ficam no
+  `.gitignore` (regeneráveis via `--as-of`).
 - **Higiene de artefatos**: limpeza é **sob demanda** via `scripts/clean-artifacts.sh`
   (dry-run por padrão; `--force` apaga). Poda transcripts de sessão (`~/.claude/.../*.jsonl`) com
   mais de 7 dias preservando a sessão ativa, e o scratch `tmp/`. **A memória

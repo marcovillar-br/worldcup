@@ -224,3 +224,6 @@ tmp/
 .claude/projects/
 # Snapshots reconstruídos são regeneráveis sob demanda (predict --as-of); versiona só runs reais.
 data/editions/*/history/*.reconstruido.*
+# Odds reais da The Odds API: NÃO versionar (ToS proíbe redistribuir odds em repo público).
+# Vive só local; o veredito de blend é reproduzível localmente. Ver docs/DATA.md §6.
+data/editions/*/odds.csv

@@ -132,7 +132,7 @@ automatiza esse cálculo e o mantém atualizado.
 - **RNF-06 — Desempenho.** Um `predict` completo (ajuste + 5000 sims + 104 palpites) roda em segundos
   num laptop; `--sims` troca estabilidade por tempo.
 - **RNF-07 — Portabilidade & segurança.** Roda local via `uv`; segredos (chave da The Odds API) vivem
-  no `.env`, nunca versionados; odds inventadas/de teste nunca entram no repo.
+  no `.env`, nunca versionados; `odds.csv` é gitignored (ToS — ver [`DATA.md`](DATA.md) §6).
 
 ## 8. Contratos de dados de entrada (resumo)
 
@@ -142,7 +142,7 @@ automatiza esse cálculo e o mantém atualizado.
 | `groups.csv` | `group,team` (nomes canônicos em inglês) | sim |
 | `fixtures.csv` | Os 104 jogos + **chaveamento por slots** + colunas de resultado | sim |
 | `scoring.toml` | Sistema de pontos, pesos de fase, `blend_weight`, `risk` | sim |
-| `odds.csv` | **Opcional**: `match_id,home,draw,away` em odds decimais | só odds reais |
+| `odds.csv` | **Opcional**: `match_id,home,draw,away` em odds decimais | não (gitignored, ToS) |
 | `historical_results.csv` | Base de treino normalizada (martj42) | não (cache) |
 
 Detalhe canônico dos contratos: [`SPEC.md`](SPEC.md) §contratos de dados e [`AGENTS.md`](../AGENTS.md)

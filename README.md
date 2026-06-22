@@ -87,6 +87,8 @@ do git (`.gitignore`); só os runs reais (`--archive`) são versionados em `hist
 - `docs/C4.md` — **arquitetura no modelo C4** (Contexto → Container → Componentes → Dinâmica),
   em diagramas Mermaid derivados do grafo de imports real.
 - `docs/PRD.md` — **requisitos de produto** (o quê e por quê), com glossário em `docs/GLOSSARIO.md`.
+- `docs/MODEL_CARD.md` — **cartão do modelo** (uso pretendido, métricas, calibração, limitações).
+- `docs/DATA.md` — **proveniência e licenciamento dos dados** (fontes, versionamento, itens de IP).
 - `AGENTS.md` (+ symlink `CLAUDE.md`) — guia para quem desenvolve/mantém o projeto.
 - `CHANGELOG.md` — mudanças relevantes por versão (Keep a Changelog); tags `vX.Y.Z` marcam marcos.
 

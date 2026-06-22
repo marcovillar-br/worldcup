@@ -6,6 +6,7 @@ esperados** do bolão. Calibrado para o **Sistema I** do app *Bolão de Futebol 
 (base 1–13 por probabilidade + bônus cumulativos; **zebra vale mais**).
 
 **Metodologia (matemática, derivações, exemplos numéricos): [`docs/SPEC.md`](docs/SPEC.md).**
+**Arquitetura visual (C4: Contexto→Container→Componentes→Dinâmica): [`docs/C4.md`](docs/C4.md).**
 
 ## Tom da interação
 
@@ -27,7 +28,7 @@ Nada específico de um ano fica no código. Cada edição é descrita por **dado
 ## Comandos (sempre via uv)
 
 Ambiente: `uv sync` (a partir do `uv.lock`). O **catálogo completo da CLI `worldcup`**
-(`predict`/`sync-results`/`record`/`backtest`, com `--archive` e `--as-of`) é canônico no
+(`predict`/`sync-results`/`record`/`backtest`/`blend-track`, com `--archive` e `--as-of`) é canônico no
 **[`README.md`](README.md)** — não duplicar aqui. As checagens de qualidade ficam abaixo.
 
 ## Qualidade (rode antes de concluir mudanças)
@@ -53,7 +54,8 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `teams.py` — nome canônico (inglês, do dataset) ↔ exibição em português.
 - `fetch_data.py` — baixa `results.csv`/`shootouts.csv` (martj42), normaliza → `data/historical_results.csv`.
 - `model.py` — `DixonColesModel`: ajuste ponderado (decaimento temporal + peso de torneio + mando),
-  filtra seleções não-FIFA; `score_matrix(home, away, neutral)`.
+  filtra seleções não-FIFA; `score_matrix(home, away, neutral, host_away=…)` (mando do anfitrião
+  via `host_away`, ver *Mando* abaixo).
 - `scoring.py` — `Scorer`: pontos do Sistema I + `best_prediction()` (maximiza pontos esperados);
   `risk` controla a ousadia (0.5 = fiel; >0.5 arrisca mais zebras).
 - `knockout.py` — `predict_knockout()`: 3 camadas (placar 90', prorrogação, pênaltis) + quem avança.
@@ -82,6 +84,9 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   oficial da FIFA — não coincidem (ex.: jogo `50` aqui = *Match 51* FIFA). Ao cruzar com a escala
   oficial, guie-se pelos **nomes das seleções**, nunca pelo número.
 - `scoring.toml` — sistema de pontos + pesos por fase (default: Sistema I + Equilíbrio gradual).
+  Campo `risk` (ousadia da escolha; `0.5` = fiel/E[pts] puro — **a edição 2026 usa `0.5`**).
+  ⚠️ O default do **campo ausente** é `0.6` (`ScoringConfig`, não `0.5`): cada edição deve **fixar
+  `risk` no `scoring.toml`**; omiti-lo herda um leve viés de ousadia (0.6), não o fiel 0.5.
   Também `blend_weight` (peso do mercado no blend com odds; `0` = só modelo, ausência do campo ⇒ 0;
   **a edição 2026 usa `0.6`** — ENG-19).
 - `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, por jogo. Ausente ⇒

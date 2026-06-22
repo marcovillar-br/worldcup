@@ -146,8 +146,8 @@ com peso `w_k = decaimento_k · torneio_k · multiplicador_k`:
 - **Decaimento temporal**: `decaimento = 0.5^(idade_anos / meia_vida)`, meia-vida padrão **2,0 anos**
   (tunada via backtest leave-one-World-Cup-out — ver `docs/BACKLOG.md` ENG-17).
   Um jogo de 2 anos atrás pesa metade; de 4 anos, um quarto.
-- **Importância do torneio**: Copa = 1,0; continentais 0,8–0,85; eliminatórias 0,8; Nations
-  League/Gold Cup e torneios não listados 0,70–0,75; amistoso = 0,5 (tabela canônica em
+- **Importância do torneio**: Copa = 1,0; continentais 0,8–0,85; eliminatórias 0,8; UEFA Nations
+  League 0,75; Gold Cup e torneios não listados 0,70; amistoso = 0,5 (tabela canônica em
   `model._TOURNAMENT_WEIGHTS`/`_DEFAULT_TOURNAMENT_WEIGHT`)
   (`model.tournament_weight`).
 - **Multiplicador** (realimentação): jogos já disputados da própria Copa entram com peso extra
@@ -161,7 +161,8 @@ estreantes.
 
 `λ` depende de `ataque[h] − defesa[a]`, invariante sob `ataque → ataque + c`, `defesa → defesa + c`.
 O ridge ancora `c` (penaliza valores grandes); pós-otimização **centramos** `ataque` e `defesa` em
-média zero e dobramos a constante no `base`. Também filtramos seleções não-FIFA (CONIFA, ilhas) que
+média zero e **absorvemos o deslocamento no `base`** (somando a média do ataque e subtraindo a da
+defesa), preservando `base + ataque[h] − defesa[a]`. Também filtramos seleções não-FIFA (CONIFA, ilhas) que
 jogam circuitos isolados e distorceriam o ajuste: mantém-se só quem disputa competições oficiais
 (`peso_torneio ≥ 0.75` ou eliminatórias) com no mínimo `min_matches` jogos.
 
@@ -330,6 +331,10 @@ quando o resultado do palpite difere do favorito do modelo.
 Assim a régua de pontos reproduz o app e o `risk` vira um **knob de estratégia** explícito: arriscar
 mais zebra (útil para ganhar variância e subir no ranking) sem distorcer a pontuação fiel usada no
 backtest e no E[pts].
+
+> **Nota de implementação:** o default do campo `risk` em `ScoringConfig` é `0.6` (não `0.5`); uma
+> edição que **omita** `risk` no `scoring.toml` herda um leve viés de ousadia. Por isso cada edição
+> fixa o valor explicitamente — a 2026 usa `risk = 0.5` (fiel). Ver `AGENTS.md` §"Modelo de dados".
 
 ---
 

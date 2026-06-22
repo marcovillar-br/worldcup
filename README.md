@@ -50,7 +50,8 @@ Os palpites ficam em `out/palpites-<edição>.md` (tabela pronta para copiar), `
 de zebra) e **otimizado para impressão** (Ctrl+P → salvar em PDF, com quebra de página por fase).
 
 `out/` é regenerável (gitignored) e sobrescrito a cada run. Para guardar o **histórico** de como
-os palpites evoluem rodada a rodada, use `predict --archive` (ou `--archive AAAA-MM-DD`): grava um
+os palpites evoluem rodada a rodada, use `predict --archive` ou `sync-results --archive` (ambos
+aceitam `--archive AAAA-MM-DD`): grava um
 snapshot imutável e **versionado** em `data/editions/<edição>/history/<data>.{csv,md}`. Faz sentido
 porque, depois que novos resultados entram e o modelo reajusta, o palpite de um dia não é mais
 reproduzível.
@@ -83,6 +84,8 @@ do git (`.gitignore`); só os runs reais (`--archive`) são versionados em `hist
 - `data/historical_results.csv` — base histórica compartilhada, baixada pelo `fetch-data`.
 - `docs/SPEC.md` — **especificação técnica e metodologia** (matemática do modelo, fórmula de
   pontuação, simulação, validação) com derivações e exemplos numéricos.
+- `docs/C4.md` — **arquitetura no modelo C4** (Contexto → Container → Componentes → Dinâmica),
+  em diagramas Mermaid derivados do grafo de imports real.
 - `AGENTS.md` (+ symlink `CLAUDE.md`) — guia para quem desenvolve/mantém o projeto.
 - `CHANGELOG.md` — mudanças relevantes por versão (Keep a Changelog); tags `vX.Y.Z` marcam marcos.
 

@@ -7,6 +7,7 @@ esperados** do bolão. Calibrado para o **Sistema I** do app *Bolão de Futebol 
 
 **Metodologia (matemática, derivações, exemplos numéricos): [`docs/SPEC.md`](docs/SPEC.md).**
 **Arquitetura visual (C4: Contexto→Container→Componentes→Dinâmica): [`docs/C4.md`](docs/C4.md).**
+**Produto (requisitos, personas, escopo): [`docs/PRD.md`](docs/PRD.md) · termos: [`docs/GLOSSARIO.md`](docs/GLOSSARIO.md).**
 
 ## Tom da interação
 

@@ -11,14 +11,15 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-22)
+## Estado atual (atualizado em 2026-06-23)
 
-- **40 de 104 jogos disputados (J1–J40).** Fase de grupos rodada 3 em andamento (J41–J44 hoje, 22/06).
-- **`blend-track` n=17:** Brier modelo **0,479** vs blend **0,456** — Δ=**+0,023**; blend
-  segue melhor. Regime de empates: 13/40 (32%) z=+1,06 — variância, sem ação.
-- Favorito ao título: **Argentina (36,2%)**; **Espanha sobe a 18,4%** (4×0 na A. Saudita), França 5,5%, Alemanha 5,3%, Brasil 5,1%.
+- **44 de 104 jogos disputados (J1–J44).** Última rodada de grupos em andamento (J45–J48 hoje, 23/06,
+  fecham os grupos K e L; demais grupos J49–J72 até 27/06).
+- **`blend-track` n=21:** Brier modelo **0,424** vs blend **0,408** — Δ=**+0,016**; blend
+  segue melhor. Regime de empates: 13/44 (30%) z=+0,74 — variância, sem ação.
+- Favorito ao título: **Argentina (45,5%)**; Espanha 16,9%, França 6,1%, Brasil 5,2%, Inglaterra 4,1%.
 - **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds Pinnacle **ATIVO** — ENG-19; odds
-  refrescadas em 22/06: 32 jogos atualizados, 49 no total); admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
+  refrescadas em 23/06: 28 jogos atualizados, 49 no total); admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
   `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API vive no `.env`.
 
 ## Decisões vivas
@@ -33,6 +34,12 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-23 — **Rodada J41–J44 fechada; 44 jogos disputados.** Argentina 2×0 Áustria e França 3×0
+  Iraque confirmaram os favoritos; Argélia bateu a Jordânia (1×2) e Noruega 3×2 Senegal (jogo aberto).
+  blend-track n=21: Brier modelo 0,424 vs blend 0,408 (Δ+0,016, blend à frente). Empates 13/44 (30%)
+  z=+0,74 — variância. **Argentina dispara a 45,5%** no título; Espanha 16,9%. Hoje (23/06) fecham os
+  grupos K e L (J45–J48).
 
 - 2026-06-22 — **Rodada J37–J40 fechada; 40 jogos disputados.** Os dois zeros foram empates de
   novo (padrão persistente): J37 Bélgica 0×0 Irã e J40 Uruguai 2×2 Cabo Verde (era o único ⚡).

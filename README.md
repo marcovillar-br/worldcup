@@ -105,6 +105,19 @@ Copa de 2022 (treinando só com jogos anteriores). Lá a estratégia **agressiva
 fez ~28% mais pontos que a fiel (`0.5`) — coerente com "azarão vale mais", ao custo de acertar menos
 o 1×2. Se quiser arriscar para subir no ranking, gere com `--risk 0.7` ou `--risk 1.0`.
 
+**Eficiência da sua campanha** — quanto dos pontos que o tool renderia você capturou:
+
+```bash
+uv run python scripts/efficiency.py --edition 2026 --my-points 143 --leader 173 [--compare-archive]
+```
+
+Para cada jogo já disputado, reconstrói o palpite **as-of** (o que o tool mostrava na manhã do jogo)
+e o pontua contra o resultado real — a soma é o **teto** que seguir o tool à risca renderia;
+`eficiência = seus_pontos / teto`. `--compare-archive` confronta com os snapshots reais de
+`history/` e lista onde a reconstrução diverge (quanto do gap é ruído de reconstrução vs. dias sem
+snapshot arquivado). Cobre a fase de grupos com pontuação exata; no mata-mata pontua os 90' (os
+bônus de prorrogação/pênaltis não são reconstrutíveis dos dados reais — só o vencedor é guardado).
+
 ## Limitações conhecidas
 
 (Resumo para o usuário; a fonte canônica, com o detalhamento técnico, é [`docs/SPEC.md`](docs/SPEC.md) §9.2.)

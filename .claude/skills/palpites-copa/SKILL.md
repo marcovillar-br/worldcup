@@ -1,6 +1,6 @@
 ---
 name: palpites-copa
-description: Gera e atualiza os palpites do bolão da Copa do Mundo usando o app worldcup (modelo Dixon-Coles). Use SEMPRE que o usuário pedir palpites da Copa, quiser os palpites da próxima rodada/fase, quiser registrar resultados de jogos já disputados, perguntar quem é o favorito/campeão, ou quiser repalpitar depois que jogos aconteceram — mesmo que não diga "worldcup" explicitamente. Cobre fase de grupos e mata-mata (90 min, prorrogação e pênaltis).
+description: Gera e atualiza os palpites do bolão da Copa do Mundo usando o app worldcup (modelo Dixon-Coles). Use SEMPRE que o usuário pedir palpites da Copa, quiser os palpites da próxima rodada/fase, quiser registrar resultados de jogos já disputados, perguntar quem é o favorito/campeão, quiser repalpitar depois que jogos aconteceram, ou perguntar sobre sua eficiência/desempenho no bolão ("estou indo bem?", "quanto deixei na mesa?") — mesmo que não diga "worldcup" explicitamente. Cobre fase de grupos e mata-mata (90 min, prorrogação e pênaltis).
 ---
 
 # Palpites da Copa (bolão)
@@ -15,6 +15,7 @@ Bolão de Futebol 2026, onde **acertar a zebra vale mais**.
 - "o Brasil empatou 1x1 com o Marrocos" (registrar resultado) → registre e repalpite
 - "quem é o favorito ao título?" → mostre as probabilidades de campeão
 - "atualiza os palpites" depois de uma rodada
+- "qual minha eficiência?" / "estou indo bem?" / "quanto eu deixei na mesa?" → passo 6
 
 ## Passos
 
@@ -91,6 +92,30 @@ Após sincronizar/repalpitar, atualize a seção **Estado atual** de `data/editi
 campanha** (mudou o `risk`, regra do bolão, situação no ranking), registre-a em **Decisões
 vivas**/**Histórico**. É a memória persistente agnóstica a ferramenta — leia-a também no início
 da sessão.
+
+### 6. Eficiência da campanha (quando o usuário perguntar "estou indo bem?")
+Mede quanto dos pontos que o tool renderia o usuário capturou. **Exige os pontos reais do usuário**
+(input dele, não derivável) — pergunte se não souber:
+```bash
+uv run python scripts/efficiency.py --edition 2026 --my-points <PTS> [--leader <PTS>] --compare-archive
+```
+Para cada jogo disputado, reconstrói o palpite **as-of** (o que o tool mostrava na manhã do jogo) e
+o pontua pelo Sistema I contra o real → o **teto** que seguir o tool à risca renderia;
+`eficiência = seus_pontos / teto`.
+
+⚠️ **Regras de interpretação (não pule — é fácil concluir errado):**
+1. **Sempre** rode com `--compare-archive`. Ele separa o teto **verificável** (jogos com snapshot
+   real em `history/`) do **reconstruído** (dias sem arquivo) — e a reconstrução **diverge** do que
+   o tool de fato mostrou (drift de odds/refit). Parte de qualquer gap é **ruído de reconstrução**.
+2. **Nunca** afirme "100%" nem culpe a execução do usuário sem checar o item 1 — sobretudo se ele
+   diz que **ajusta os palpites toda manhã** (= segue o tool; o gap então é majoritariamente
+   reconstrução, não má jogada). Foi o erro cometido na 1ª medição (ver `BOLAO.md` 2026-06-24).
+3. Se o **líder** estiver **acima** do teto do tool, diga claramente: nem seguir o tool à risca
+   alcançaria; ele pegou variância de exatos a favor (regride), não estratégia superior.
+4. Recomende manter o **arquivo da manhã completo** (`predict --archive` todo dia) — só assim a
+   eficiência fica exata (seus pontos vs `scored(palpite arquivado)`, sem reconstrução).
+
+Registre o veredito (eficiência, teto, posição) no **Histórico** do `BOLAO.md`.
 
 ## Notas
 - **Histórico/reconstrução**: `predict --archive` guarda o snapshot do dia em `history/`. Para

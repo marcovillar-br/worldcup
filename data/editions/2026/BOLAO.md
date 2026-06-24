@@ -35,6 +35,24 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
+- 2026-06-24 — **Eficiência ~88% (143 reais vs teto 161 do tool), MAS o teto é parcialmente não
+  verificável.** Usuário em **14º com 143 pts**; líder do grupo **173**. Medido por
+  `scripts/efficiency.py` (novo): reconstrói a previsão **as-of** de cada manhã (mesmo caminho do
+  `predict --as-of`, config real `risk 0.5` + blend `0.6`) e pontua pelo Sistema I → teto **161 pts**
+  (3,35/jogo). Usuário diz **ajustar os palpites toda manhã** (raramente à noite), ou seja, segue o
+  tool — então o gap **não é "má jogada"**. O `--compare-archive` localiza a incerteza: dos 48 jogos,
+  **36 têm snapshot REAL arquivado** (a partir de 13/06) e **12 não** (J1–J4, J25–J30, J32, J35) — e
+  esses 12 contêm justamente as cravadas de alto valor (J27=14, J30=14, J1=13 ≈ 41 pts), com teto
+  **100% reconstruído / não verificável**. Pior: **mesmo onde há arquivo, a reconstrução escorrega** —
+  nos 36 jogos verificáveis o tool real marcou **103** vs **100** do as-of (Δ−3; divergências em
+  J5/J7/J17/J24 por drift de odds/refit). **Conclusão honesta:** "88,8%" repousa sobre um teto ~40%
+  sintético nas partidas que mais pontuam; parte do gap é **ruído de reconstrução**, não execução.
+  **Correção:** manter o **arquivo da run da manhã completo** (`predict --archive` todo dia) — aí
+  eficiência = seus pontos vs `scored(palpite arquivado)`, sem reconstrução. **Ponto que se mantém:**
+  o líder (173) está **ACIMA** do teto (161; 164 com arquivo) — nem seguir o tool à risca colocaria
+  em 1º hoje; ele pegou variância de exatos a favor (regride no esperado). Reafirma a decisão viva:
+  alavanca é acurácia/adesão (+ peso 2× do mata-mata amplificando), não ousadia.
+
 - 2026-06-24 — **Rodada J45–J48 fechada; 48 jogos disputados.** Grupos K e L encerrados. blend-track
   n=25: Brier modelo 0,424 vs blend 0,415 (Δ+0,010, blend à frente). Empates 14/48 (29%) z=+0,74 —
   variância. **Argentina 44,0%** no título; Espanha 16,3%, Portugal sobe ao top-4 (5,5%). Hoje (24/06)

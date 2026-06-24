@@ -22,6 +22,10 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   agregados nas 4 Copas — veredito de que o modelo é bem calibrado em empate. (ENG-18)
 - Testes **e2e do pipeline** e de integração do `sync` rodando no CI (fixture histórico sintético,
   sem depender do `historical_results.csv`); piso de cobertura `fail_under` 65→80. (ENG-20)
+- **Eficiência da campanha** (`scripts/efficiency.py`): mede `seus_pontos / teto-do-tool`
+  reconstruindo o palpite **as-of** de cada manhã (mesmo caminho do `predict --as-of`) e pontuando
+  pelo Sistema I; `--compare-archive` separa o teto verificável (snapshots reais) do reconstruído e
+  expõe o ruído de reconstrução. Passo 6 da skill `palpites-copa`.
 
 ### Corrigido
 - Fit do Dixon-Coles **converge** via gradiente analítico (antes esgotava o orçamento de avaliações

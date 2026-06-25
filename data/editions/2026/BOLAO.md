@@ -11,15 +11,15 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-24)
+## Estado atual (atualizado em 2026-06-25)
 
-- **48 de 104 jogos disputados (J1–J48).** Última rodada de grupos em andamento: J49–J54 hoje (24/06,
-  grupos A/B/C); demais J55–J72 até 27/06.
-- **`blend-track` n=25:** Brier modelo **0,424** vs blend **0,415** — Δ=**+0,010**; blend
-  segue melhor. Regime de empates: 14/48 (29%) z=+0,74 — variância, sem ação.
-- Favorito ao título: **Argentina (44,0%)**; Espanha 16,3%, França 5,8%, Portugal 5,5%, Brasil 4,5%.
+- **54 de 104 jogos disputados (J1–J54).** Última rodada de grupos em andamento: J55–J60 hoje (25/06,
+  grupos D/E/F); demais J61–J72 até 27/06.
+- **`blend-track` n=31:** Brier modelo **0,426** vs blend **0,410** — Δ=**+0,015**; blend
+  segue melhor. Regime de empates: 14/54 (26%) z=+0,22 — variância, sem ação.
+- Favorito ao título: **Argentina (42,7%)**; Espanha 15,5%, Brasil 7,8%, França 5,6%, Portugal 5,2%.
 - **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19; odds
-  refrescadas em 24/06: 24 jogos atualizados, 49 no total); admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
+  refrescadas em 25/06: 18 jogos atualizados, 49 no total); admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
   `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API vive no `.env`.
 
 ## Decisões vivas
@@ -34,6 +34,16 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-25 — **Rodada J49–J54 fechada; 54 jogos disputados.** Grupos A, B e C encerrados.
+  blend-track n=31: Brier modelo 0,426 vs blend 0,410 (Δ+0,015, blend à frente). Empates 14/54 (26%)
+  z=+0,22 — variância (regime normalizou para ~25%). **Argentina 42,7%** no título; Espanha 15,5%,
+  Brasil sobe ao top-3 (7,8%). Hoje (25/06) fecham os grupos D/E/F (J55–J60).
+  **Eficiência: 88,4% (168 reais vs teto 190 do tool).** Ritmo mantido vs 24/06 (88,8%): +25 pts
+  em J49–J54 contra +29 de teto (~86% de captura na rodada). Teto subiu 161→190 (3,52/jogo) — tool
+  foi bem nos 6 jogos novos, o que **levanta a régua**. Caveat de sempre: 12/54 jogos com teto
+  reconstruído/não verificável (ver entrada 24/06). O líder de ontem (173) caiu **abaixo** do teto
+  novo (190) ⇒ alcançável seguindo o tool (número atual do líder não confirmado).
 
 - 2026-06-24 — **Eficiência ~88% (143 reais vs teto 161 do tool), MAS o teto é parcialmente não
   verificável.** Usuário em **14º com 143 pts**; líder do grupo **173**. Medido por

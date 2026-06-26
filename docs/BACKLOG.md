@@ -36,6 +36,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-20](#eng-20) | P2 | tests/ci | ✅ | Pipeline `predict` não roda no CI; `sync`/`pipeline` com cobertura baixa (34%/43%) |
 | [ENG-21](#eng-21) | P3 | processo | ✅ | Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11) |
 | [ENG-22](#eng-22) | P3 | backtest | ✅ | Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo) |
+| [ENG-23](#eng-23) | P1 | scoring | ✅ | Bônus de placar somados em vez de hierárquicos (inflam pontos, enviesam contra empate) |
 
 ---
 
@@ -562,3 +563,31 @@ no espírito do ENG-21). 4 testes (z conhecido = 1,549; gatilho >2σ; vazio; rep
 `observed` = empates reais). **Veredito ao vivo (28 jogos): 10 obs vs 7,3 esp, z=+1,19 → variância,
 não agir** — confirma o ENG-18. O item-filho de correção só abre se o z cruzar 2σ até o fim dos grupos.
 **Commit:** f1c0da6
+
+## ENG-23
+**Bônus de placar somados em vez de hierárquicos (inflam pontos, enviesam contra empate)** · P1 · `scoring` · ✅ feito
+
+`scoring.points` somava os bônus de placar do Sistema I — no placar exato dava `base + exato(5) +
+saldo(2) + gols_vencedor(3) + gols_perdedor(1)` = base+11 — mas o app concede **só o maior nível
+atingido** (hierárquico): **exato +5 > gols do vencedor +3 > saldo +2 > gols do perdedor +1**; a
+goleada (+1) é um extra que empilha. Descoberto ao confrontar as telas "Pontos por Jogo" do app
+(rodadas J43–J60, 23–25/06): Curaçao 0×2 cravado pontuou **7** (= base 2 + exato 5), não os 13 que o
+código dava; Paraguai 0×0 cravado = **9** (base 4 + 5). Prova de que não era cumulativo: 7 é
+impossível somando (base mínima 1 + 11 = 12). Dois efeitos graves: (1) **toda eficiência calculada
+ficou inflada** (teto superestimado); (2) **`best_prediction` enviesado contra empates** — jogo
+decidido acumulava mais bônus que empate, então o E-max quase nunca escolhia empate (ligado ao
+sintoma do [ENG-18]/[ENG-22], "0 empates palpitados").
+
+**Refs:** `scoring.Scorer.points` (a régua), `scoring.Scorer.best_prediction`/`expected_points`
+(consumidores; mudam de comportamento), `docs/SPEC.md` §4 (tabela + pseudocódigo + exemplos).
+**Correção:** os quatro níveis de placar viram uma **hierarquia** (`if/elif` pelo maior atingido),
+não somas; os três níveis "decididos" são mutuamente exclusivos com o exato (acertar dois ⇒ exato),
+o que torna a hierarquia natural. Goleada (+1) mantida como extra que empilha (sem exemplo no app —
+marcado no teste). **Validação:** confronto dos 12 jogos J43–J54 com o app — **8 cravam exato, 4
+erram por ≤1 só na base** (probabilidade nossa ≠ a do app; resíduo separado, não o bug). Casos de
+ouro travados em `tests/test_scoring.py` (`test_app_golden_points_per_game`,
+`test_exact_score_is_base_plus_five_only`, `test_placar_bonus_levels_are_exclusive`). Docs de "bônus
+cumulativos" → "hierárquicos" em SPEC/GLOSSARIO/PRD/AGENTS/scoring.toml. Edição repalpitada: o modelo
+**volta a palpitar empates** (J61/J62 de 26/06 saem 0×0). **Pendência (não-bloqueante):** base ~1pt
+baixa em ~1/3 dos jogos por divergência de probabilidade modelo×app — vira item-filho se incomodar.
+**Commit:** 5017468

@@ -12,10 +12,14 @@ html,body{height:100%}
 body{
   background:#05080d;color:var(--ink);
   font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
-  display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;overflow:hidden;
+  min-height:100vh;min-height:100dvh; /* dvh: desconta a barra do navegador mobile (vh fica atrás dela) */
 }
 .stage{
-  position:relative;width:min(100vw,177.78vh);height:min(56.25vw,100vh);
+  position:relative;
+  /* dvh garante que o palco (e o rodapé no fundo dele) caiba na área VISÍVEL no mobile/paisagem */
+  width:min(100vw,177.78vh);height:min(56.25vw,100vh);
+  width:min(100dvw,177.78dvh);height:min(56.25dvw,100dvh);
   container-type:size;display:flex;flex-direction:column;overflow:hidden;
   background:
     radial-gradient(120% 90% at 50% -20%, #14233a 0%, #0a0e14 55%, #070b12 100%);

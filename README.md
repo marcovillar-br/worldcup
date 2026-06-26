@@ -127,10 +127,10 @@ explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):
 uv run python scripts/build_presentation.py --docs   # gera out/ e docs/apresentacao.html
 ```
 
-Abra o HTML gerado no navegador (← → navegam; `Ctrl+P` salva um PDF/handout). É self-contained (sem
-CDN; imagens embutidas em base64). O **fonte versionado** é o script + as imagens em `scripts/assets/`;
-o HTML em si é **gerado sob demanda** (gitignored, pesado pelas fotos embutidas) — rode o comando acima
-para produzi-lo.
+Abra o HTML no navegador (← → navegam; `Ctrl+P` salva um PDF/handout). É self-contained (sem CDN;
+imagens CC embutidas em base64). A versão pronta vive versionada em
+[`docs/apresentacao.html`](docs/apresentacao.html); ao editar o script, **regenere com `--docs`** e
+inclua o HTML no mesmo commit.
 
 ## Limitações conhecidas
 

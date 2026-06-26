@@ -463,18 +463,22 @@ os anfitriões da Copa-alvo (`_WORLD_CUP_HOSTS`), para tratar o mando do país-s
 (§3.1). Em 2022 isso não altera a tabela: o Qatar abriu como mandante, então o caso *host-away*
 nunca dispara.
 
-Resultado na Copa **2022** (64 jogos):
+Resultado na Copa **2022** (64 jogos), com a **régua hierárquica corrigida** (ENG-23):
 
 | risco | pts totais | média/jogo | % resultado | % placar exato |
 |---|---|---|---|---|
-| 0.0 | 170.0 | 2.66 | 42.2% | 9.4% |
-| 0.5 | 177.0 | 2.77 | 43.8% | 9.4% |
-| 1.0 | **226.0** | 3.53 | 32.8% | **12.5%** |
+| 0.0 | **187.0** | 2.92 | 54.7% | 10.9% |
+| 0.5 | 159.0 | 2.48 | 46.9% | 9.4% |
+| 1.0 | 181.0 | 2.83 | 26.6% | 10.9% |
 
-A estratégia agressiva (`risk=1.0`) fez **~28% mais pontos** que a fiel (`0.5`) e ~33% mais que a
-conservadora (`0.0`) numa Copa cheia de zebras — coerente com "azarão vale mais", ao custo de acertar
-menos o 1×2 (32.8% vs 43.8%). (Uma Copa só; não generalizar cegamente. Números com a régua de pontos
-calibrada ao app — §4.1.)
+O resultado é **não-monótono e ruidoso** (uma Copa só): aqui o conservador (`0.0`) fez mais pontos, o
+agressivo (`1.0`) ficou logo atrás e o fiel (`0.5`) abaixo dos dois. A grande vantagem do agressivo que
+aparecia antes (`risk=1.0` ~28% acima do fiel) **era artefato do bug de pontuação cumulativa** (ENG-23),
+que superrecompensava cravar placar e premiava a caça a zebras exatas; corrigida a régua para
+**hierárquica**, essa vantagem some. **Não há sinal robusto de que subir o risco melhore os pontos** — a
+alavanca de ranking é **acurácia** (blend de odds, ENG-19), não ousadia (ver também a modelagem de campo
+no `BOLAO.md`). (Números reproduzíveis por `uv run worldcup backtest --edition 2022`; uma Copa só, não
+generalizar cegamente. Régua de pontos calibrada ao app — §4.1.)
 
 **Calibração probabilística (ENG-18).** Além dos pontos e do acerto de 1×2 (métricas de
 *classificação*, via argmax), o backtest reporta a **calibração** do modelo — se as probabilidades

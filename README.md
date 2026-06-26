@@ -101,9 +101,11 @@ O default já vem calibrado como **Sistema I** (base 1–13 + bônus reais do ap
 ## Validação e estratégia
 
 Rode `uv run worldcup backtest --edition 2022` para ver quantos pontos o modelo teria feito na
-Copa de 2022 (treinando só com jogos anteriores). Lá a estratégia **agressiva** (`risk=1.0`)
-fez ~28% mais pontos que a fiel (`0.5`) — coerente com "azarão vale mais", ao custo de acertar menos
-o 1×2. Se quiser arriscar para subir no ranking, gere com `--risk 0.7` ou `--risk 1.0`.
+Copa de 2022 (treinando só com jogos anteriores). Com a régua de pontos **corrigida** (bônus de placar
+hierárquicos, não somados), subir o risco **não** melhora os pontos de forma confiável: no backtest de
+2022 o conservador (`risk=0.0`) faz mais que o agressivo (`1.0`), e o fiel (`0.5`) fica no meio — um
+resultado ruidoso de uma Copa só. A alavanca de ranking é **acurácia** (blend de odds), não ousadia; o
+default `0.5` (maximiza pontos esperados) é o recomendado.
 
 **Eficiência da sua campanha** — quanto dos pontos que o tool renderia você capturou:
 

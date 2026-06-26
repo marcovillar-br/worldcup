@@ -155,7 +155,9 @@ Detalhe canônico dos contratos: [`SPEC.md`](SPEC.md) §contratos de dados e [`A
 - **M1 — Pontos no bolão** (resultado final): pontos do apostador vs. o campo (a métrica que importa).
 - **M2 — Acurácia preditiva**: **Brier multiclasse** do modelo/blend nos jogos disputados (quanto
   menor, melhor); meta operacional: **blend ≤ modelo-puro** (Δ positivo no `blend-track`).
-- **M3 — Eficiência do palpite**: pontos colhidos vs. o teto do modelo (palpites as-of renderiam quanto?).
+- **M3 — Eficiência do palpite**: pontos colhidos vs. o teto do modelo (palpites as-of renderiam
+  quanto?). *(`scripts/efficiency.py`: `eficiência = seus_pontos / teto`, teto por reconstrução as-of;
+  estimativa ±~1/jogo — a base do Sistema I usa a probabilidade interna do app, inobservável, ENG-24.)*
 - **M4 — Calibração**: regime de empates observado vs esperado dentro do ruído (sem viés sistemático).
 
 > Achado de campanha (não-objetivo de produto, mas norteia M1): no Sistema I a **alavanca de ranking é

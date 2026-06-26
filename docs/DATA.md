@@ -27,7 +27,12 @@ termos próprios, tratados aqui.
 
 - **Normalização** (`fetch_data.normalize`): recorte a partir de **2006-01-01**, só jogos disputados,
   nomes mapeados para o **canônico em inglês** (`teams.canonical`), saída em
-  `data/historical_results.csv`.
+  `data/historical_results.csv` com 8 colunas (`fetch_data.OUTPUT_COLUMNS`):
+  `date, home_team, away_team, home_score, away_score, tournament, neutral, penalty_winner`.
+  As 7 primeiras vêm do `results.csv`; **`penalty_winner`** é **mesclada** do `shootouts.csv`
+  (`_merge_penalty_winner`, casando por `date+home+away`): nome canônico do vencedor da disputa, ou
+  `""` se o jogo não foi a pênaltis. É o **único desfecho de mata-mata determinável da fonte** (o
+  martj42 não traz a fase); o `backtest` a usa para os bônus de prorrogação/pênaltis (ENG-12).
 - **Odds** (`scripts/fetch_odds.py`): busca e **mescla** no `odds.csv`, **preservando** os jogos já
   disputados (não sobrescreve histórico de odds). Linhas em branco/ inválidas são ignoradas.
 - Nenhum dado é alterado manualmente no cache; correções de resultado entram via `record`/`sync`.

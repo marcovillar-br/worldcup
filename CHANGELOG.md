@@ -42,6 +42,13 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   do scipy e parava longe do ótimo, sem sinal além do aviso). (ENG-16)
 
 ### Mudado
+- **Doc de estratégia/backtest realinhada à régua hierárquica** (auditoria pós-ENG-23): a tabela do
+  backtest 2022 (SPEC §9.1, MODEL_CARD) foi atualizada (agora 187/159/181 por risco 0.0/0.5/1.0) e a
+  tese "agressivo faz ~28% mais pontos" foi **removida** — era artefato do bug de pontuação somada;
+  com a régua corrigida, subir o risco não melhora os pontos de forma confiável. README não recomenda
+  mais `--risk 0.7/1.0` para subir no ranking.
+- **Esquema do `historical_results.csv` documentado** no `docs/DATA.md` (8 colunas, incl. a nova
+  `penalty_winner` mesclada do `shootouts.csv`); `efficiency.py` citado no PRD (M3) e no GLOSSARIO.
 - Defaults do `FitConfig` recalibrados por **LOO-CV** (meia-vida 2,5→2,0, ridge 0,05→0,10; +9,2% de
   pontos no backtest das 4 Copas). (ENG-17)
 - Curva de pontos base reproduz o app (log-linear `1 + 7,55·log10(1/p)`); `risk` **desacoplado** da

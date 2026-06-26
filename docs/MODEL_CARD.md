@@ -78,16 +78,19 @@ Resultados de jogos internacionais de seleções (dataset martj42), normalizados
   **superestima** levemente (o `rho` do Dixon–Coles já puxa para cima). O baixo acerto de empates num
   punhado de jogos é **variância**, não miscalibração — sem ajuste de modelo a fazer.
 
-**Pontos — backtest Copa 2022 (64 jogos), régua fiel do app — SPEC §9.1:**
+**Pontos — backtest Copa 2022 (64 jogos), régua hierárquica corrigida (ENG-23) — SPEC §9.1:**
 
 | risco | pts totais | média/jogo | % acerto 1×2 | % placar exato |
 |---|---|---|---|---|
-| 0.0 (conservador) | 170,0 | 2,66 | 42,2% | 9,4% |
-| 0.5 (fiel) | 177,0 | 2,77 | 43,8% | 9,4% |
-| 1.0 (agressivo) | **226,0** | 3,53 | 32,8% | **12,5%** |
+| 0.0 (conservador) | **187,0** | 2,92 | 54,7% | 10,9% |
+| 0.5 (fiel) | 159,0 | 2,48 | 46,9% | 9,4% |
+| 1.0 (agressivo) | 181,0 | 2,83 | 26,6% | 10,9% |
 
-Em 2022 (Copa cheia de zebras) o agressivo fez **~28% mais pontos** que o fiel, ao custo de acertar
-menos o 1×2 — coerente com "zebra vale mais". **Caveat forte:** é **uma Copa só**; não generaliza.
+Resultado **não-monótono e ruidoso** (uma Copa só): o conservador fez mais pontos, o agressivo logo
+atrás, o fiel abaixo. A vantagem do agressivo (~28%) que aparecia antes **era artefato do bug de
+pontuação cumulativa** (ENG-23, que superrecompensava cravar placar); com a régua hierárquica ela
+**some**. **Caveat forte:** é **uma Copa só**; não generaliza. Subir o risco **não** melhora os pontos
+de forma confiável.
 
 **Risco como alavanca de *ranking* (não de pontos médios):** a modelagem de campo (60 participantes,
 40k simulações — `BOLAO.md`, 2026-06-17) mostra que **subir o `risk` reduz** P(vencer) e P(top-10),

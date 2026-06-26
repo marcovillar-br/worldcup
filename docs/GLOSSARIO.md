@@ -90,6 +90,11 @@ Termos e conceitos que o produto manipula. Referência para o [`PRD.md`](PRD.md)
   **z-score**; gatilho de ação só além de ~2σ (senão é variância).
 - **blend-track** — comando que acumula o Brier blend-vs-modelo nos jogos disputados com odds e roda o
   monitor de empates; o veredito vai pro `BOLAO.md`.
+- **Eficiência (da campanha)** — quanto dos pontos que o tool renderia o apostador capturou:
+  `eficiência = seus_pontos / teto`, onde o **teto** é a soma dos pontos do palpite **as-of** (o que o
+  tool mostrava na manhã de cada jogo) contra os resultados reais. Calculada por `scripts/efficiency.py`
+  (flag `--my-points`); é **aproximada** (±~1/jogo), porque a base do Sistema I depende da probabilidade
+  interna do app, que não observamos ([ENG-24]).
 
 ## Simulação e formato
 

@@ -23,6 +23,7 @@ import pandas as pd
 from .edition import ScoringConfig
 from .fetch_data import load_historical
 from .format_engine import MatrixCache
+from .knockout import predict_knockout
 from .model import DixonColesModel, FitConfig
 from .scoring import Scorer, outcome_probs_from_matrix
 from .teams import canonical
@@ -60,6 +61,7 @@ class BacktestResult:
     # calibração (risk-independente): Brier multiclasse e confiabilidade da classe empate
     brier: float = 0.0
     reliability_draw: list[ReliabilityBin] = field(default_factory=list)
+    n_penalty_shootouts: int = 0  # jogos de KO decididos nos pênaltis (bônus de KO computado — ENG-12)
 
 
 def _outcome_index(home_score: int, away_score: int) -> int:
@@ -157,6 +159,7 @@ def run_backtest(year: int = 2022, risks: tuple[float, ...] = (0.0, 0.5, 1.0), n
             actual = (int(m["home_score"]), int(m["away_score"]))
             probs = outcome_probs_from_matrix(mat)
             pts = award.points((pred.home_goals, pred.away_goals), actual, probs)
+            pts += _knockout_bonus_for(m, mat, award)  # +pênaltis quando o jogo foi à disputa (ENG-12)
             total += pts
             if (pred.home_goals, pred.away_goals) == actual:
                 exact += 1
@@ -177,12 +180,16 @@ def run_backtest(year: int = 2022, risks: tuple[float, ...] = (0.0, 0.5, 1.0), n
     brier = multiclass_brier(probs_all, outcomes_all)
     reliability_draw = reliability_curve([p[1] for p in probs_all], [o == 1 for o in outcomes_all])
 
+    # defensivo: bases/fixtures antigos podem não ter a coluna (load_historical real sempre tem)
+    pen_col = test["penalty_winner"] if "penalty_winner" in test.columns else pd.Series("", index=test.index)
+    n_pens = int((pen_col.astype(str).str.len() > 0).sum())
     result = BacktestResult(
         year=year,
         n_matches=len(test),
         by_risk=by_risk,
         brier=brier,
         reliability_draw=reliability_draw,
+        n_penalty_shootouts=n_pens,
     )
     _print_report(result)
     return result
@@ -327,6 +334,23 @@ def draw_regime_report(edition: Edition) -> DrawRegime:
     return draw_regime_stats(p_draws, is_draw)
 
 
+def _knockout_bonus_for(row: pd.Series, matrix, award: Scorer) -> float:
+    """Bônus de prorrogação/pênaltis (Sistema I) de um jogo de KO decidido **nos pênaltis**.
+
+    Só os jogos com `penalty_winner` (do `shootouts` mesclado em `fetch_data`) são determináveis da
+    fonte: foram à disputa (`extra_time` real = "penalties") e sabemos o vencedor → concede o bônus de
+    ida-aos-pênaltis (+3) e o de acerto do vencedor (+3). Jogos decididos **dentro** da prorrogação não
+    são separáveis no martj42 (sem fase/flag de ET), então não recebem bônus aqui (limitação SPEC §9.2).
+    """
+    pen_winner = str(row.get("penalty_winner", "") or "")
+    if not pen_winner:
+        return 0.0
+    home, away = canonical(row["home_team"]), canonical(row["away_team"])
+    kp = predict_knockout(home, away, matrix, award)
+    actual_pen = "home" if canonical(pen_winner) == home else "away"
+    return award.knockout_bonus(kp.extra_time, kp.penalty_winner, "penalties", actual_pen)
+
+
 def _award_scorer() -> Scorer:
     """Pontuação fiel (risk=0.5) usada para conceder pontos, independente da estratégia."""
     cfg = ScoringConfig(system="sistema_i", risk=0.5)
@@ -343,6 +367,8 @@ def _print_report(r: BacktestResult) -> None:
             f"{s['result_pct']:>10.1f}% | {s['exact_pct']:>13.1f}%"
         )
     print("\n(% resultado = acertou vencedor/empate; % placar exato = cravou o placar.)")
+    if r.n_penalty_shootouts:
+        print(f"({r.n_penalty_shootouts} jogo(s) decidido(s) nos pênaltis — bônus de KO incluído no total.)")
 
     # calibração do modelo (independe do risco)
     print(f"\n🎯 Calibração (modelo) — Brier multiclasse = {r.brier:.4f}  (0 = perfeito, 0,667 = uniforme)")

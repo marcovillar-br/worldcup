@@ -498,6 +498,12 @@ _Fonte canônica das limitações do projeto. O `README.md` resume para o usuár
   confrontos dos 32-avos com os resultados reais registrados.
 - **Mata-mata em camadas**: o placar real importado pode incluir prorrogação (não só 90'); para a
   realimentação isso é irrelevante (interessa o vencedor e o efeito no treino).
+- **Bônus de KO no backtest (ENG-12)**: o backtest concede os bônus de prorrogação/pênaltis **só** nos
+  jogos decididos **nos pênaltis** — os únicos determináveis da fonte (`shootouts.csv`, mesclado como
+  `penalty_winner` em `fetch_data`). O martj42 **não traz a fase** nem separa 90' de prorrogação, então
+  jogos decididos **dentro** da prorrogação não são identificáveis e **não** recebem o bônus de ET
+  (subestimativa pequena e conhecida; a edição **viva** não tem esse problema — `sync` resolve o
+  bracket real com os shootouts).
 
 ### 9.3 Ideias futuras
 

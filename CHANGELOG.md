@@ -22,6 +22,10 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   agregados nas 4 Copas — veredito de que o modelo é bem calibrado em empate. (ENG-18)
 - Testes **e2e do pipeline** e de integração do `sync` rodando no CI (fixture histórico sintético,
   sem depender do `historical_results.csv`); piso de cobertura `fail_under` 65→80. (ENG-20)
+- **Bônus de mata-mata no backtest** (ENG-12): `fetch_data` mescla `shootouts.csv` → coluna
+  `penalty_winner` na base histórica, e `backtest` concede os bônus de prorrogação/pênaltis nos jogos
+  decididos nos pênaltis (`Scorer.knockout_bonus`, antes config morta). Jogos decididos dentro da
+  prorrogação seguem não-identificáveis na fonte (martj42 não traz a fase) — limitação documentada.
 - **Eficiência da campanha** (`scripts/efficiency.py`): mede `seus_pontos / teto-do-tool`
   reconstruindo o palpite **as-of** de cada manhã (mesmo caminho do `predict --as-of`) e pontuando
   pelo Sistema I; `--compare-archive` separa o teto verificável (snapshots reais) do reconstruído e

@@ -161,3 +161,23 @@ def test_draw_regime_report_on_2026(monkeypatch):
     assert dr.observed == real_draws
     assert 0.0 <= dr.expected <= dr.n
     assert isinstance(dr.z, float)
+
+
+# --------------------------------------------------------------- bônus de mata-mata (ENG-12)
+
+
+def test_knockout_bonus_awarded_on_penalty_shootout():
+    """Jogo decidido nos pênaltis (penalty_winner preenchido) recebe os bônus de KO; senão, zero."""
+    import numpy as np
+
+    award = bt._award_scorer()
+    mat = np.zeros((7, 7))
+    mat[1, 0] = mat[0, 1] = 0.3  # vitória do mandante / do visitante simétricas
+    mat[0, 0] = mat[1, 1] = 0.2  # empates → jogo "vai aos pênaltis", vencedor previsto = mandante
+    base = {"home_team": "Brazil", "away_team": "Argentina"}
+    # acertou a ida aos pênaltis (+3) e o vencedor = mandante (+3) = 6
+    assert bt._knockout_bonus_for(pd.Series({**base, "penalty_winner": "Brazil"}), mat, award) == 6.0
+    # vencedor real = visitante → só o bônus de ida aos pênaltis (+3)
+    assert bt._knockout_bonus_for(pd.Series({**base, "penalty_winner": "Argentina"}), mat, award) == 3.0
+    # não foi a pênaltis → sem bônus
+    assert bt._knockout_bonus_for(pd.Series({**base, "penalty_winner": ""}), mat, award) == 0.0

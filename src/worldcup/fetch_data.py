@@ -42,6 +42,11 @@ HISTORICAL_CSV = DATA_DIR / "historical_results.csv"
 
 COLUMNS = ["date", "home_team", "away_team", "home_score", "away_score", "tournament", "neutral"]
 SHOOTOUT_COLUMNS = ["date", "home_team", "away_team", "winner"]
+# Saída persistida = colunas da fonte + o vencedor de pênaltis (mesclado do shootouts.csv).
+# `penalty_winner` != "" marca um jogo decidido nos pênaltis (necessariamente mata-mata) e diz quem
+# venceu — único desfecho de prorrogação/pênaltis **determinável** da fonte (martj42 não traz a fase
+# nem separa 90' de prorrogação; ver ENG-12 e docs/SPEC.md §9.2). Usado pelo backtest p/ os bônus de KO.
+OUTPUT_COLUMNS = [*COLUMNS, "penalty_winner"]
 
 
 def _require_columns(df: pd.DataFrame, expected: list[str], source: str) -> None:
@@ -105,8 +110,17 @@ def download_shootouts(url: str = SHOOTOUTS_URL, timeout: int = 60) -> pd.DataFr
     return df
 
 
-def normalize(df: pd.DataFrame, cutoff: str = DEFAULT_CUTOFF, played_only: bool = True) -> pd.DataFrame:
-    """Filtra por data, opcionalmente só jogos disputados, e canoniza nomes/tipos."""
+def normalize(
+    df: pd.DataFrame,
+    cutoff: str = DEFAULT_CUTOFF,
+    played_only: bool = True,
+    shootouts: pd.DataFrame | None = None,
+) -> pd.DataFrame:
+    """Filtra por data, opcionalmente só jogos disputados, canoniza nomes/tipos e mescla pênaltis.
+
+    Com `shootouts` (schema `SHOOTOUT_COLUMNS`), adiciona a coluna `penalty_winner` (nome canônico do
+    vencedor da disputa, ou `""` se o jogo não foi a pênaltis), casando por `(date, home, away)`.
+    """
     out = df.copy()
     out["date"] = pd.to_datetime(out["date"], errors="coerce")
     out = out[out["date"] >= pd.Timestamp(cutoff)]
@@ -119,7 +133,21 @@ def normalize(df: pd.DataFrame, cutoff: str = DEFAULT_CUTOFF, played_only: bool 
         out["home_score"] = out["home_score"].astype(int)
         out["away_score"] = out["away_score"].astype(int)
     out["date"] = out["date"].dt.strftime("%Y-%m-%d")
-    return out[COLUMNS].reset_index(drop=True)
+    out["penalty_winner"] = _merge_penalty_winner(out, shootouts)
+    return out[OUTPUT_COLUMNS].reset_index(drop=True)
+
+
+def _merge_penalty_winner(games: pd.DataFrame, shootouts: pd.DataFrame | None) -> pd.Series:
+    """Série `penalty_winner` (canônico, ou `""`) alinhada a `games`, casando por (date, home, away)."""
+    if shootouts is None or shootouts.empty:
+        return pd.Series([""] * len(games), index=games.index)
+    sh = shootouts.copy()
+    sh["date"] = pd.to_datetime(sh["date"], errors="coerce").dt.strftime("%Y-%m-%d")
+    for col in ("home_team", "away_team", "winner"):
+        sh[col] = sh[col].map(canonical)
+    key = ["date", "home_team", "away_team"]
+    merged = games[key].merge(sh[[*key, "winner"]].drop_duplicates(key), on=key, how="left")
+    return pd.Series(merged["winner"].fillna("").to_numpy(), index=games.index)
 
 
 def fetch(
@@ -127,12 +155,22 @@ def fetch(
     cutoff: str = DEFAULT_CUTOFF,
     out_path: Path = HISTORICAL_CSV,
 ) -> Path:
-    """Baixa, normaliza e grava a base histórica. Retorna o caminho do CSV salvo."""
+    """Baixa, normaliza e grava a base histórica (resultados + pênaltis). Retorna o caminho salvo."""
     df = download_from_urls(urls or [DEFAULT_URL])
-    norm = normalize(df, cutoff=cutoff, played_only=True)
+    shootouts = _try_download_shootouts()
+    norm = normalize(df, cutoff=cutoff, played_only=True, shootouts=shootouts)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     norm.to_csv(out_path, index=False)
     return out_path
+
+
+def _try_download_shootouts() -> pd.DataFrame | None:
+    """Baixa os pênaltis; se falhar (rede/schema), segue sem eles (`penalty_winner` fica vazio)."""
+    try:
+        return download_shootouts()
+    except (NetworkError, DataSourceError) as err:
+        logger.warning("Pênaltis indisponíveis (%s); seguindo sem 'penalty_winner'.", err)
+        return None
 
 
 def load_historical(path: Path = HISTORICAL_CSV) -> pd.DataFrame:
@@ -141,4 +179,7 @@ def load_historical(path: Path = HISTORICAL_CSV) -> pd.DataFrame:
         raise FileNotFoundError(f"Base histórica não encontrada em {path}. Rode `uv run worldcup fetch-data` primeiro.")
     df = pd.read_csv(path)
     df["date"] = pd.to_datetime(df["date"])
+    if "penalty_winner" not in df.columns:  # compat: base gerada antes do merge de pênaltis (ENG-12)
+        df["penalty_winner"] = ""
+    df["penalty_winner"] = df["penalty_winner"].fillna("")
     return df

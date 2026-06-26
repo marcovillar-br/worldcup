@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import urllib.error
+from io import StringIO
 
 import pytest
 
@@ -133,3 +134,32 @@ def test_download_from_urls_raises_when_all_fail(monkeypatch):
     monkeypatch.setattr(fetch_data, "download_raw", fake_download_raw)
     with pytest.raises(NetworkError, match="offline"):
         download_from_urls([_PRIMARY, _FALLBACK])
+
+
+def _games_df():
+    import pandas as pd
+
+    return pd.read_csv(
+        StringIO(
+            "date,home_team,away_team,home_score,away_score,tournament,neutral\n"
+            "2022-12-09,Croatia,Brazil,1,1,FIFA World Cup,True\n"  # foi a pênaltis
+            "2022-12-10,England,France,1,2,FIFA World Cup,True\n"  # decidido em 90'
+        )
+    )
+
+
+def test_normalize_merges_penalty_winner():
+    # o shootouts adiciona penalty_winner casando por (date, home, away); só o jogo de pênaltis recebe
+    import pandas as pd
+
+    shootouts = pd.read_csv(StringIO("date,home_team,away_team,winner\n2022-12-09,Croatia,Brazil,Croatia\n"))
+    out = fetch_data.normalize(_games_df(), cutoff="2006-01-01", shootouts=shootouts)
+    assert "penalty_winner" in out.columns
+    rows = {(r.home_team, r.away_team): r.penalty_winner for r in out.itertuples()}
+    assert rows[("Croatia", "Brazil")] == "Croatia"
+    assert rows[("England", "France")] == ""  # não foi a pênaltis
+
+
+def test_normalize_without_shootouts_leaves_penalty_winner_empty():
+    out = fetch_data.normalize(_games_df(), cutoff="2006-01-01", shootouts=None)
+    assert list(out["penalty_winner"]) == ["", ""]

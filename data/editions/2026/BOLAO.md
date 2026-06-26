@@ -52,6 +52,9 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   J61/J62 saem 0×0 ⚡), relevante numa Copa empate-pesada. Repalpitei tudo com o scorer corrigido.
   Docs (SPEC §4, GLOSSARIO, PRD, AGENTS, scoring.toml) atualizadas de "cumulativos" → "hierárquicos".
   **Pendência:** base ~1pt baixa em alguns jogos (probs nossas vs app) — menor, separado, não é o bug.
+  **Re-arquivo (fim do dia):** ao trabalhar o ENG-12 rodei `fetch-data`, que refrescou a base histórica
+  com resultados mais recentes; o snapshot 26/06 foi **re-arquivado** sobre essa base. Mudou 1 pick de
+  hoje (J61 Cabo Verde 0×0→1×0, quase-empate) e alguns de rodadas futuras (J69, J76) — ajustes de borda.
 
 - 2026-06-26 — **Rodada J55–J60 fechada; 60 jogos disputados.** Grupos D/E/F encerrados. blend-track
   n=37: Brier modelo 0,477 vs blend 0,446 (Δ+0,031, blend à frente, delta cresce). Empates 16/60 (27%)

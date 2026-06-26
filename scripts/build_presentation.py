@@ -22,12 +22,14 @@ Uso: `uv run python scripts/build_presentation.py [--out PATH] [--docs]`
 from __future__ import annotations
 
 import argparse
+import base64
 from dataclasses import dataclass
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUT = PROJECT_ROOT / "out" / "apresentacao.html"
 DOCS_OUT = PROJECT_ROOT / "docs" / "apresentacao.html"
+ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
 AS_OF = "26 jun 2026"
 VERSION = "v0.2.0"
@@ -113,6 +115,33 @@ def cover_svg() -> str:
 """
 
 
+def _embed(name: str) -> str | None:
+    """Lê uma imagem livre de `scripts/assets/` e devolve um data-URI base64 (offline). None se ausente."""
+    p = ASSETS_DIR / name
+    if not p.exists():
+        return None
+    return "data:image/jpeg;base64," + base64.b64encode(p.read_bytes()).decode("ascii")
+
+
+def hero_bg(name: str) -> str:
+    """Fundo fotográfico da capa (foto livre embutida) + scrim escuro; cai para o SVG se a foto faltar."""
+    uri = _embed(name)
+    if uri is None:
+        return cover_svg()
+    return f'<div class="bgphoto on-hero" style="background-image:url({uri})"></div><div class="scrim"></div>'
+
+
+def photo_bg(name: str, *, opacity: str = ".22") -> str:
+    """Fundo fotográfico discreto (divisória) + scrim suave; vazio se a foto faltar (degradação graciosa)."""
+    uri = _embed(name)
+    if uri is None:
+        return ""
+    return (
+        f'<div class="bgphoto" style="background-image:url({uri});opacity:{opacity}"></div>'
+        '<div class="scrim soft"></div>'
+    )
+
+
 def bar_compare() -> str:
     """Barras 'zebra vale mais': favorito (pouco) vs zebra (muito)."""
     rows = [
@@ -181,7 +210,7 @@ def build_slides() -> list[Slide]:
         Slide(
             "worldcup",
             f"""
-      {cover_svg()}
+      {hero_bg("cover-stadium.jpg")}
       <div class="cover">
         <div class="badge">{_IC_TROPHY} bolão da Copa · modelo estatístico</div>
         <h1>O palpite <span class="accent">inteligente</span><br>para cada jogo da Copa</h1>
@@ -502,12 +531,15 @@ def build_slides() -> list[Slide]:
         Slide(
             "Obrigado",
             f"""
+      {photo_bg("pitch-wembley.jpg")}
       <div class="center end">
         <div class="badge">{_IC_TROPHY} worldcup · {VERSION}</div>
         <h1>A alavanca é <span class="accent">acurácia</span>,<br>não ousadia.</h1>
         <p class="lede">Um modelo honesto, reprodutível e agnóstico à edição — pronto para a próxima Copa.</p>
         <p class="credits">Dados: martj42/international_results (CC0) · odds: The Odds API ·
-          gerado por <code>scripts/build_presentation.py</code></p>
+          gerado por <code>scripts/build_presentation.py</code>.<br>
+          Fotos: estádio à noite por Krzysztof Popławski (CC BY 4.0) · Wembley por Alex Kinney
+          (CC BY-SA 2.0), via Wikimedia Commons.</p>
       </div>""",
         )
     )
@@ -586,10 +618,15 @@ p.muted{color:var(--muted);font-size:1.6cqw;margin-top:1.8cqh}
 code{background:#0e1626;border:1px solid var(--line);border-radius:5px;padding:.1em .35em;
   font-size:.92em;color:#a5f3ef}
 b{color:#f1f5f9}
-.center{align-items:flex-start}
-.center h2,.cover h1{}
-/* ---- capa ---- */
+.center{align-items:flex-start;position:relative;z-index:2}
+.split{position:relative;z-index:2}
+/* ---- capa / fundos fotográficos ---- */
 .hero{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.9}
+.bgphoto{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:.5}
+.bgphoto.on-hero{opacity:.62}
+.scrim{position:absolute;inset:0;z-index:1;
+  background:linear-gradient(180deg,#05080dd9 0%,#05080d8c 38%,#0a0e14f5 100%)}
+.scrim.soft{background:radial-gradient(130% 110% at 50% 45%,#05080d66 0%,#0a0e14f2 100%)}
 .cover{position:relative;z-index:2}
 .badge{display:inline-flex;align-items:center;gap:.6cqw;font-size:1.3cqw;color:#bfe9f5;
   background:#0c2330;border:1px solid #14455a;border-radius:999px;padding:.9cqh 1.4cqw;
@@ -714,7 +751,7 @@ b{color:#f1f5f9}
     color:#0a0e14;font-size:11pt}
   .slide h1,.slide h2,.slide b{color:#0a0e14}
   .slide p,.muted,.slab{color:#33415a}
-  .hero{opacity:.18}
+  .hero,.bgphoto,.scrim{display:none}
   .card,.panel,.stat,.matrix,.formula,.ba,.limcard,.fstep,.year{background:#f6f8fb;border-color:#d7deea}
   .accent{color:#0e7490}
   *{font-size:revert}

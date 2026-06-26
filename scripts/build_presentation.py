@@ -131,7 +131,7 @@ def hero_bg(name: str) -> str:
     return f'<div class="bgphoto on-hero" style="background-image:url({uri})"></div><div class="scrim"></div>'
 
 
-def photo_bg(name: str, *, opacity: str = ".22") -> str:
+def photo_bg(name: str, *, opacity: str = ".34") -> str:
     """Fundo fotográfico discreto (divisória) + scrim suave; vazio se a foto faltar (degradação graciosa)."""
     uri = _embed(name)
     if uri is None:
@@ -452,27 +452,27 @@ def build_slides() -> list[Slide]:
                         (
                             "13–17/06",
                             "Risco não é alavanca; acurácia é.",
-                            "Simulação de campo: subir a ousadia piora a chance de top-10. Decisão: fiel (0,5).",
+                            "Subir a ousadia piora a chance de top-10. Ficamos no fiel.",
                         ),
                         (
                             "19/06",
                             "A fraqueza é o empate, não o placar exato.",
-                            "Os erros eram empates — variância, não viés (modelo calibrado). Não forçar empates.",
+                            "Os erros eram empates — variância, não viés. Não forçar.",
                         ),
                         (
                             "rodada a rodada",
                             "Deixe o mercado corrigir o modelo.",
-                            "O blend com odds melhora o Brier a cada rodada (0,477 → 0,446).",
+                            "O blend com odds melhora o Brier a cada rodada.",
                         ),
                         (
                             "26/06",
                             "Confie nos dados crus.",
-                            "O bug de pontuação só apareceu nas telas do app; a eficiência 'inflada' era artefato.",
+                            "O bug de pontuação só apareceu nas telas do app.",
                         ),
                         (
                             "26/06",
                             "Aceitar limites com honestidade.",
-                            "Parte da pontuação do app é inobservável — calcular + avisar, sem fingir exatidão.",
+                            "Parte da pontuação do app é inobservável — calcular + avisar.",
                         ),
                     ]
                 )
@@ -597,10 +597,11 @@ body{
   font-size:1.2cqw;font-family:inherit;transition:background .2s,border-color .2s}
 .nav:hover{background:#1b2740;border-color:var(--accent)}
 .nav:disabled{opacity:.35;cursor:default}
-.pbar{flex:1;margin:0 2.5cqw;height:.5cqh;background:#1a2334;border-radius:999px;overflow:hidden}
+.footcenter{flex:1;display:flex;flex-direction:column;align-items:center;gap:.8cqh;margin:0 3cqw}
+.pbar{width:100%;height:.5cqh;background:#1a2334;border-radius:999px;overflow:hidden}
 .pbar i{display:block;height:100%;width:0;border-radius:999px;
   background:linear-gradient(90deg,var(--home),var(--accent));transition:width .35s ease}
-.foot-credit{font-size:1cqw;color:#54627a}
+.foot-credit{font-size:1cqw;color:#54627a;letter-spacing:.04em}
 /* ---- deck / slides ---- */
 .deck{position:relative;flex:1;z-index:2;overflow:hidden}
 .slide{position:absolute;inset:0;padding:4cqh 6cqw;display:flex;flex-direction:column;
@@ -623,10 +624,10 @@ b{color:#f1f5f9}
 /* ---- capa / fundos fotográficos ---- */
 .hero{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.9}
 .bgphoto{position:absolute;inset:0;z-index:0;background-size:cover;background-position:center;opacity:.5}
-.bgphoto.on-hero{opacity:.62}
+.bgphoto.on-hero{opacity:.78}
 .scrim{position:absolute;inset:0;z-index:1;
-  background:linear-gradient(180deg,#05080dd9 0%,#05080d8c 38%,#0a0e14f5 100%)}
-.scrim.soft{background:radial-gradient(130% 110% at 50% 45%,#05080d66 0%,#0a0e14f2 100%)}
+  background:linear-gradient(180deg,#05080db3 0%,#05080d66 42%,#0a0e14ee 100%)}
+.scrim.soft{background:radial-gradient(135% 115% at 50% 45%,#05080d40 0%,#0a0e14ee 100%)}
 .cover{position:relative;z-index:2}
 .badge{display:inline-flex;align-items:center;gap:.6cqw;font-size:1.3cqw;color:#bfe9f5;
   background:#0c2330;border:1px solid #14455a;border-radius:999px;padding:.9cqh 1.4cqw;
@@ -716,14 +717,14 @@ b{color:#f1f5f9}
 .ba.right{border-color:#155e6b}
 .baarrow{font-size:2.6cqw;color:var(--accent)}
 /* ---- timeline ---- */
-.tl{display:flex;flex-direction:column;gap:1.2cqh;margin:1cqh 0;width:100%;
-  border-left:2px solid #1e2a3e;padding-left:2.4cqw}
+.tl{display:flex;flex-direction:column;gap:2cqh;margin:1.4cqh 0;width:100%;
+  border-left:2px solid #1e2a3e;padding-left:2.6cqw}
 .tli{position:relative}
-.tldot{position:absolute;left:calc(-2.4cqw - 1px);top:.4cqh;width:1.2cqw;height:1.2cqw;border-radius:50%;
+.tldot{position:absolute;left:calc(-2.6cqw - 1px);top:.5cqh;width:1.2cqw;height:1.2cqw;border-radius:50%;
   background:var(--accent);transform:translateX(-50%);box-shadow:0 0 8px var(--accent)}
-.tlc{display:flex;flex-direction:column}
+.tlc{display:flex;flex-direction:column;gap:.3cqh}
 .tldate{font-size:1.15cqw;color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
-.tlc b{font-size:1.7cqw} .tldet{font-size:1.3cqw;color:var(--muted)}
+.tlc b{font-size:1.75cqw;line-height:1.15} .tldet{font-size:1.32cqw;color:var(--muted);line-height:1.35}
 /* ---- limitações ---- */
 .lim{margin-top:2cqh} .limcard{background:#0d1726;border:1px solid var(--line);border-radius:12px;padding:1.8cqh 1.6cqw}
 .limcard b{font-size:1.6cqw;display:block;margin-bottom:.5cqh}
@@ -773,7 +774,7 @@ _JS = """
     nums.forEach(function(el){
       var to=parseFloat(el.getAttribute('data-to'))||0;
       if(reduce){el.textContent=to;return;}
-      var t0=null, dur=900;
+      var t0=null, dur=650;
       function step(ts){
         if(!t0)t0=ts; var p=Math.min(1,(ts-t0)/dur);
         var e=1-Math.pow(1-p,3);
@@ -840,8 +841,8 @@ def render_presentation(slides: list[Slide]) -> str:
         f'  <div class="deck">{body}</div>\n'
         '  <div class="bottombar">\n'
         '    <button class="nav" id="prev">‹ Anterior</button>\n'
-        '    <span class="pbar"><i id="pbar-i"></i></span>\n'
-        '    <span class="foot-credit">worldcup · ' + VERSION + " · 2026</span>\n"
+        '    <div class="footcenter"><span class="pbar"><i id="pbar-i"></i></span>'
+        '<span class="foot-credit">worldcup · ' + VERSION + " · 2026</span></div>\n"
         '    <button class="nav" id="next">Próximo ›</button>\n'
         "  </div>\n"
         "</div>\n"

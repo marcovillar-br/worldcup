@@ -11,7 +11,13 @@ Self-contained: NÃO lê os CSVs de `history/` — recomputa a previsão. Assim 
 reprodutível mesmo onde não houve snapshot arquivado.
 
 Limitações:
-  - Fase de grupos: pontuação exata do Sistema I (base por probabilidade + bônus de placar).
+  - **Base inobservável (ENG-24):** o bônus de placar (exato/vencedor/saldo/perdedor) é
+    determinístico e hierárquico, então o pegamos exato. Mas a **base variável (1–13)** é função da
+    **probabilidade interna do app**, que difere da nossa (modelo+blend) e não é observável — então a
+    base carrega **±~1 ponto por jogo** de incerteza. Logo o teto e a eficiência são **aproximados**,
+    não exatos (confirmado: na validação contra o app, ~1/3 dos jogos erraram por ≤1 só na base).
+    Ver `docs/SPEC.md` §4.
+  - Fase de grupos: bônus de placar exatos; base aproximada (acima).
   - Mata-mata: pontua o placar dos **90'**; os bônus de prorrogação/pênaltis NÃO são pontuados
     (os dados reais guardam só o vencedor do confronto, não a camada que o decidiu — daí não
     serem reconstrutíveis). Um aviso é impresso se houver jogo de mata-mata disputado.
@@ -186,6 +192,9 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\nJogos pontuados: {len(scores)}")
     cfg = f"risk {edition.scoring.risk} + blend {edition.scoring.blend_weight}"
     print(f"Teto do tool (as-of, {cfg}): {total:.0f} pts ({total / len(scores):.2f}/jogo)")
+    print("⚠️  APROXIMADO: a base (1–13) usa a probabilidade interna do app (inobservável) ⇒ ±~1/jogo")
+    print("    de incerteza. O bônus de placar é exato; a base não. Teto e eficiência são estimativas")
+    print("    (ENG-24 / SPEC §4) — não leia o % como cravado.")
     if has_ko:
         print("⚠️  Mata-mata presente: o placar dos 90' foi pontuado, mas os bônus de prorrogação/")
         print("    pênaltis NÃO entram (dados reais guardam só o vencedor) — o teto de KO é subestimado.")

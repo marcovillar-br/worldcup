@@ -259,15 +259,25 @@ Essa é a régua **fiel do app** e **não depende de `risk`** — o risco mora n
 |---|---|---|
 | 0.80 | 2 | 2 |
 | 0.50 | 3 | 3 |
+| 0.45 | 3 | 4 ⚠️ |
 | 0.20 | — | 6 |
 | 0.15 | 7 | 7 |
-| 0.10 | — | 9 |
+| 0.10 | 9 | 9 |
 | 0.05 | 11 | 11 |
 | ≤ ~0.026 | 13 (teto) | 13 |
 
 > Nota: a forma `(1/p)^γ` antiga **não** reproduzia o app (em `p=0.5` dava 2, o app dá 3); a calibração
 > log-linear acima ajusta os pontos observados dentro de ±0.5. Coeficiente em `scoring.toml::base_log_coeff`;
-> refinar com mais pontos do Simulador se necessário. (Backlog ENG-14.)
+> refinar com mais pontos do Simulador se necessário. (Backlog ENG-14.) Pontos do Simulador colhidos em
+> 26/06/2026 mostram que **nenhuma** curva log+arredondamento passa por `0.45→3` **e** `0.10→9` ao mesmo
+> tempo (o app usa régua/tabela própria); o resíduo é ±1 no meio da curva.
+
+> **Limite de observabilidade (ENG-24).** A base é função da **probabilidade do app**, calculada
+> internamente e **diferente da nossa** (modelo + blend) — e **não exposta**. Mesmo com a fórmula
+> perfeita, alimentamos a *nossa* `p`, então a base sai com **±~1 ponto por jogo** de erro sempre que
+> nosso bucket de probabilidade cruza a fronteira de arredondamento do app. **Consequência:** o bônus
+> de placar (§4.2) é reconstrutível com exatidão, mas a base **não**; logo qualquer estimativa de
+> pontos/teto/eficiência (`scripts/efficiency.py`) é **aproximada** (±~1/jogo), nunca cravada.
 
 ### 4.2 Função de pontos
 

@@ -227,3 +227,6 @@ data/editions/*/history/*.reconstruido.*
 # Odds reais da The Odds API: NÃO versionar (ToS proíbe redistribuir odds em repo público).
 # Vive só local; o veredito de blend é reproduzível localmente. Ver docs/DATA.md §6.
 data/editions/*/odds.csv
+# Apresentação gerada (regenerável por scripts/build_presentation.py; embute imagens → pesada).
+# Fonte versionado = o script + scripts/assets/; o HTML sai sob demanda.
+docs/apresentacao.html

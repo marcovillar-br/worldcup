@@ -29,7 +29,8 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
 - **Apresentação do projeto** (`scripts/build_presentation.py`): gera um deck HTML autocontido (tema
   dark "Placar Noturno", palco 16:9 com auto-resize, navegação por botões/teclado/dots, deep-link
   `#slide-k`, contadores animados e modo impressão/PDF) explicando o projeto para leigos. Saída
-  versionada em `docs/apresentacao.html`. Self-contained (CSS+JS inline, SVG-first, sem CDN).
+  gerada sob demanda em `docs/apresentacao.html` (gitignored; fonte = script + `scripts/assets/`).
+  Self-contained (CSS+JS inline, SVG-first, fotos CC embutidas em base64, sem CDN).
 - **Eficiência da campanha** (`scripts/efficiency.py`): mede `seus_pontos / teto-do-tool`
   reconstruindo o palpite **as-of** de cada manhã (mesmo caminho do `predict --as-of`) e pontuando
   pelo Sistema I; `--compare-archive` separa o teto verificável (snapshots reais) do reconstruído e

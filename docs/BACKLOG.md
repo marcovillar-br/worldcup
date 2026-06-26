@@ -615,6 +615,11 @@ que nosso bucket cruza a fronteira de arredondamento do app. **Evidência:** o S
 (telas de 26/06/2026) dá `0.80→2, 0.45→3, 0.15→7, 0.10→9, 0.05→11`; nossa fórmula erra em `0.45` (dá 4),
 e **nenhuma** curva log+arredondamento passa por `0.45→3` e `0.10→9` ao mesmo tempo. Na validação do
 [ENG-23] (12 jogos vs app), os 4 desvios foram **todos ±1 só na base** — exatamente este efeito, não bug.
+**Confirmação adicional (tela "Editar Palpite" do J61, 26/06):** o app mostra suas probabilidades
+**39/28/33** (Cabo Verde/empate/Arábia) vs. as nossas **41/31/28** — distribuições diferentes — e a base
+`0.28→6`, onde nossa fórmula dá **5** (−1). Somado ao `0.45→3` (nossa dá 4, +1), o erro da curva vai
+**nos dois sentidos**: o app usa régua própria, não uma log simples. Ou seja, o resíduo tem **duas
+causas independentes** — probabilidade de entrada diferente **e** curva de base diferente.
 
 **Impacto:** `scripts/efficiency.py` (teto/eficiência) é **aproximado** (±~1/jogo), nunca exato — não
 ler o `%` como cravado. Já houve auto-engano por causa disso (BOLAO 24–26/06: "eficiência 86,7%" e "você
@@ -624,8 +629,12 @@ observabilidade) e na docstring de `scripts/efficiency.py`; o script agora **imp
 teto/eficiência são estimativas ±~1/jogo.
 **Refs:** `scoring.Scorer._base_points`, `scripts/efficiency.py` (`asof_scores`/`archive_scores`),
 `docs/SPEC.md` §4.1.
-**Resolução possível (aberta):** (a) capturar as **probabilidades exibidas pelo app** por jogo (entrada
-manual num CSV opcional, à la `odds.csv`) e usá-las na base do `efficiency.py` → base exata onde houver;
-(b) ou aceitar o limite e sempre **reportar faixa** em vez de ponto. **Aceite:** quando (a) existir,
-a eficiência dos jogos com probabilidade do app registrada bate o app dentro de ±0 na base; até lá, o
-item fica como **limitação conhecida documentada** (não há fix puramente algorítmico — é dado que falta).
+**Resolução possível (aberta) — caminho refinado:** a tela "Editar Palpite" do app **expõe a base
+diretamente** (ex.: J61 → 4/6/5 por desfecho), além das probabilidades. Então a resolução **não é
+calcular** a base (impossível sem as probs do app) **nem adivinhar** a curva — é **capturar** o número
+que o app já mostra. (a) CSV opcional por jogo (`app_base` ou `app_probs`, à la `odds.csv`, entrada
+manual) consumido por `efficiency.py` → base **exata** nos jogos registrados; (b) fallback: aceitar o
+limite e **reportar faixa**. **Aceite:** com (a), a eficiência dos jogos com base do app registrada bate
+o app em ±0; até lá, fica como **limitação conhecida documentada** (não há fix algorítmico — é dado que
+falta, e o dado é colhível manualmente da tela de edição). **Custo/benefício:** entrada manual por jogo;
+só vale se quiser eficiência cravada — caso contrário o caveat de ±~1/jogo já basta.

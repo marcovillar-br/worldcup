@@ -37,7 +37,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-21](#eng-21) | P3 | processo | ✅ | Podar/consolidar a camada meta pós-ENG-19 (extensão recorrente do ENG-11) |
 | [ENG-22](#eng-22) | P3 | backtest | ✅ | Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo) |
 | [ENG-23](#eng-23) | P1 | scoring | ✅ | Bônus de placar somados em vez de hierárquicos (inflam pontos, enviesam contra empate) |
-| [ENG-24](#eng-24) | P2 | scoring | 🔴 | Base (1–13) usa a probabilidade interna do app (inobservável) ⇒ eficiência só aproximada |
+| [ENG-24](#eng-24) | P2 | scoring | ⚪ | Base (1–13) usa a probabilidade interna do app (inobservável) ⇒ eficiência só aproximada |
 
 ---
 
@@ -604,7 +604,7 @@ baixa em ~1/3 dos jogos por divergência de probabilidade modelo×app — vira i
 **Commit:** 5017468
 
 ## ENG-24
-**Base (1–13) usa a probabilidade interna do app (inobservável) ⇒ eficiência só aproximada** · P2 · `scoring` · 🔴 todo
+**Base (1–13) usa a probabilidade interna do app (inobservável) ⇒ eficiência só aproximada** · P2 · `scoring` · ⚪ descartado (limitação aceita)
 
 O Sistema I tem **duas partes**: o **bônus de placar** (exato/vencedor/saldo/perdedor — hierárquico,
 [ENG-23]) é **determinístico** e reconstrutível com exatidão; a **base variável "Acertar o vencedor ou
@@ -629,12 +629,21 @@ observabilidade) e na docstring de `scripts/efficiency.py`; o script agora **imp
 teto/eficiência são estimativas ±~1/jogo.
 **Refs:** `scoring.Scorer._base_points`, `scripts/efficiency.py` (`asof_scores`/`archive_scores`),
 `docs/SPEC.md` §4.1.
-**Resolução possível (aberta) — caminho refinado:** a tela "Editar Palpite" do app **expõe a base
-diretamente** (ex.: J61 → 4/6/5 por desfecho), além das probabilidades. Então a resolução **não é
-calcular** a base (impossível sem as probs do app) **nem adivinhar** a curva — é **capturar** o número
-que o app já mostra. (a) CSV opcional por jogo (`app_base` ou `app_probs`, à la `odds.csv`, entrada
-manual) consumido por `efficiency.py` → base **exata** nos jogos registrados; (b) fallback: aceitar o
-limite e **reportar faixa**. **Aceite:** com (a), a eficiência dos jogos com base do app registrada bate
-o app em ±0; até lá, fica como **limitação conhecida documentada** (não há fix algorítmico — é dado que
-falta, e o dado é colhível manualmente da tela de edição). **Custo/benefício:** entrada manual por jogo;
-só vale se quiser eficiência cravada — caso contrário o caveat de ±~1/jogo já basta.
+**Decisão (26/06/2026 — ⚪ descartado, limitação aceita):** **não** resolver; manter o **cálculo**
+(nossa `p` + fórmula) com o **caveat de ±~1/jogo** já aplicado. Razões:
+- **Captura manual descartada** — inviável registrar a prob/base do app por jogo a cada rodada (o
+  usuário rejeitou, com razão).
+- **Calcular melhor tem retorno decrescente** — há **duas fontes de erro independentes**: (1) a
+  probabilidade de entrada (nossa ≠ a do app — **irredutível** sem a prob do app) e (2) a curva (o app
+  não usa log; os desvios `0.45`/`0.28` vão em **sentidos opostos**, então nenhum coeficiente conserta).
+  Refinar a fórmula poliria só a fonte menor (2) e deixaria a dominante (1).
+- **O tripwire de bug já existe** — o papel de "pegar divergência absurda" (que teria flagrado o ENG-23)
+  está coberto pelos **testes de ouro** `test_app_golden_points_per_game` (valores do app travados como
+  regressão). Não precisa de check em runtime.
+- **A calibração que importa já é monitorada** — divergência vs o app é modelo-vs-modelo; a divergência
+  útil (nossa prob vs realidade) é o `blend-track` (Brier) + monitor de empates [ENG-22].
+
+**Mitigação que fica no lugar:** caveat impresso no `efficiency.py` + nota de observabilidade em
+`docs/SPEC.md` §4. A eficiência é **curiosidade de campanha** (não entra em decisão), então o nível de
+aproximação atual basta. Reabrir só se a base virar insumo de decisão e houver fonte automática das
+probabilidades do app.

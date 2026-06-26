@@ -29,7 +29,9 @@ SF = 2.0
 final = 4.0
 
 # Parâmetros do Sistema I ("O mais justo e equilibrado"), valores oficiais do app.
-# Pontos base variam com a probabilidade do resultado (1 a 13); os bônus são cumulativos.
+# Pontos base variam com a probabilidade do resultado (1 a 13). Os níveis de acerto de placar são
+# HIERÁRQUICOS, não cumulativos: o app concede só o MAIOR atingido — exato(5) > gols_vencedor(3) >
+# saldo(2) > gols_perdedor(1). A goleada(1) empilha como extra. (Ver docs/SPEC.md §4.)
 [sistema_i]
 base_min = 1.0          # pontos base mínimos (favorito óbvio)
 base_max = 13.0         # pontos base máximos (zebra acertada)

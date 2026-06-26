@@ -11,15 +11,19 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-25)
+## Estado atual (atualizado em 2026-06-26)
 
-- **54 de 104 jogos disputados (J1–J54).** Última rodada de grupos em andamento: J55–J60 hoje (25/06,
-  grupos D/E/F); demais J61–J72 até 27/06.
-- **`blend-track` n=31:** Brier modelo **0,426** vs blend **0,410** — Δ=**+0,015**; blend
-  segue melhor. Regime de empates: 14/54 (26%) z=+0,22 — variância, sem ação.
-- Favorito ao título: **Argentina (42,7%)**; Espanha 15,5%, Brasil 7,8%, França 5,6%, Portugal 5,2%.
+- **60 de 104 jogos disputados (J1–J60).** Última rodada de grupos: J61–J66 hoje (26/06, grupos
+  G/H/I); J67–J72 amanhã (27/06, fecham J/K/L).
+- **Posição: 189 pts, 5º** de 60; líder (Fernanda Polido) 203. **Eficiência ~100%** (segue o blend;
+  o "86,7%" anterior era bug de scorer — ver ENG-23 no Histórico). Gap p/ líder = variância dela.
+- **`blend-track` n=37:** Brier modelo **0,477** vs blend **0,446** — Δ=**+0,031**; blend
+  segue melhor (delta cresce). Regime de empates: 16/60 (27%) z=+0,45 — variância, sem ação.
+- Favorito ao título: **Argentina (43,0%)**; Espanha 15,8%, Brasil 7,7%, França 6,5%, Portugal 5,8%.
 - **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19; odds
-  refrescadas em 25/06: 18 jogos atualizados, 49 no total); admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
+  refrescadas em 26/06: 12 jogos atualizados, 49 no total). **Scorer corrigido (ENG-23, 26/06):** bônus
+  de placar agora **hierárquicos** (só o maior nível), não somados — o modelo voltou a palpitar empates.
+  Admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
   `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API vive no `.env`.
 
 ## Decisões vivas
@@ -34,6 +38,25 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-26 — **BUG DE PONTUAÇÃO ENCONTRADO E CORRIGIDO (ENG-23) — retrata a narrativa de eficiência.**
+  As telas "Pontos por Jogo" do app revelaram que meu `scoring.points` **somava** os bônus de placar,
+  mas o app dá só o **maior nível** (hierárquico): exato +5 > gols do vencedor +3 > saldo +2 > gols do
+  perdedor +1. O bug inflava todo placar cravado (Curaçao 0×2 valia 7 no app, eu calculava 13).
+  **Validação:** 12 jogos (J43–J54) confrontados com o app — 8 cravam, 4 erram por ≤1 só na base
+  (nossa probabilidade ≠ a do app). **Consequências:** (1) **a eficiência estava inflada** — os
+  registros de 24/06 (88,8%) e 25/06 (88,4%) e o "você vazou 7 pts em J55–J60" estão **ERRADOS**; sua
+  eficiência real é **~100%**: você seguiu o blend e pontuou o que o app deu. **Não há vazamento.**
+  (2) O bug **enviesava o `best_prediction` contra empates** (jogo decidido somava mais bônus) — explica
+  o "modelo nunca palpita empate" do [ENG-22]. Corrigido, o modelo **volta a palpitar empates** (hoje
+  J61/J62 saem 0×0 ⚡), relevante numa Copa empate-pesada. Repalpitei tudo com o scorer corrigido.
+  Docs (SPEC §4, GLOSSARIO, PRD, AGENTS, scoring.toml) atualizadas de "cumulativos" → "hierárquicos".
+  **Pendência:** base ~1pt baixa em alguns jogos (probs nossas vs app) — menor, separado, não é o bug.
+
+- 2026-06-26 — **Rodada J55–J60 fechada; 60 jogos disputados.** Grupos D/E/F encerrados. blend-track
+  n=37: Brier modelo 0,477 vs blend 0,446 (Δ+0,031, blend à frente, delta cresce). Empates 16/60 (27%)
+  z=+0,45 — variância. Argentina 43,0% no título; Espanha 15,8%, Brasil 7,7%. Estado: **189 pts, 5º**;
+  líder (Fernanda Polido) 203. Hoje (26/06) fecham os grupos G/H/I (J61–J66).
 
 - 2026-06-25 — **Rodada J49–J54 fechada; 54 jogos disputados.** Grupos A, B e C encerrados.
   blend-track n=31: Brier modelo 0,426 vs blend 0,410 (Δ+0,015, blend à frente). Empates 14/54 (26%)

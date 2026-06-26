@@ -104,26 +104,28 @@ class Scorer:
                 return float(c.get("winner", 10.0)) + float(c.get("diff_bonus", 3.0))
             return float(c.get("winner", 10.0))
 
-        # sistema_i: base por probabilidade + bônus cumulativos
+        # sistema_i: base por probabilidade + UM nível de acerto de placar (HIERÁRQUICO, não somado).
+        # O app concede apenas o MAIOR nível atingido — exato(+5) > gols do vencedor(+3) > saldo(+2) >
+        # gols do perdedor(+1) — e NÃO a soma deles. Confirmado nas telas "Pontos por Jogo" do app:
+        # Curaçao 0x2 cravado = base(2)+5 = 7 (não base+11); Paraguai 0x0 cravado = base(4)+5 = 9.
+        # Os três níveis "decididos" são mutuamente exclusivos com o exato (acertar dois ⇒ exato).
+        # A goleada (+1) é um extra que empilha (sem exemplo no app — ver teste).
         c = self.cfg.sistema_i
         p_out = probs[0] if ra > 0 else probs[1] if ra == 0 else probs[2]
         pts = self._base_points(p_out)
         exact = (ph, pa) == (ah, aa)
+        win_pred, win_act = (ph, ah) if rp > 0 else (pa, aa)
+        lose_pred, lose_act = (pa, aa) if rp > 0 else (ph, ah)
         if exact:
             pts += float(c.get("exact", 5.0))
-        if (ph - pa) == (ah - aa):  # diferença de gols (vale também para empates)
+        elif ra != 0 and win_pred == win_act:  # acertou os gols do vencedor
+            pts += float(c.get("winner_goals", 3.0))
+        elif (ph - pa) == (ah - aa):  # acertou o saldo (vale também para empates não-exatos)
             pts += float(c.get("goal_diff", 2.0))
-        if ra != 0:  # jogo decidido: bônus de gols do vencedor / do perdedor
-            win_pred = ph if rp > 0 else pa
-            win_act = ah if ra > 0 else aa
-            lose_pred = pa if rp > 0 else ph
-            lose_act = aa if ra > 0 else ah
-            if win_pred == win_act:
-                pts += float(c.get("winner_goals", 3.0))
-            if lose_pred == lose_act:
-                pts += float(c.get("loser_goals", 1.0))
-            if exact and abs(ah - aa) >= 3:  # goleada acertada
-                pts += float(c.get("goleada", 1.0))
+        elif ra != 0 and lose_pred == lose_act:  # acertou os gols do perdedor
+            pts += float(c.get("loser_goals", 1.0))
+        if exact and abs(ah - aa) >= 3:  # goleada (extra que empilha; sem evidência do app)
+            pts += float(c.get("goleada", 1.0))
         return pts
 
     def knockout_bonus(

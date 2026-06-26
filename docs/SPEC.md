@@ -236,7 +236,12 @@ Valores oficiais do app (confirmados no print de regras do grupo):
 | Prorrogação (mata-mata) | +3 |
 | Pênaltis (mata-mata) | +3 |
 
-Os bônus são **cumulativos** e só contam se o **resultado (1×2) estiver certo** (errou o lado → 0).
+Só contam se o **resultado (1×2) estiver certo** (errou o lado → 0). Os quatro níveis de acerto de
+placar — **exato (+5) > gols do vencedor (+3) > saldo (+2) > gols do perdedor (+1)** — são
+**hierárquicos, não cumulativos**: o app concede **apenas o maior nível atingido**, não a soma. Os
+três níveis "decididos" são mutuamente exclusivos com o exato (acertar dois ⇒ é o exato). A **goleada
+(+1)** é um extra que empilha. (Confirmado nas telas "Pontos por Jogo" do app: Curaçao 0×2 cravado =
+base(2)+5 = **7**, não base+11 — ver §4.3.)
 
 ### 4.1 Pontos base (régua fiel do app)
 
@@ -272,12 +277,12 @@ Para palpite `(p_h, p_a)` e resultado real `(r_h, r_a)` com probabilidades de re
 se resultado(palpite) ≠ resultado(real):  0
 senão:
     pts = base( p_do_resultado_real )
+    # UM nível de acerto de placar (hierárquico — o maior, não a soma):
     se placar exato:                       pts += 5
-    se saldo igual (vale p/ empate):       pts += 2
-    se jogo decidido:
-        se acertou gols do vencedor:       pts += 3
-        se acertou gols do perdedor:       pts += 1
-        se exato e |saldo| ≥ 3:            pts += 1   (goleada)
+    senão se acertou gols do vencedor:     pts += 3
+    senão se saldo igual (inclui empate):  pts += 2
+    senão se acertou gols do perdedor:     pts += 1
+    se exato e |saldo| ≥ 3:                pts += 1   (goleada, extra que empilha)
 ```
 
 ### 4.3 Exemplos numéricos
@@ -286,19 +291,26 @@ senão:
 
 ```
 base(0.63) = round(1 + 7.55·log10(1/0.63)) = round(2.52) = 3
-+ exato 5  + saldo 2  + gols do vencedor 3  + gols do perdedor 1
-= 3 + 11 = 14 pts
++ exato 5  (hierárquico: só o nível mais alto)
+= 3 + 5 = 8 pts
 ```
 
-**Favorito cravado** (`p = 0.81`), palpite `2×0`, real `2×0`:
+**Favorito cravado** (`p = 0.81`), palpite `2×0`, real `2×0` — o caso Curaçao×C.Marfim, que o app
+pontuou **7** (não 13):
 
 ```
-base(0.81) = round(1 + 7.55·log10(1/0.81)) = round(1.69) = 2  + 5 + 2 + 3 + 1 = 13 pts
+base(0.81) = round(1 + 7.55·log10(1/0.81)) = round(1.69) = 2  + exato 5 = 7 pts
+```
+
+**Acerto parcial decidido** (`p = 0.50`), palpite `0×3`, real `1×3` — acertou só os gols do vencedor:
+
+```
+base(0.50) = 3  + gols do vencedor 3  (não exato, não saldo, não perdedor) = 6 pts
 ```
 
 **Por que a zebra vale mais**: acertar **exato** um resultado de `p = 0.10` rende
-`base(0.10)=9 → 9 + 5 + 2 + 3 + 1 = 20 pts`, contra 13 do favorito — embora aconteça menos vezes
-(o trade-off é resolvido na escolha, §5).
+`base(0.10)=9 → 9 + 5 = 14 pts`, contra 7 do favorito — embora aconteça menos vezes (o trade-off é
+resolvido na escolha, §5).
 
 ---
 

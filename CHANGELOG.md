@@ -28,6 +28,12 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   expõe o ruído de reconstrução. Passo 6 da skill `palpites-copa`.
 
 ### Corrigido
+- **Bônus de placar do Sistema I eram somados, não hierárquicos** (`scoring.points`): o app concede só
+  o MAIOR nível atingido (exato +5 > gols do vencedor +3 > saldo +2 > gols do perdedor +1), não a soma.
+  O bug inflava todo placar cravado (ex.: favorito 2×0 dava base+11 ≈ 13 em vez de base+5 = 7) e
+  **enviesava o `best_prediction` contra empates** (jogo decidido somava mais bônus que empate). Achado
+  por confronto com as telas "Pontos por Jogo" do app; validado em 12 jogos (8 exatos, 4 off ≤1 só na
+  base). Corrige eficiência (estava inflada) e faz o modelo voltar a palpitar empates. (ENG-23)
 - Fit do Dixon-Coles **converge** via gradiente analítico (antes esgotava o orçamento de avaliações
   do scipy e parava longe do ótimo, sem sinal além do aviso). (ENG-16)
 

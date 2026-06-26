@@ -3,7 +3,8 @@
 Gerador de palpites de bolão da Copa do Mundo. Modelo estatístico (Poisson/Dixon–Coles) treinado
 em resultados históricos de seleções; gera o palpite de cada jogo maximizando os **pontos
 esperados** do bolão. Calibrado para o **Sistema I** do app *Bolão de Futebol 2026*
-(base 1–13 por probabilidade + bônus cumulativos; **zebra vale mais**).
+(base 1–13 por probabilidade + bônus **hierárquicos** de placar — só o maior nível conta, não a soma;
+**zebra vale mais**).
 
 **Metodologia (matemática, derivações, exemplos numéricos): [`docs/SPEC.md`](docs/SPEC.md).**
 **Arquitetura visual (C4: Contexto→Container→Componentes→Dinâmica): [`docs/C4.md`](docs/C4.md).**

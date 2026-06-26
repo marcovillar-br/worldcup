@@ -20,8 +20,9 @@ resultados reais e repalpita só o que falta.
 ## 2. Problema e contexto
 
 Em um bolão de pontuação probabilística, o palpite ingênuo ("chuto o favorito 2×0") deixa pontos na
-mesa: a régua premia acertos improváveis e bônus cumulativos (saldo, gols do vencedor, goleada,
-prorrogação, pênaltis). Calcular à mão, para 104 jogos, o placar que maximiza o **valor esperado** sob
+mesa: a régua premia acertos improváveis e bônus de placar (exato/gols do vencedor/saldo/gols do
+perdedor — hierárquicos, só o maior conta — além de goleada, prorrogação, pênaltis). Calcular à mão,
+para 104 jogos, o placar que maximiza o **valor esperado** sob
 essa régua — e refazê-lo a cada rodada conforme o cenário muda — é inviável manualmente. O produto
 automatiza esse cálculo e o mantém atualizado.
 
@@ -73,8 +74,9 @@ automatiza esse cálculo e o mantém atualizado.
   **nível de risco** ajustável: `best_prediction` otimiza `E[pts]·(1/P)^(2·risk−1)`. *(`scoring.Scorer`;
   SPEC §4–5)*
 - **RF-04** — Pontuar pelo **Sistema I**: base **1–13** por probabilidade (`base = 1 + 7,55·log10(1/p)`,
-  truncada a [1,13]) **+ bônus cumulativos** — exato +5, gols do vencedor +3, saldo +2, gols do
-  perdedor +1, goleada (margem ≥3) +1, prorrogação +3, pênaltis +3. *(`scoring.toml [sistema_i]`)*
+  truncada a [1,13]) **+ bônus de placar hierárquico** (só o maior nível conta) — exato +5 > gols do
+  vencedor +3 > saldo +2 > gols do perdedor +1; goleada (margem ≥3) +1 empilha; prorrogação +3 e
+  pênaltis +3 no mata-mata. *(`scoring.toml [sistema_i]`)*
 - **RF-05** — Aplicar **peso por fase** (Equilíbrio gradual: grupos 1×, mata-mata 2×, final 4×) ao
   sinalizar onde arriscar mais decide o ranking. *(`scoring.toml [phase_weights]`)*
 - **RF-06** — Para o **mata-mata**, prever em 3 camadas — placar dos 90', prorrogação e pênaltis — e

@@ -11,15 +11,16 @@ Termos e conceitos que o produto manipula. Referência para o [`PRD.md`](PRD.md)
 - **Bolão** — competição de palpites: cada participante crava o placar dos jogos e pontua conforme
   acerta. O produto otimiza para *um* bolão específico (app *Bolão de Futebol 2026*).
 - **Sistema I** — o sistema de pontos probabilístico do app ("o mais justo e equilibrado"): a base
-  varia com a probabilidade do resultado (**zebra vale mais**) e há bônus cumulativos. Configurado em
-  `scoring.toml [sistema_i]`.
+  varia com a probabilidade do resultado (**zebra vale mais**) mais um bônus **hierárquico** de placar
+  (só o maior nível conta). Configurado em `scoring.toml [sistema_i]`.
 - **Palpite** — o placar escolhido para um jogo (ex.: `2×1`). Não é o placar mais provável, e sim o de
   maior **valor esperado** de pontos. Em mata-mata inclui prorrogação/pênaltis e quem avança.
 - **Régua de pontos / base** — os pontos-base de um palpite acertado, função da probabilidade `p` do
   resultado: `base = 1 + 7,55·log10(1/p)`, truncada a **[1, 13]**. Fiel ao Simulador do app (SPEC §4).
-- **Bônus cumulativos** — somados à base quando o palpite acerta detalhes: **exato** +5, **gols do
-  vencedor** +3, **saldo** (diferença de gols) +2, **gols do perdedor** +1, **goleada** (margem ≥3) +1,
-  **prorrogação** +3, **pênaltis** +3.
+- **Bônus de placar (hierárquicos)** — somados à base, mas o app concede **só o maior nível atingido**,
+  não a soma: **exato** +5 > **gols do vencedor** +3 > **saldo** (diferença de gols) +2 > **gols do
+  perdedor** +1. A **goleada** (margem ≥3) +1 é um extra que empilha. No mata-mata, **prorrogação** +3
+  e **pênaltis** +3 são camadas à parte (também somadas).
 - **Zebra** — resultado improvável (favorito tropeça). Como a base cresce com `1/p`, cravar a zebra
   rende muito mais pontos — daí a estratégia não ser sempre o favorito.
 - **Peso por fase / Equilíbrio gradual** — multiplicador de importância por etapa: grupos **1×**,

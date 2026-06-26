@@ -18,13 +18,39 @@ def test_wrong_result_scores_zero():
     assert s.points((2, 0), (0, 1), probs) == 0.0
 
 
-def test_exact_score_gets_all_bonuses():
+def test_exact_score_is_base_plus_five_only():
+    # HIERÁRQUICO, não somado: o exato dá base + 5 (NÃO base + 5 + 3 + 2 + 1). Os níveis de placar
+    # são mutuamente exclusivos; o exato não acumula gols do vencedor / saldo / gols do perdedor.
     s = _scorer()
     probs = (0.5, 0.3, 0.2)
-    # placar exato 2x1: base + exact(5) + winner_goals(3) + goal_diff(2) + loser_goals(1)
     pts = s.points((2, 1), (2, 1), probs)
     base = 3.0  # curva fiel do app: p=0.50 -> 3 pts base
-    assert abs(pts - (base + 5 + 3 + 2 + 1)) < 1e-6
+    assert abs(pts - (base + 5)) < 1e-6
+
+
+def test_app_golden_points_per_game():
+    """Casos de ouro das telas 'Pontos por Jogo' do app (rodada J55–J60, 25/06/2026).
+
+    Travam a régua hierárquica contra o ground-truth do app. A base depende da probabilidade
+    *do app* (que difere da nossa); aqui fixamos `probs` para isolar a estrutura do bônus.
+    """
+    s = _scorer()
+    # Curaçao 0x2 C.Marfim, cravado (vitória do visitante, P≈0.81 → base 2): base + exato(5) = 7
+    assert abs(s.points((0, 2), (0, 2), (0.10, 0.09, 0.81)) - (2 + 5)) < 1e-6
+    # Paraguai 0x0 Austrália, empate cravado (P_empate=0.40 → base 4): base + exato(5) = 9
+    assert abs(s.points((0, 0), (0, 0), (0.30, 0.40, 0.30)) - (4 + 5)) < 1e-6
+    # Tunísia 0x3 / real 1x3: acertou só os gols do vencedor (3) — NÃO exato, NÃO saldo, NÃO perdedor
+    # P_visitante=0.50 → base 3: base + gols_vencedor(3) = 6
+    assert abs(s.points((0, 3), (1, 3), (0.25, 0.25, 0.50)) - (3 + 3)) < 1e-6
+
+
+def test_placar_bonus_levels_are_exclusive():
+    # cada nível decidido isolado, sem acumular com os outros (jogo decidido, P_mandante=0.50→base 3)
+    s = _scorer()
+    p = (0.50, 0.25, 0.25)
+    assert abs(s.points((2, 0), (2, 1), p) - (3 + 3)) < 1e-6  # só gols do vencedor (+3): 2x0 vs 2x1
+    assert abs(s.points((3, 1), (2, 0), p) - (3 + 2)) < 1e-6  # só saldo (+2): 3x1 vs 2x0
+    assert abs(s.points((2, 1), (3, 1), p) - (3 + 1)) < 1e-6  # só gols do perdedor (+1): 2x1 vs 3x1
 
 
 def test_underdog_correct_scores_more_than_favorite():

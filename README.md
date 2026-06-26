@@ -120,6 +120,16 @@ e o pontua contra o resultado real — a soma é o **teto** que seguir o tool à
 snapshot arquivado). Cobre a fase de grupos com pontuação exata; no mata-mata pontua os 90' (os
 bônus de prorrogação/pênaltis não são reconstrutíveis dos dados reais — só o vencedor é guardado).
 
+**Apresentação do projeto** — um deck HTML autocontido (tema "Placar Noturno", 16:9, navegável) que
+explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):
+
+```bash
+uv run python scripts/build_presentation.py --docs   # gera out/ e docs/apresentacao.html
+```
+
+Abra o HTML no navegador (← → navegam; `Ctrl+P` salva um PDF/handout). É self-contained (sem CDN);
+a versão pronta vive em [`docs/apresentacao.html`](docs/apresentacao.html).
+
 ## Limitações conhecidas
 
 (Resumo para o usuário; a fonte canônica, com o detalhamento técnico, é [`docs/SPEC.md`](docs/SPEC.md) §9.2.)

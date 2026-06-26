@@ -25,7 +25,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-9](#eng-9) | P3 | tests | ✅ | Guardrail: toda seleção da edição tem tradução PT |
 | [ENG-10](#eng-10) | P3 | release | ✅ | Versão estática, sem CHANGELOG/tags |
 | [ENG-11](#eng-11) | P3 | processo | ✅ | Vigiar proporcionalidade doc/código; consolidar docs |
-| [ENG-12](#eng-12) | P2 | scoring | 🟡 | Bônus de prorrogação/pênaltis definidos mas não computados |
+| [ENG-12](#eng-12) | P2 | scoring | ✅ | Bônus de prorrogação/pênaltis definidos mas não computados |
 | [ENG-13](#eng-13) | P3 | format_engine | ✅ | Default morto `n_sims=8000` em `monte_carlo()` |
 | [ENG-14](#eng-14) | P2 | scoring | ✅ | Curva de pontos base não reproduz o app (50%→3, não 2) |
 | [ENG-15](#eng-15) | P2 | fetch_data | ✅ | `sync-results` depende de fonte única (martj42) sem fallback |
@@ -184,7 +184,7 @@ para o SPEC). Demais sobreposições são audiências distintas (ex.: README §E
 **Commit:** 8e4616d
 
 ## ENG-12
-**Bônus de prorrogação/pênaltis definidos mas não computados** · P2 · `scoring.py` · 🟡 fazendo
+**Bônus de prorrogação/pênaltis definidos mas não computados** · P2 · `scoring.py` · ✅ feito
 
 `scoring.toml` define `extra_time = 3.0` e `penalties = 3.0` (bônus oficiais do app, confirmados nas
 telas de regras), mas `Scorer.points()` nunca lê esses parâmetros — só computa base + exact +
@@ -205,7 +205,17 @@ mais morta). **Bloqueio descoberto:** o `historical_results.csv` local (saída d
 não tem coluna de **fase** nem dados de **pênaltis** (`shootouts`), então o backtest não identifica
 jogos de KO nem o desfecho ET/pênaltis. Fechar exige estender o pipeline: persistir `shootouts` no
 histórico + inferir/rotular a fase. Sub-tarefa de dados antes de wirar no backtest.
-**Commit:** —
+**Resolução (0df13f6):** `fetch_data` agora **mescla** `shootouts.csv` na base histórica como coluna
+`penalty_winner` (canônico, casado por `date+home+away`; `OUTPUT_COLUMNS`, `_merge_penalty_winner`,
+`fetch` baixa best-effort, `load_historical` compat com bases antigas). O `backtest._knockout_bonus_for`
+concede os bônus de KO (`Scorer.knockout_bonus`: +3 ida aos pênaltis, +3 vencedor) nos jogos com
+`penalty_winner`, via `predict_knockout` sobre a matriz as-of; o relatório conta os jogos de pênaltis.
+Testes: merge no `normalize` (com/sem shootouts) + bônus de KO no backtest (jogo de pênaltis → 6/3/0).
+Validado end-to-end: **Copa 2022 reconhece 5 jogos de pênaltis** e soma o bônus. **Limitação aceita
+(não é o bug, é a fonte):** o martj42 não traz a **fase** nem separa 90' de prorrogação, então jogos
+decididos **dentro da prorrogação** não são identificáveis e **não** recebem bônus de ET (documentado
+em SPEC §9.2). A edição **viva** não sofre disso — `sync` resolve o bracket real com os shootouts.
+**Commit:** 0df13f6
 
 ## ENG-13
 **Default morto `n_sims=8000` em `monte_carlo()`** · P3 · `format_engine.py` · ✅ feito

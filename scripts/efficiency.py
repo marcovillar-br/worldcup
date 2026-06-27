@@ -7,6 +7,12 @@ jogo** (estado de conhecimento as-of: só resultados anteriores), pelo MESMO cam
 palpite pelo Sistema I contra o resultado real. A soma é o **teto** que seguir o tool à risca
 renderia. `eficiência = seus_pontos / teto`.
 
+Reporta também um **teto teórico (oráculo)**: a pontuação de cravar o placar **exato** de todo
+jogo (base + bônus máximo). Dá duas leituras complementares — `tool / oráculo` (qualidade do
+modelo+blend; o resto é ruído irredutível do futebol) e `seus_pontos / oráculo` (sua distância
+da perfeição, que mistura execução + limite do modelo + azar). A **eficiência** (vs teto do tool)
+continua sendo a métrica de execução; o oráculo é diagnóstico de teto, não de jogada.
+
 Self-contained: NÃO lê os CSVs de `history/` — recomputa a previsão. Assim o número é
 reprodutível mesmo onde não houve snapshot arquivado.
 
@@ -189,9 +195,21 @@ def main(argv: list[str] | None = None) -> int:
                     diverged.append((mid, a, s["pts"]))
         print(line)
 
+    # Teto teórico (oráculo): cravar o placar EXATO de todo jogo — base + bônus máximo.
+    # Reusa as probs as-of já computadas (a base ainda é aproximada, ENG-24). Mede a fração
+    # do máximo teórico que cada estratégia captura: o tool (qualidade do modelo) e você.
+    scorer = Scorer(edition.scoring)
+    oracle = 0.0
+    for s in scores.values():
+        real = _parse_score(s["real"])
+        oracle += scorer.points(real, real, s["probs"])
+
     print(f"\nJogos pontuados: {len(scores)}")
     cfg = f"risk {edition.scoring.risk} + blend {edition.scoring.blend_weight}"
     print(f"Teto do tool (as-of, {cfg}): {total:.0f} pts ({total / len(scores):.2f}/jogo)")
+    print(f"Teto teórico (oráculo, cravar todo placar): {oracle:.0f} pts ({oracle / len(scores):.2f}/jogo)")
+    print(f"   captura do tool sobre o teórico: {100.0 * total / oracle:.1f}%  (qualidade do modelo+blend;")
+    print("   o resto é ruído irredutível do futebol — inatingível por qualquer estratégia, não execução)")
     print("⚠️  APROXIMADO: a base (1–13) usa a probabilidade interna do app (inobservável) ⇒ ±~1/jogo")
     print("    de incerteza. O bônus de placar é exato; a base não. Teto e eficiência são estimativas")
     print("    (ENG-24 / SPEC §4) — não leia o % como cravado.")
@@ -215,7 +233,9 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.my_points is not None:
         eff = 100.0 * args.my_points / total
-        print(f"\nSeus pontos: {args.my_points:.0f}   Eficiência: {eff:.1f}%")
+        cap = 100.0 * args.my_points / oracle
+        print(f"\nSeus pontos: {args.my_points:.0f}   Eficiência: {eff:.1f}%  (vs teto do tool — sua execução)")
+        print(f"   sua captura do teto teórico: {cap:.1f}%  (vs oráculo — inclui o limite do modelo + azar)")
         if args.leader is not None:
             above = args.leader > total
             note = (

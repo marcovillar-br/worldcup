@@ -35,6 +35,10 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   reconstruindo o palpite **as-of** de cada manhã (mesmo caminho do `predict --as-of`) e pontuando
   pelo Sistema I; `--compare-archive` separa o teto verificável (snapshots reais) do reconstruído e
   expõe o ruído de reconstrução. Passo 6 da skill `palpites-copa`.
+- **Teto teórico (oráculo)** no `efficiency.py`: além do teto do tool, reporta a pontuação de cravar
+  o placar exato de todo jogo e duas capturas complementares (`tool/oráculo` = qualidade do
+  modelo+blend; `seus_pontos/oráculo` = distância da perfeição). Diagnóstico de teto, não de execução
+  (o oráculo é dominado por ruído irredutível — o tool perfeito captura ~34% dele).
 
 ### Corrigido
 - **Bônus de placar do Sistema I eram somados, não hierárquicos** (`scoring.points`): o app concede só

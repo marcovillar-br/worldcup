@@ -113,6 +113,13 @@ Para cada jogo disputado, reconstrói o palpite **as-of** (o que o tool mostrava
 o pontua pelo Sistema I contra o real → o **teto** que seguir o tool à risca renderia;
 `eficiência = seus_pontos / teto`.
 
+O script também imprime um **teto teórico (oráculo)** — cravar o placar exato de todo jogo — e duas
+capturas complementares: `tool / oráculo` (qualidade do modelo+blend) e `seus_pontos / oráculo` (sua
+distância da perfeição). **A eficiência (vs teto do tool) é a métrica de execução; o oráculo é só
+diagnóstico de teto.** O oráculo é dominado por ruído irredutível (ninguém crava placar exato com
+consistência: o tool perfeito captura ~34% do teórico), então **não** o use para avaliar a jogada do
+usuário — serve para dimensionar "quanto teto ainda existe".
+
 ⚠️ **Regras de interpretação (não pule — é fácil concluir errado):**
 1. **Sempre** rode com `--compare-archive`. Ele separa o teto **verificável** (jogos com snapshot
    real em `history/`) do **reconstruído** (dias sem arquivo) — e a reconstrução **diverge** do que

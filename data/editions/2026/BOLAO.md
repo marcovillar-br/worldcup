@@ -11,20 +11,23 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-26)
+## Estado atual (atualizado em 2026-06-27)
 
-- **60 de 104 jogos disputados (J1–J60).** Última rodada de grupos: J61–J66 hoje (26/06, grupos
-  G/H/I); J67–J72 amanhã (27/06, fecham J/K/L).
-- **Posição: 189 pts, 5º** de 60; líder (Fernanda Polido) 203. **Eficiência ~100%** (segue o blend;
-  o "86,7%" anterior era bug de scorer — ver ENG-23 no Histórico). Gap p/ líder = variância dela.
-- **`blend-track` n=37:** Brier modelo **0,477** vs blend **0,446** — Δ=**+0,031**; blend
-  segue melhor (delta cresce). Regime de empates: 16/60 (27%) z=+0,45 — variância, sem ação.
-- Favorito ao título: **Argentina (43,0%)**; Espanha 15,8%, Brasil 7,7%, França 6,5%, Portugal 5,8%.
+- **66 de 104 jogos disputados (J1–J66).** J61–J66 (26/06, grupos G/H/I) registrados via busca na
+  internet (a fonte pública do `sync-results` ainda não os tinha). Hoje (27/06) fecham os últimos
+  grupos (J/K/L): J67–J72, ainda não disputados (começam 17h/19h30/22h).
+- **Posição: 189 pts, 5º** de 60 (antes da rodada de 26/06; pontos reais a confirmar). **Eficiência
+  ~100%** (segue o blend; o "86,7%" anterior era bug de scorer — ver ENG-23 no Histórico).
+- **`blend-track` n=43:** Brier modelo **0,443** vs blend **0,425** — Δ=**+0,019**; blend segue
+  melhor. Regime de empates: 18/66 (27%) z=+0,62 — variância, sem ação.
+- Favorito ao título: **Argentina (43,5%)**; Espanha **18,9%** (saltou ao vencer o grupo H),
+  França 9,7%, Brasil 7,8%, Portugal 4,3%.
 - **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19; odds
   refrescadas em 26/06: 12 jogos atualizados, 49 no total). **Scorer corrigido (ENG-23, 26/06):** bônus
   de placar agora **hierárquicos** (só o maior nível), não somados — o modelo voltou a palpitar empates.
   Admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
   `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API vive no `.env`.
+  Odds refrescadas em 27/06 (6 jogos atualizados, 49 no total).
 
 ## Decisões vivas
 
@@ -38,6 +41,18 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-27 — **Rodada J61–J66 fechada (grupos G/H/I); 66 jogos disputados.** Resultados buscados na
+  internet (a fonte do `sync-results` ainda estava em 60) e registrados à mão: J61 Cabo Verde 0×0 Arábia
+  Saudita, J62 Egito 1×1 Irã, J63 Nova Zelândia 1×5 Bélgica, J64 **Noruega 1×4 França**, J65 Senegal 5×0
+  Iraque, J66 Uruguai 0×1 Espanha. **5/6 lados certos**; único furo no empate do Cabo Verde (palpite 1×0).
+  blend-track n=43: Brier modelo 0,443 vs blend 0,425 (Δ+0,019, blend à frente). Empates 18/66 (27%)
+  z=+0,62 — variância. **Espanha salta a 18,9%** no título após vencer o grupo H; Argentina 43,5%,
+  França sobe ao top-3 (9,7%), Brasil 7,8%. Hoje (27/06) fecham os grupos J/K/L (J67–J72), ainda não
+  jogados. **Processo:** o J64 foi registrado invertido (Noruega 4×1) de uma fonte só e corrigido em
+  seguida — placar errado contamina o refit e o chaveamento (mudou o palpite de J78). **Lição: no registro manual
+  (fonte oficial indisponível), confirmar o placar em ≥2 fontes antes de `record`** — não vale para o
+  `sync-results`, cuja fonte canônica já é a referência.
 
 - 2026-06-26 — **BUG DE PONTUAÇÃO ENCONTRADO E CORRIGIDO (ENG-23) — retrata a narrativa de eficiência.**
   As telas "Pontos por Jogo" do app revelaram que meu `scoring.points` **somava** os bônus de placar,

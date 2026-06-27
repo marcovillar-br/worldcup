@@ -46,6 +46,16 @@ uv run worldcup record --edition 2026 --match <ID> --home <gols_mandante> --away
 nem sempre é a intuitiva: a escala oficial lista o anfitrião como *visitante* em alguns jogos no
 estádio dele (ex.: o fixture do jogo 60 é `Turkey × United States`, não `EUA × Turquia`). **Confira a
 ordem do fixture antes de registrar** e mapeie o placar ditado para ela — senão grava invertido.
+
+⚠️ **No registro manual** (quando a fonte oficial do `sync-results` ainda não tem o jogo e você busca
+o placar na internet): **confirme em ≥2 fontes independentes antes de `record`** (ESPN, FIFA, Yahoo,
+Olympics, etc.) — placar **e** ordem mandante×visitante. **Nunca** registre a partir de uma única
+busca/resumo. (Isso **não** se aplica ao `sync-results`: a fonte canônica dele já é a referência.)
+O resultado realimenta o ajuste do modelo (peso alto nos jogos disputados), então um placar
+errado/invertido **contamina o refit inteiro**: favoritos ao título, regime de empates e o
+chaveamento do mata-mata. Já aconteceu (2026-06-27): J64 gravado como `Noruega 4×1 França` de uma
+fonte só — o correto era França 4×1; o erro mudava o favorito e o palpite de jogos futuros (J78). Se
+as fontes divergirem, **não registre** — pergunte ao usuário.
 Para mata-mata empatado nos 90'/prorrogação, acrescente `--ko-winner "<Seleção em inglês>"`
 (ex.: `--ko-winner Brazil`). Nomes canônicos em inglês — veja `data/editions/2026/groups.csv`.
 

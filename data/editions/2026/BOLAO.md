@@ -16,8 +16,9 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 - **66 de 104 jogos disputados (J1–J66).** J61–J66 (26/06, grupos G/H/I) registrados via busca na
   internet (a fonte pública do `sync-results` ainda não os tinha). Hoje (27/06) fecham os últimos
   grupos (J/K/L): J67–J72, ainda não disputados (começam 17h/19h30/22h).
-- **Posição: 189 pts, 5º** de 60 (antes da rodada de 26/06; pontos reais a confirmar). **Eficiência
-  ~100%** (segue o blend; o "86,7%" anterior era bug de scorer — ver ENG-23 no Histórico).
+- **Posição: 209 pts** (líder 234). **Eficiência 103,5%** (teto as-of 202; segue o blend — captura
+  cheia, o >100% é subestimação do teto reconstruído). Líder está 32 pts ACIMA do teto do tool ⇒ gap
+  é variância de exatos dele, não erro de execução (ver Histórico 2026-06-27).
 - **`blend-track` n=43:** Brier modelo **0,443** vs blend **0,425** — Δ=**+0,019**; blend segue
   melhor. Regime de empates: 18/66 (27%) z=+0,62 — variância, sem ação.
 - Favorito ao título: **Argentina (43,5%)**; Espanha **18,9%** (saltou ao vencer o grupo H),
@@ -49,7 +50,13 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   blend-track n=43: Brier modelo 0,443 vs blend 0,425 (Δ+0,019, blend à frente). Empates 18/66 (27%)
   z=+0,62 — variância. **Espanha salta a 18,9%** no título após vencer o grupo H; Argentina 43,5%,
   França sobe ao top-3 (9,7%), Brasil 7,8%. Hoje (27/06) fecham os grupos J/K/L (J67–J72), ainda não
-  jogados. **Processo:** o J64 foi registrado invertido (Noruega 4×1) de uma fonte só e corrigido em
+  jogados.
+  **Eficiência (66 jogos): 103,5%** — seus **209 pts** vs teto as-of **202** (3,06/jogo). Acima de 100%
+  = captura cheia do blend (você ajusta toda manhã) + subestimação do teto reconstruído (base 1–13 usa
+  prob. interna do app inobservável, ±~1/jogo; +7 de ruído de reconstrução nos 54 verificáveis; 12 jogos
+  sem snapshot: J1–J4, J25–J30, J32, J35). **Líder 234 está 32 pts ACIMA do teto** ⇒ nem seguir o tool
+  à risca alcançaria hoje; é variância de exatos a favor dele (regride), não estratégia superior. Alavanca
+  segue sendo acurácia (blend), não ousadia. **Processo:** o J64 foi registrado invertido (Noruega 4×1) de uma fonte só e corrigido em
   seguida — placar errado contamina o refit e o chaveamento (mudou o palpite de J78). **Lição: no registro manual
   (fonte oficial indisponível), confirmar o placar em ≥2 fontes antes de `record`** — não vale para o
   `sync-results`, cuja fonte canônica já é a referência.

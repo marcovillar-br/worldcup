@@ -40,6 +40,13 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   modelo+blend; `seus_pontos/oráculo` = distância da perfeição). Diagnóstico de teto, não de execução
   (o oráculo é dominado por ruído irredutível — o tool perfeito captura ~34% dele).
 
+### Adicionado
+- **Slide de balanço da fase de grupos** na apresentação (`build_presentation`): resumo dos 72 jogos
+  (28% de empates, zebra Cabo Verde no grupo da Espanha) + expectativa do mata-mata (corrida ao
+  título, final prevista Espanha×Argentina, jogos 50/50 a observar). Números da campanha/Brier/
+  favoritos atualizados para o fim dos grupos (28/06): 2º lugar, 235 pts (72/104), eficiência 103%,
+  blend-track n=49 (modelo 0,442 / blend 0,418).
+
 ### Corrigido
 - **Rótulo da fase R32 estava errado: "32-avos" → "16-avos de final"** (`render._STAGE_LABEL`). A
   rodada de 32 seleções tem **16 jogos** (1/16 da final), logo é "16-avos" — coerente com "oitavas"

@@ -31,7 +31,7 @@ DEFAULT_OUT = PROJECT_ROOT / "out" / "apresentacao.html"
 DOCS_OUT = PROJECT_ROOT / "docs" / "apresentacao.html"
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
-AS_OF = "26 jun 2026"
+AS_OF = "28 jun 2026"
 VERSION = "v0.2.0"
 
 
@@ -159,9 +159,10 @@ def bar_compare() -> str:
     return "".join(out)
 
 
-def champ_bars() -> str:
-    """Favoritos ao título (Monte Carlo, até 26/06)."""
-    teams = [("Argentina", 43), ("Espanha", 16), ("Brasil", 8), ("França", 7), ("Portugal", 6)]
+def champ_bars(teams: list[tuple[str, int]] | None = None) -> str:
+    """Favoritos ao título (Monte Carlo, até 28/06 — fase de grupos encerrada)."""
+    if teams is None:
+        teams = [("Argentina", 30), ("Espanha", 20), ("França", 12), ("Brasil", 9), ("Portugal", 7)]
     out = ['<div class="champ">']
     for name, pct in teams:
         out.append(
@@ -372,14 +373,46 @@ def build_slides() -> list[Slide]:
             f"Resultados · campanha 2026 ({AS_OF})",
             f"""
       <div class="center">
-        <h2>A campanha 2026, ao vivo</h2>
+        <h2>A campanha 2026 — fase de grupos encerrada</h2>
         <div class="stats">
-          {stat("5", "5", "lugar de 60", suffix="º")}
-          {stat("189", "189", "pontos (60 de 104 jogos)")}
-          {stat("100", "100", "de eficiência*", suffix="%")}
+          {stat("2", "2", "lugar de 60", suffix="º")}
+          {stat("235", "235", "pontos (72 de 104 jogos)")}
+          {stat("103", "103", "de eficiência*", suffix="%")}
         </div>
         <p class="muted">*eficiência ≈ quanto dos pontos que o tool renderia você capturou (segue o blend).</p>
         <div class="champwrap"><div class="cwtitle">{_IC_TROPHY} favoritos ao título</div>{champ_bars()}</div>
+      </div>""",
+        )
+    )
+
+    # 9b — balanço da fase de grupos + expectativa do mata-mata
+    s.append(
+        Slide(
+            "Balanço · fase de grupos",
+            f"""
+      <div class="center">
+        <h2>72 jogos depois: o <span class="accent">mapa do mata-mata</span></h2>
+        <div class="row2">
+          <div class="panel">
+            <div class="ptitle">{_IC_BALL} a fase de grupos</div>
+            <div class="stats mini">
+              {stat("72", "72", "jogos disputados")}
+              {stat("32", "32", "classificados · 16 caem")}
+            </div>
+            <p class="muted"><b>28% de empates</b> (20/72) — a marca desta Copa; com o scorer
+              corrigido, o modelo voltou a palpitá-los.</p>
+            <p class="muted">Zebra da fase: <b>Cabo Verde</b> passou em 2º <b>no grupo da Espanha</b> —
+              "zebra vale mais" na prática.</p>
+          </div>
+          <div class="panel">
+            <div class="ptitle">{_IC_TROPHY} o que esperar</div>
+            {champ_bars([("Argentina", 30), ("Espanha", 20), ("França", 12)])}
+            <p class="muted">final prevista: <b>Espanha × Argentina</b> → <b class="accent">Argentina</b> campeã.</p>
+            <p class="muted">jogos para ficar de olho: <b>Brasil × Japão</b>, Holanda × Marrocos (57%),
+              Costa do Marfim × Noruega (52%).</p>
+          </div>
+        </div>
+        <p class="muted">Agora cada jogo do mata-mata vale <b>2× / 4×</b> — é onde o bolão se decide.</p>
       </div>""",
         )
     )
@@ -396,11 +429,11 @@ def build_slides() -> list[Slide]:
             <div class="ptitle">{_IC_CHART} Erro de previsão (Brier · menor = melhor)</div>
             <div class="vs">
               <div class="vrow"><span>modelo puro</span><span class="vtrack"><i style="width:100%"
-                class="away"></i></span><b>0,477</b></div>
-              <div class="vrow"><span>com blend</span><span class="vtrack"><i style="width:93%"
-                class="home"></i></span><b class="accent">0,446</b></div>
+                class="away"></i></span><b>0,442</b></div>
+              <div class="vrow"><span>com blend</span><span class="vtrack"><i style="width:95%"
+                class="home"></i></span><b class="accent">0,418</b></div>
             </div>
-            <p class="muted">37 jogos rastreados · o blend reduz o erro a cada rodada.</p>
+            <p class="muted">49 jogos rastreados · o blend reduz o erro a cada rodada.</p>
           </div>
           <div class="panel">
             <div class="ptitle">{_IC_SCALE} Backtest em 4 Copas (2010–22)</div>
@@ -498,7 +531,8 @@ def build_slides() -> list[Slide]:
             alerta estatístico.</span></div>
           <div class="limcard"><b>Desempates de grupo</b><span>Simplificados (sem confronto direto
             oficial).</span></div>
-          <div class="limcard"><b>Melhores 3ºs</b><span>Alocados por aproximação do Annex C da FIFA.</span></div>
+          <div class="limcard"><b>Melhores 3ºs</b><span>Aproxima o Annex C; a alocação oficial da
+            combinação realizada é cravada.</span></div>
         </div>
       </div>""",
         )

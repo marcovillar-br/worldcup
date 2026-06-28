@@ -11,24 +11,22 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-27)
+## Estado atual (atualizado em 2026-06-28)
 
-- **66 de 104 jogos disputados (J1–J66).** J61–J66 (26/06, grupos G/H/I) registrados via busca na
-  internet (a fonte pública do `sync-results` ainda não os tinha). Hoje (27/06) fecham os últimos
-  grupos (J/K/L): J67–J72, ainda não disputados (começam 17h/19h30/22h).
-- **Posição: 209 pts** (líder 234). **Eficiência 103,5%** (teto as-of 202; segue o blend — captura
-  cheia, o >100% é subestimação do teto reconstruído). Líder está 32 pts ACIMA do teto do tool ⇒ gap
-  é variância de exatos dele, não erro de execução (ver Histórico 2026-06-27).
-- **`blend-track` n=43:** Brier modelo **0,443** vs blend **0,425** — Δ=**+0,019**; blend segue
-  melhor. Regime de empates: 18/66 (27%) z=+0,62 — variância, sem ação.
-- Favorito ao título: **Argentina (43,5%)**; Espanha **18,9%** (saltou ao vencer o grupo H),
-  França 9,7%, Brasil 7,8%, Portugal 4,3%.
-- **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19; odds
-  refrescadas em 26/06: 12 jogos atualizados, 49 no total). **Scorer corrigido (ENG-23, 26/06):** bônus
-  de placar agora **hierárquicos** (só o maior nível), não somados — o modelo voltou a palpitar empates.
-  Admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato do
-  `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API vive no `.env`.
-  Odds refrescadas em 27/06 (6 jogos atualizados, 49 no total).
+- **72 de 104 jogos disputados (J1–J72) — FASE DE GRUPOS COMPLETA.** J67–J72 (27/06, grupos J/K/L)
+  sincronizados pela fonte pública do `sync-results` (6 jogos de grupo preenchidos). Começa o
+  **mata-mata (32-avos, R32)**: J73 (África do Sul × Canadá) é hoje 28/06; o resto do R32 vai até
+  02/07.
+- **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
+  melhor (delta cresce). Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
+- Favorito ao título: **Argentina (29,0%)**; Espanha **21,2%**, França 10,7%, Brasil 8,1%,
+  Portugal 7,5%. (Probabilidades comprimem ao entrar no mata-mata — chaveamento definido reduz o
+  domínio do top-1.)
+- **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19). Scorer
+  hierárquico (ENG-23). Admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato
+  do `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API
+  vive no `.env`. Odds em 28/06: fetch retornou 16 eventos mas 0 novos/atualizados (os confrontos do
+  mata-mata ainda não casaram com o feed) — 49 jogos no total, todos disputados.
 
 ## Decisões vivas
 
@@ -42,6 +40,15 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-28 — **Fase de grupos completa (J67–J72 fechados); 72 jogos disputados. Começa o R32.**
+  Sincronização pela fonte pública (não foi preciso registro manual desta vez). blend-track n=49:
+  Brier modelo 0,442 vs blend 0,418 (Δ+0,024, blend à frente). Empates 20/72 (28%) z=+0,74 —
+  variância. **Argentina 29,0%** no título, **Espanha 21,2%** (encosta), França 10,7%, Brasil 8,1%,
+  Portugal 7,5%. Chaveamento previsto: campeão **Argentina** (bate Espanha na final, 0×0/pênaltis);
+  Brasil cai na semi para a Argentina (J102). Hoje (28/06) abre o mata-mata com J73 (África do Sul ×
+  Canadá; palpite 0×0, Canadá avança). Pendente: pegar os pontos reais do usuário pós-grupos para
+  recalcular eficiência.
 
 - 2026-06-27 — **Rodada J61–J66 fechada (grupos G/H/I); 66 jogos disputados.** Resultados buscados na
   internet (a fonte do `sync-results` ainda estava em 60) e registrados à mão: J61 Cabo Verde 0×0 Arábia

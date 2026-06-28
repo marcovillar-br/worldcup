@@ -98,6 +98,14 @@ def test_sync_results_fills_unplayed_group_games(tmp_path, monkeypatch):
     """sync_results preenche jogos de grupo ainda em aberto a partir de resultados sintéticos,
     sem tocar nos já preenchidos — exercita o caminho de IO completo num clone temporário."""
     shutil.copytree(EDITIONS_DIR / "2026", tmp_path / "2026")
+    # Esvazia 2 jogos de grupo no clone para garantir partidas em aberto, independentemente de
+    # quão avançada está a Copa real nos dados versionados (a fase de grupos pode já ter terminado).
+    fx_path = tmp_path / "2026" / "fixtures.csv"
+    fx = pd.read_csv(fx_path, dtype=str, keep_default_na=False)  # str: não vira "2.0" nem NaN
+    group_idx = fx.index[fx["stage"] == "group"][:2]
+    fx.loc[group_idx, ["home_goals", "away_goals"]] = ""
+    fx.to_csv(fx_path, index=False)
+
     ed = load_edition(2026, base_dir=tmp_path)
     unplayed = [f for f in ed.group_fixtures() if not f.played][:2]
     assert len(unplayed) == 2

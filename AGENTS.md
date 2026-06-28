@@ -79,6 +79,9 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 ## Modelo de dados de uma edição (`data/editions/2026/`)
 
 - `tournament.toml` — formato (grupos, avanço, melhores 3ºs, fases, desempates, anfitriões).
+  Tabela opcional `[group_stage.third_allocation]` (`match_id → grupo`) crava a alocação **oficial**
+  dos melhores terceiros (Annex C) para a combinação realizada — usada quando o conjunto de grupos
+  bate com os terceiros classificados; senão cai no casamento por restrição. Ver SPEC §7.3.
 - `groups.csv` — `group,team` (nomes canônicos em inglês).
 - `fixtures.csv` — os 104 jogos. **O chaveamento mora aqui**, via slots em `home`/`away`:
   `1A`/`2A` (1º/2º do grupo A), `3rd` (+ `third_groups` permitidos), `W73` (vencedor do jogo 73),

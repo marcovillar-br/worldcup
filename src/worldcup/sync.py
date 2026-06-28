@@ -121,7 +121,7 @@ def _resolve_real_bracket(edition: Edition, scores, shootouts) -> dict[int, tupl
         ]
         ko = edition.knockout_fixtures()
         slots = [(f.match_id, f.third_groups) for f in ko if f.away == "3rd"]
-        assign = _assign_thirds(slots, [g for g, _ in ranked])
+        assign = _assign_thirds(slots, [g for g, _ in ranked], spec.third_allocation)
         third_team_by_match = {mid: thirds_by_group[g].team for mid, g in assign.items()}
 
     # caminha o mata-mata propagando vencedores reais

@@ -19,9 +19,12 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   02/07.
 - **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
   melhor (delta cresce). Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
-- Favorito ao título: **Argentina (29,0%)**; Espanha **21,2%**, França 10,7%, Brasil 8,1%,
-  Portugal 7,5%. (Probabilidades comprimem ao entrar no mata-mata — chaveamento definido reduz o
-  domínio do top-1.)
+- Favorito ao título: **Argentina (29,8%)**; Espanha **19,9%**, França 11,5%, Brasil 8,8%.
+  (Probabilidades comprimem ao entrar no mata-mata; números pós-correção do bracket, ver abaixo.)
+- **Bracket R32 corrigido (ENG-25, 28/06):** a alocação dos terceiros divergia da tabela oficial da
+  FIFA — J74/J77/J81 saíam com Bósnia/Paraguai/Suécia rodados. Cravada a alocação oficial (row 67,
+  grupos B/D/E/F/I/J/K/L) em `tournament.toml`. Agora: J74 Alemanha×**Paraguai**, J77 França×**Suécia**,
+  J81 EUA×**Bósnia**. Os 16 confrontos batem com o oficial (Yahoo/Sky/Wikipedia).
 - **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19). Scorer
   hierárquico (ENG-23). Admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato
   do `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API
@@ -41,14 +44,29 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
+- 2026-06-28 (correção) — **Bracket do R32 estava com 3 confrontos errados; corrigido (ENG-25).** O
+  casamento por restrição dos terceiros (`_assign_thirds`) escolhia um emparelhamento válido **porém
+  não-oficial** — divergia da tabela Annex C da FIFA em J74/J77/J81 (Bósnia/Paraguai/Suécia rodados).
+  Verificado contra 2 fontes oficiais (bracket Yahoo/Sky + Wikipedia "row 67"). Correção data-driven:
+  override `[group_stage.third_allocation]` no `tournament.toml` (oficial: 1E×3D, 1I×3F, 1D×3B, +5 que
+  já batiam), aplicado quando o conjunto de grupos casa. Os 16 confrontos do R32 agora corretos.
+  Tabela completa de 495 combinações virou item de backlog (ENG-25). Repalpitado e re-arquivado o
+  snapshot de hoje. Probabilidades pós-correção: Argentina 29,8%, Espanha 19,9%, França 11,5%,
+  Brasil 8,8%.
+
 - 2026-06-28 — **Fase de grupos completa (J67–J72 fechados); 72 jogos disputados. Começa o R32.**
   Sincronização pela fonte pública (não foi preciso registro manual desta vez). blend-track n=49:
   Brier modelo 0,442 vs blend 0,418 (Δ+0,024, blend à frente). Empates 20/72 (28%) z=+0,74 —
   variância. **Argentina 29,0%** no título, **Espanha 21,2%** (encosta), França 10,7%, Brasil 8,1%,
   Portugal 7,5%. Chaveamento previsto: campeão **Argentina** (bate Espanha na final, 0×0/pênaltis);
   Brasil cai na semi para a Argentina (J102). Hoje (28/06) abre o mata-mata com J73 (África do Sul ×
-  Canadá; palpite 0×0, Canadá avança). Pendente: pegar os pontos reais do usuário pós-grupos para
-  recalcular eficiência.
+  Canadá; palpite 0×0, Canadá avança).
+  **Eficiência (72 jogos): 103,1%** — seus **235 pts** (2º) vs teto as-of **228** (3,17/jogo). >100% =
+  captura cheia do blend + subestimação do teto reconstruído (Δ+7 nos 60 verificáveis; 12 jogos sem
+  snapshot: J1–J4, J25–J30, J32, J35). **Líder 259 está 31 pts ACIMA do teto** ⇒ variância de exatos a
+  favor dele (regride), não erro de execução seu. Oráculo (cravar tudo) = 639; tool perfeito captura só
+  35,7% (resto é ruído irredutível). Sua captura do teórico: 36,8% (à frente do tool). Alavanca segue
+  acurácia (blend) + pesos 2×/4× do mata-mata, não ousadia.
 
 - 2026-06-27 — **Rodada J61–J66 fechada (grupos G/H/I); 66 jogos disputados.** Resultados buscados na
   internet (a fonte do `sync-results` ainda estava em 60) e registrados à mão: J61 Cabo Verde 0×0 Arábia

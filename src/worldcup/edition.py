@@ -31,6 +31,12 @@ class GroupStageSpec(BaseModel):
     best_thirds: int = Field(ge=0)
     tiebreakers: list[str]
     knockout_stages: list[str]
+    # Override opcional da alocação dos melhores terceiros (tabela oficial Annex C da FIFA).
+    # Mapeia o match_id de cada slot de terceiro -> grupo cujo 3º o preenche, para UMA combinação
+    # realizada de terceiros classificados. Quando o conjunto de grupos do override bate com os
+    # terceiros que de fato se classificaram, o motor usa esta tabela; senão cai no casamento por
+    # restrição (`_assign_thirds`). Permite cravar a alocação oficial sem hardcode no código.
+    third_allocation: dict[int, str] = Field(default_factory=dict)
 
 
 class TournamentSpec(BaseModel):

@@ -38,6 +38,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-22](#eng-22) | P3 | backtest | ✅ | Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo) |
 | [ENG-23](#eng-23) | P1 | scoring | ✅ | Bônus de placar somados em vez de hierárquicos (inflam pontos, enviesam contra empate) |
 | [ENG-24](#eng-24) | P2 | scoring | ⚪ | Base (1–13) usa a probabilidade interna do app (inobservável) ⇒ eficiência só aproximada |
+| [ENG-25](#eng-25) | P3 | format_engine | 🔴 | Tabela oficial completa (495 combinações) da alocação de terceiros (Annex C) |
 
 ---
 
@@ -647,3 +648,28 @@ teto/eficiência são estimativas ±~1/jogo.
 `docs/SPEC.md` §4. A eficiência é **curiosidade de campanha** (não entra em decisão), então o nível de
 aproximação atual basta. Reabrir só se a base virar insumo de decisão e houver fonte automática das
 probabilidades do app.
+
+## ENG-25
+**Tabela oficial completa (495 combinações) da alocação de terceiros (Annex C)** · P3 · `format_engine` · 🔴 todo
+
+O casamento por restrição do `_assign_thirds` (backtracking) aproxima o Annex C da FIFA, mas **não é
+único**: para uma dada combinação dos 8 grupos cujos terceiros se classificam podem existir vários
+emparelhamentos válidos slot→grupo, e a FIFA escolhe **um** específico via tabela predeterminada.
+O backtracking devolve o primeiro válido — que pode **divergir** do oficial. Aconteceu em 2026 (após
+a fase de grupos, combinação B/D/E/F/I/J/K/L = "row 67"): J74/J77/J81 saíam com Bósnia/Paraguai/Suécia
+**rodados** em relação ao bracket oficial.
+
+**Mitigação já no lugar (não é este item):** override por edição em
+`tournament.toml::[group_stage.third_allocation]` (`match_id → grupo`), aplicado quando o conjunto de
+grupos bate com os terceiros classificados — crava a alocação oficial da combinação **realizada**.
+Resolve o caso vivo (2026), mas exige preencher a tabela **após** a fase de grupos e cobre **uma**
+combinação.
+
+**Este item:** ingerir a tabela oficial **completa** das 495 combinações (C(12,8)) como dado da
+edição (CSV/TOML), indexada pelo conjunto de grupos classificados, e fazer o `_assign_thirds`
+consultá-la sempre (não só na combinação cravada). Aí o bracket sai **sempre** oficial, inclusive nas
+ramificações do Monte Carlo (hoje aproximadas pelo backtracking). **Refs:** `format_engine._assign_thirds`,
+`docs/SPEC.md` §7.3/§9.2-§9.3. **Critério de aceite:** dado qualquer conjunto de 8 grupos válido, a
+alocação bate com a tabela FIFA; teste com ≥3 combinações conhecidas (inclui a row 67 de 2026).
+**Fonte:** Wikipedia "2026 FIFA World Cup knockout stage" + documento oficial FIFA (Annex). Trabalho
+sobretudo de **transcrição confiável** da tabela.

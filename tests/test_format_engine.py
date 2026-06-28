@@ -39,6 +39,24 @@ def test_assign_thirds_respects_allowed_groups():
     assert assign[77] == "D"
 
 
+def test_assign_thirds_official_override_overrides_backtracking():
+    """Quando o override (tabela Annex C) descreve a combinação realizada, ele manda — mesmo que o
+    backtracking encontrasse outro emparelhamento válido."""
+    # Ambos os grupos são permitidos nos dois slots ⇒ o backtracking sozinho casaria 74->A, 77->B.
+    slots = [(74, ["A", "B"]), (77, ["A", "B"])]
+    override = {74: "B", 77: "A"}
+    assign = _assign_thirds(slots, ["A", "B"], override)
+    assert assign == {74: "B", 77: "A"}
+
+
+def test_assign_thirds_override_ignored_when_combination_differs():
+    """Se os terceiros classificados não batem com o conjunto do override, ignora-o e casa por restrição."""
+    slots = [(74, ["A", "B"]), (77, ["C", "D"])]
+    override = {74: "B", 77: "A"}  # descreve {A,B}, mas a combinação real é {A,D}
+    assign = _assign_thirds(slots, ["A", "D"], override)
+    assert assign == {74: "A", 77: "D"}
+
+
 def _synthetic_edition() -> tuple[Edition, DixonColesModel]:
     """Formato diferente do de 2026: 4 grupos de 4, sem melhores terceiros."""
     teams = [f"T{i}" for i in range(16)]

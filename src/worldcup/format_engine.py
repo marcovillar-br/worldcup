@@ -106,8 +106,21 @@ def group_standings(
 
 
 # --------------------------------------------------------------------- slots
-def _assign_thirds(slots: list[tuple[int, list[str]]], qualified_groups: list[str]) -> dict[int, str]:
-    """Casa cada grupo de terceiro classificado a um slot permitido (matching por backtracking)."""
+def _assign_thirds(
+    slots: list[tuple[int, list[str]]],
+    qualified_groups: list[str],
+    override: dict[int, str] | None = None,
+) -> dict[int, str]:
+    """Casa cada grupo de terceiro classificado a um slot permitido (matching por backtracking).
+
+    Se `override` (tabela oficial Annex C) descreve exatamente esta combinação de terceiros
+    classificados — i.e. seu conjunto de grupos bate com `qualified_groups` — usa-o direto,
+    restrito aos slots presentes. Senão, cai no casamento por restrição.
+    """
+    if override and set(override.values()) == set(qualified_groups):
+        slot_ids = {mid for mid, _ in slots}
+        return {mid: g for mid, g in override.items() if mid in slot_ids}
+
     assignment: dict[int, str] = {}
     used: set[str] = set()
 
@@ -198,7 +211,7 @@ def monte_carlo(
         qual_thirds = thirds[: spec.best_thirds]
         for _, s in qual_thirds:
             third_q[s.team] += 1
-        third_assign = _assign_thirds(third_slots, [g for g, _ in qual_thirds])
+        third_assign = _assign_thirds(third_slots, [g for g, _ in qual_thirds], spec.third_allocation)
         third_team = {mid: {g: s.team for g, s in qual_thirds}[g] for mid, g in third_assign.items()}
 
         # 2) mata-mata
@@ -299,7 +312,7 @@ def deterministic_bracket(
     third_groups_ranked = sorted(edition.groups, key=lambda g: -sim.third_qualify.get(thirds[g], 0))[: spec.best_thirds]
     ko = edition.knockout_fixtures()
     third_slots = [(f.match_id, f.third_groups) for f in ko if f.away == "3rd"]
-    third_assign = _assign_thirds(third_slots, third_groups_ranked)
+    third_assign = _assign_thirds(third_slots, third_groups_ranked, spec.third_allocation)
     third_team = {mid: thirds[g] for mid, g in third_assign.items()}
 
     # resolve cada jogo do mata-mata na ordem, propagando vencedores previstos

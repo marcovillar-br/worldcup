@@ -428,6 +428,15 @@ classificaram, fazemos um **casamento perfeito** slot→grupo respeitando as res
 backtracking (`_assign_thirds`). É um emparelhamento bipartido com 8 itens — barato e determinístico.
 Aproxima a tabela oficial de 495 combinações pela via das restrições por slot (ver §9).
 
+⚠️ **O casamento por restrição não é único**: para uma combinação de grupos podem existir vários
+emparelhamentos válidos, e a tabela oficial da FIFA escolhe **um** específico. O backtracking devolve
+o primeiro que acha — que pode **divergir** do oficial (aconteceu em 2026: J74/J77/J81 saíam com
+Bósnia/Paraguai/Suécia rodados). Por isso a edição pode **cravar a alocação oficial** via
+`tournament.toml::[group_stage.third_allocation]` (`match_id → grupo`): quando o conjunto de grupos
+dessa tabela bate com os terceiros que de fato se classificaram, `_assign_thirds` a usa direto; senão
+cai no backtracking. É dado da edição (não há lógica de ano no código), aplicado tanto no bracket
+real (`sync`) quanto no determinístico/Monte Carlo (`format_engine`).
+
 ### 7.4 Chaveamento determinístico (o palpite concreto)
 
 Para produzir **um** bracket palpitável: pega-se o 1º/2º/3º **mais frequente** de cada grupo (das
@@ -498,8 +507,11 @@ _Fonte canônica das limitações do projeto. O `README.md` resume para o usuár
 - **Modelo baseado em resultados**: pondera fortemente o recente → favorece quem vem bem (CONMEBOL
   aparece forte) e pode subestimar potência em má fase recente (ex.: França).
 - **Desempates de grupo** simplificados (sem confronto direto / fair-play oficiais).
-- **Terceiros**: casamento por restrição aproxima o Annex C; após a fase de grupos, confira os 8
-  confrontos dos 32-avos com os resultados reais registrados.
+- **Terceiros**: casamento por restrição aproxima o Annex C — e **não é único**, podendo divergir da
+  tabela oficial da FIFA (§7.3). Mitigação: cravar a alocação oficial da combinação realizada em
+  `tournament.toml::[group_stage.third_allocation]` (feito em 2026 após a fase de grupos: row 67,
+  grupos B/D/E/F/I/J/K/L). A tabela completa de 495 combinações segue pendente (§9.3). **Sempre confira
+  os 8 confrontos dos 32-avos com o bracket oficial** após a fase de grupos.
 - **Mata-mata em camadas**: o placar real importado pode incluir prorrogação (não só 90'); para a
   realimentação isso é irrelevante (interessa o vencedor e o efeito no treino).
 - **Bônus de KO no backtest (ENG-12)**: o backtest concede os bônus de prorrogação/pênaltis **só** nos

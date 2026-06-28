@@ -41,6 +41,17 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (o oráculo é dominado por ruído irredutível — o tool perfeito captura ~34% dele).
 
 ### Corrigido
+- **Alocação dos melhores terceiros podia divergir da tabela oficial da FIFA** (`_assign_thirds`): o
+  casamento por restrição (backtracking) devolvia o **primeiro** emparelhamento válido, que não é
+  único — em 2026 saiu diferente do Annex C oficial (J74/J77/J81 com Bósnia/Paraguai/Suécia rodados).
+  Adicionado override por edição em `tournament.toml::[group_stage.third_allocation]` (`match_id →
+  grupo`), aplicado quando o conjunto de grupos bate com os terceiros classificados — usado no bracket
+  real (`sync`) e no determinístico/Monte Carlo (`format_engine`). 2026 cravado na row 67 (grupos
+  B/D/E/F/I/J/K/L), verificado vs bracket oficial (Yahoo/Sky) + Wikipedia. Tabela completa de 495
+  combinações segue pendente (SPEC §9.3).
+- **Suíte de testes resiliente ao avanço da Copa**: `test_sync_results_fills_unplayed_group_games`
+  esvazia 2 jogos no clone em vez de depender de partidas de grupo em aberto nos dados reais (quebrava
+  quando a fase de grupos terminava).
 - **Bônus de placar do Sistema I eram somados, não hierárquicos** (`scoring.points`): o app concede só
   o MAIOR nível atingido (exato +5 > gols do vencedor +3 > saldo +2 > gols do perdedor +1), não a soma.
   O bug inflava todo placar cravado (ex.: favorito 2×0 dava base+11 ≈ 13 em vez de base+5 = 7) e

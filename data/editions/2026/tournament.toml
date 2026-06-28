@@ -20,3 +20,20 @@ tiebreakers = ["points", "goal_difference", "goals_for", "random"]
 
 # Ordem das fases do mata-mata (rótulos usados em fixtures.csv e nos pesos de pontuação).
 knockout_stages = ["R32", "R16", "QF", "SF", "3rd_place", "final"]
+
+# Alocação oficial dos 8 melhores terceiros (tabela Annex C da FIFA) para a combinação REALIZADA
+# em 2026: terceiros classificados vêm dos grupos B, D, E, F, I, J, K, L ("row 67" da tabela de 495
+# combinações). Mapeia o match_id de cada slot de terceiro -> grupo cujo 3º o preenche. O motor só
+# aplica isto quando esse conjunto de grupos bate com os terceiros que de fato passaram; do contrário
+# usa o casamento por restrição (`_assign_thirds`). Sem esta tabela, o backtracking escolhe um
+# emparelhamento VÁLIDO porém não-oficial (J74/J77/J81 saíam trocados). Fontes: bracket oficial
+# (Yahoo/Sky) + Wikipedia "2026 FIFA World Cup knockout stage". Ver SPEC §7.3 / §9.2.
+[group_stage.third_allocation]
+74 = "D"   # 1E Alemanha  x 3D Paraguai
+77 = "F"   # 1I França    x 3F Suécia
+79 = "E"   # 1A México    x 3E Equador
+80 = "K"   # 1L Inglaterra x 3K RD Congo
+81 = "B"   # 1D EUA       x 3B Bósnia
+82 = "I"   # 1G Bélgica   x 3I Senegal
+85 = "J"   # 1B Suíça     x 3J Argélia
+87 = "L"   # 1K Colômbia  x 3L Gana

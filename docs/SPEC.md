@@ -511,7 +511,7 @@ _Fonte canônica das limitações do projeto. O `README.md` resume para o usuár
   tabela oficial da FIFA (§7.3). Mitigação: cravar a alocação oficial da combinação realizada em
   `tournament.toml::[group_stage.third_allocation]` (feito em 2026 após a fase de grupos: row 67,
   grupos B/D/E/F/I/J/K/L). A tabela completa de 495 combinações segue pendente (§9.3). **Sempre confira
-  os 8 confrontos dos 32-avos com o bracket oficial** após a fase de grupos.
+  os 8 confrontos dos 16-avos com o bracket oficial** após a fase de grupos.
 - **Mata-mata em camadas**: o placar real importado pode incluir prorrogação (não só 90'); para a
   realimentação isso é irrelevante (interessa o vencedor e o efeito no treino).
 - **Bônus de KO no backtest (ENG-12)**: o backtest concede os bônus de prorrogação/pênaltis **só** nos

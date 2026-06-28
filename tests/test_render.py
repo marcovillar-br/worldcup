@@ -77,6 +77,6 @@ def test_outputs_render_for_knockout_rows():
     )
     md = render_markdown(_run_with([ko]))
     html_out = render_html(_run_with([ko]))
-    assert "32-avos de final" in md
+    assert "16-avos de final" in md
     assert "Brasil" in html_out
     assert "Coreia do Sul" in html_out

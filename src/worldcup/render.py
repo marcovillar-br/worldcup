@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
 _STAGE_LABEL = {
     "group": "Fase de Grupos",
-    "R32": "32-avos de final",
+    "R32": "16-avos de final",
     "R16": "Oitavas de final",
     "QF": "Quartas de final",
     "SF": "Semifinais",

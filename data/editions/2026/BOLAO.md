@@ -15,7 +15,7 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 - **72 de 104 jogos disputados (J1–J72) — FASE DE GRUPOS COMPLETA.** J67–J72 (27/06, grupos J/K/L)
   sincronizados pela fonte pública do `sync-results` (6 jogos de grupo preenchidos). Começa o
-  **mata-mata (32-avos, R32)**: J73 (África do Sul × Canadá) é hoje 28/06; o resto do R32 vai até
+  **mata-mata (16-avos, R32)**: J73 (África do Sul × Canadá) é hoje 28/06; o resto do R32 vai até
   02/07.
 - **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
   melhor (delta cresce). Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.

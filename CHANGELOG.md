@@ -41,6 +41,10 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (o oráculo é dominado por ruído irredutível — o tool perfeito captura ~34% dele).
 
 ### Corrigido
+- **Rótulo da fase R32 estava errado: "32-avos" → "16-avos de final"** (`render._STAGE_LABEL`). A
+  rodada de 32 seleções tem **16 jogos** (1/16 da final), logo é "16-avos" — coerente com "oitavas"
+  (8 jogos) e "quartas" (4). Snapshots já versionados em `history/` ficam como estão (registros
+  imutáveis do que o tool emitiu no dia).
 - **Alocação dos melhores terceiros podia divergir da tabela oficial da FIFA** (`_assign_thirds`): o
   casamento por restrição (backtracking) devolvia o **primeiro** emparelhamento válido, que não é
   único — em 2026 saiu diferente do Annex C oficial (J74/J77/J81 com Bósnia/Paraguai/Suécia rodados).

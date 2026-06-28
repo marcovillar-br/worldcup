@@ -144,7 +144,7 @@ inclua o HTML no mesmo commit.
 - **Melhores terceiros**: a alocação aos slots usa casamento por restrição de grupos (Annex C da
   FIFA aproximado) e **pode divergir** da tabela oficial — há mais de um emparelhamento válido. Dá
   para cravar a alocação oficial da combinação realizada via `[group_stage.third_allocation]` no
-  `tournament.toml` (feito em 2026). Depois da fase de grupos, **confira os 8 confrontos dos 32-avos**
+  `tournament.toml` (feito em 2026). Depois da fase de grupos, **confira os 8 confrontos dos 16-avos**
   com o bracket oficial.
 
 ## Licença

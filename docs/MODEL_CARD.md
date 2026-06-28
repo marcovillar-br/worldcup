@@ -111,7 +111,7 @@ propósito.
 ## 9. Ressalvas e recomendações
 
 - **Vieses estruturais** (SPEC §9.2): favorece forma recente; desempates de grupo simplificados (sem
-  confronto direto/fair-play); 8 melhores 3ºs por **aproximação** do Annex C — confira os 32-avos com
+  confronto direto/fair-play); 8 melhores 3ºs por **aproximação** do Annex C — confira os 16-avos com
   os resultados reais.
 - **Empates** são a fraqueza prática: o otimizador raramente crava empate, então numa Copa
   empate-pesada zera mais jogos — **monitorar** via `blend-track`, **não forçar** empate (baixa o E[pts]).

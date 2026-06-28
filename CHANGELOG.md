@@ -10,7 +10,7 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 ## [Não lançado]
 
-Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-13..ENG-22).
+Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Adicionado
 - **Blend com odds de mercado** (`blend.py`): des-vig → pool logarítmico → reescala da matriz, com
@@ -40,7 +40,6 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   modelo+blend; `seus_pontos/oráculo` = distância da perfeição). Diagnóstico de teto, não de execução
   (o oráculo é dominado por ruído irredutível — o tool perfeito captura ~34% dele).
 
-### Adicionado
 - **Slide de balanço da fase de grupos** na apresentação (`build_presentation`): resumo dos 72 jogos
   (28% de empates, zebra Cabo Verde no grupo da Espanha) + expectativa do mata-mata (corrida ao
   título, final prevista Espanha×Argentina, jogos 50/50 a observar). Números da campanha/Brier/

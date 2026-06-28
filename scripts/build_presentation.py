@@ -12,7 +12,7 @@ Características:
   - **Contadores animados** nos números de resultado; **modo impressão/PDF** (1 slide por página).
   - Visual **SVG-first** (vetorial, nítido em qualquer escala); sem imagens externas.
 
-Conteúdo curado (números "até 26/06/2026"); para atualizar, edite as constantes abaixo e rode de novo.
+Conteúdo curado (números "até 28/06/2026"); para atualizar, edite as constantes abaixo e rode de novo.
 
 Uso: `uv run python scripts/build_presentation.py [--out PATH] [--docs]`
   --out   destino do HTML (default: out/apresentacao.html, gitignored/regenerável)
@@ -216,8 +216,8 @@ def build_slides() -> list[Slide]:
         <div class="badge">{_IC_TROPHY} bolão da Copa · modelo estatístico</div>
         <h1>O palpite <span class="accent">inteligente</span><br>para cada jogo da Copa</h1>
         <p class="lede">Num bolão com 100 amigos, 99 chutam Brasil 2×0. Um arrisca Paraguai 1×1.
-          Se acerta, ganha <b>10× mais pontos</b>. Quem está certo? Depende do sistema de pontos —
-          e é exatamente isso que esta ferramenta calcula.</p>
+          Se a zebra sai, ele <b>leva uma bolada de pontos</b> — e os outros 99 zeram. Quem está
+          certo? Depende do sistema de pontos — e é exatamente isso que esta ferramenta calcula.</p>
         <div class="hint">use ← → ou os botões para navegar</div>
       </div>""",
         )

@@ -17,6 +17,9 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   sincronizados pela fonte pública do `sync-results` (6 jogos de grupo preenchidos). Começa o
   **mata-mata (16-avos, R32)**: J73 (África do Sul × Canadá) é hoje 28/06; o resto do R32 vai até
   02/07.
+- **Standing: 2º de 60** · **235 pts** (líder 259) · **eficiência ~103%** (teto as-of 228; segue o
+  blend). Líder 31 pts acima do teto do tool ⇒ variância de exatos a favor dele, não erro de execução
+  (detalhe na entrada 2026-06-28 do Histórico).
 - **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
   melhor (delta cresce). Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
 - Favorito ao título: **Argentina (29,8%)**; Espanha **19,9%**, França 11,5%, Brasil 8,8%.

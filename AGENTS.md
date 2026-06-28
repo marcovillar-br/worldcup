@@ -67,6 +67,9 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   de placares ao 1×2-alvo preservando a forma condicional). Aplicado em `pipeline.run` só nos jogos com
   odds; sem odds ou `blend_weight=0` ⇒ matriz do modelo intacta (degradação graciosa).
 - `format_engine.py` — simulação genérica: standings, Monte Carlo, chaveamento determinístico.
+- `backtest.py` — valida o modelo nas 4 Copas passadas (`backtest`) e o blend prospectivamente na
+  edição viva (`blend-track`): `multiclass_brier`, `reliability_draw`/`pooled_draw_calibration` +
+  monitor de regime de empates (z-score). Treina só com jogos anteriores a cada Copa.
 - `sync.py` — resolve o bracket só com resultados reais e preenche `fixtures.csv`.
 - `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites.
 - `render.py` — camada de **apresentação** (funções puras): `render_markdown`/`render_html` +

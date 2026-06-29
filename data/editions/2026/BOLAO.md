@@ -17,9 +17,10 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   × Canadá) sincronizado pela fonte pública do `sync-results`. **16-avos (R32)** em andamento: hoje
   29/06 são **J74 Alemanha × Paraguai**, **J75 Holanda × Marrocos** e **J76 Brasil × Japão**; o
   resto do R32 vai até 02/07.
-- **Standing: 2º de 60** · **235 pts** (líder 259) · **eficiência ~103%** (teto as-of 228; segue o
-  blend). Líder 31 pts acima do teto do tool ⇒ variância de exatos a favor dele, não erro de execução
-  (detalhe na entrada 2026-06-28 do Histórico).
+- **Standing: 4º de 60** · **235 pts** (líder 275) · **eficiência ~103%** (teto as-of 228; segue o
+  blend). J73 custou posições: o líder cravou Canadá 1–0 (+16 num jogo) e o tool palpitava 0×0. Líder
+  **47 pts acima do teto do tool** ⇒ variância de exatos a favor dele (regride), não erro de execução.
+  Cenário de risco (29/06) confirma: **não subir o risco** — detalhe na entrada 2026-06-29 do Histórico.
 - **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
   melhor (delta cresce). Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
 - Favorito ao título (29/06): **Argentina (30,6%)**; Espanha **21,0%**, França 10,9%, Brasil 8,7%,
@@ -46,6 +47,22 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-29 — **J73 fechado (Canadá venceu nos 90'); caí para 4º. Cenário de risco rodado: NÃO subir
+  o risco.** Resultado: África do Sul **0×1 Canadá** (Canadá 1–0 no tempo normal). O tool acertou o
+  **classificado** (Canadá, as-of 28/06) mas o palpite de 90' era **0×0** indo à prorrogação → fez **0
+  pts** no jogo. **Standing: 235 pts, 4º de 60** (era 2º); **líder saltou para 275 (+16 num jogo só** =
+  cravou o Canadá 1–0 + bônus de KO). Eficiência segue **103,1%** (teto as-of 228) — execução intacta, o
+  gap é variância. **Líder está 47 pts ACIMA do teto do tool** ⇒ inalcançável por estratégia; surfa
+  exatos (regride). **Cenário risk 0.5 vs alto nos 15 R32 restantes (J74–J88), script
+  `scratchpad/scenario_risk.py`:** risk 0.5 → ΣE[pts] **42,4**, Σ P(exato) **2,30**, SD-carteira **11,9**;
+  risk 0.65 → 38,4 (**−4,0**), P(exato) 2,32, SD 14,8; risk 0.8 → 36,1 (**−6,3**), P(exato) **2,24** (cai!),
+  SD 15,4. **Veredito: o botão de risco é a ferramenta errada** — (a) NÃO aumenta a chance de cravar
+  exato (Σ P(exato) fica ~2,3 e até cai), só empurra palpites para empates 1×1/0×0; (b) a variância que
+  compra é paga **1:1 em E[pts]**, então a caçada dos 40 pts continua a **~2,4 σ** com ou sem risco. O que
+  o líder fez (cravar exato não-modal) o risco **não replica**. Mantido **`risk 0.5`**; caminho ao título
+  = líder regredir + variância natural dos ~31 jogos restantes, não sabotar o E[pts]. Reafirma a decisão
+  viva de risco com quantificação específica do cenário de recuperação.
 
 - 2026-06-28 (correção) — **Bracket do R32 estava com 3 confrontos errados; corrigido (ENG-25).** O
   casamento por restrição dos terceiros (`_assign_thirds`) escolhia um emparelhamento válido **porém

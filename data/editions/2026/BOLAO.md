@@ -11,19 +11,19 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-28)
+## Estado atual (atualizado em 2026-06-29)
 
-- **72 de 104 jogos disputados (J1–J72) — FASE DE GRUPOS COMPLETA.** J67–J72 (27/06, grupos J/K/L)
-  sincronizados pela fonte pública do `sync-results` (6 jogos de grupo preenchidos). Começa o
-  **mata-mata (16-avos, R32)**: J73 (África do Sul × Canadá) é hoje 28/06; o resto do R32 vai até
-  02/07.
+- **73 de 104 jogos disputados (J1–J73).** Fase de grupos completa + J73 do mata-mata (África do Sul
+  × Canadá) sincronizado pela fonte pública do `sync-results`. **16-avos (R32)** em andamento: hoje
+  29/06 são **J74 Alemanha × Paraguai**, **J75 Holanda × Marrocos** e **J76 Brasil × Japão**; o
+  resto do R32 vai até 02/07.
 - **Standing: 2º de 60** · **235 pts** (líder 259) · **eficiência ~103%** (teto as-of 228; segue o
   blend). Líder 31 pts acima do teto do tool ⇒ variância de exatos a favor dele, não erro de execução
   (detalhe na entrada 2026-06-28 do Histórico).
 - **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
   melhor (delta cresce). Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
-- Favorito ao título: **Argentina (29,8%)**; Espanha **19,9%**, França 11,5%, Brasil 8,8%.
-  (Probabilidades comprimem ao entrar no mata-mata; números pós-correção do bracket, ver abaixo.)
+- Favorito ao título (29/06): **Argentina (30,6%)**; Espanha **21,0%**, França 10,9%, Brasil 8,7%,
+  Portugal 6,8%. (Probabilidades comprimem ao entrar no mata-mata; números pós-correção do bracket.)
 - **Bracket R32 corrigido (ENG-25, 28/06):** a alocação dos terceiros divergia da tabela oficial da
   FIFA — J74/J77/J81 saíam com Bósnia/Paraguai/Suécia rodados. Cravada a alocação oficial (row 67,
   grupos B/D/E/F/I/J/K/L) em `tournament.toml`. Agora: J74 Alemanha×**Paraguai**, J77 França×**Suécia**,

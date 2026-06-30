@@ -11,20 +11,25 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-29)
+## Estado atual (atualizado em 2026-06-30)
 
-- **73 de 104 jogos disputados (J1–J73).** Fase de grupos completa + J73 do mata-mata (África do Sul
-  × Canadá) sincronizado pela fonte pública do `sync-results`. **16-avos (R32)** em andamento: hoje
-  29/06 são **J74 Alemanha × Paraguai**, **J75 Holanda × Marrocos** e **J76 Brasil × Japão**; o
-  resto do R32 vai até 02/07.
-- **Standing: 4º de 60** · **235 pts** (líder 275) · **eficiência ~103%** (teto as-of 228; segue o
-  blend). J73 custou posições: o líder cravou Canadá 1–0 (+16 num jogo) e o tool palpitava 0×0. Líder
-  **47 pts acima do teto do tool** ⇒ variância de exatos a favor dele (regride), não erro de execução.
-  Cenário de risco (29/06) confirma: **não subir o risco** — detalhe na entrada 2026-06-29 do Histórico.
+- **76 de 104 jogos disputados (J1–J76).** Fase de grupos completa + J73–J76 do mata-mata
+  sincronizados pela fonte pública do `sync-results`. **16-avos (R32)** em andamento: hoje
+  30/06 são **J77 França × Suécia**, **J78 Costa do Marfim × Noruega** e **J79 México × Equador**; o
+  resto do R32 vai até 03/07.
+- **Ontem (29/06): duas zebras no R32.** J74 Alemanha **1×1** Paraguai → **Paraguai avança** nos
+  pênaltis (eliminou a Alemanha); J75 Holanda **1×1** Marrocos → **Marrocos avança** (eliminou a
+  Holanda); J76 Brasil **2×1** Japão → **Brasil avança**. O tool pegou o lado do Brasil; as duas
+  zebras de potência eram improváveis no modelo (favorece quem vem bem).
 - **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
-  melhor (delta cresce). Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
-- Favorito ao título (29/06): **Argentina (30,6%)**; Espanha **21,0%**, França 10,9%, Brasil 8,7%,
-  Portugal 6,8%. (Probabilidades comprimem ao entrar no mata-mata; números pós-correção do bracket.)
+  melhor. Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
+- **Blend AGORA cobre o mata-mata (ENG-28, 30/06):** o `fetch_odds` só casava jogos de grupo — o
+  blend estava **desligado em todos os 31 jogos de KO (peso 2×/4×)**. Corrigido: resolve o bracket
+  pelos resultados reais e casa os confrontos de KO definidos. `odds.csv` foi de 49→**62 jogos** (+13
+  KO). Efeito imediato: **J78 mudou de "avança Costa do Marfim" para "avança Noruega"** (mercado tem
+  Noruega favorita, 2.17). Os palpites de KO agora saem blendados; a sim de campeão segue DC-only.
+- Favorito ao título (30/06): **Argentina (29,8%)**; Espanha **19,9%**, França 13,0%, **Brasil 12,3%**
+  (sobe forte — bracket abriu com Alemanha/Holanda fora), Portugal 7,6%.
 - **Bracket R32 corrigido (ENG-25, 28/06):** a alocação dos terceiros divergia da tabela oficial da
   FIFA — J74/J77/J81 saíam com Bósnia/Paraguai/Suécia rodados. Cravada a alocação oficial (row 67,
   grupos B/D/E/F/I/J/K/L) em `tournament.toml`. Agora: J74 Alemanha×**Paraguai**, J77 França×**Suécia**,
@@ -32,8 +37,8 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 - **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19). Scorer
   hierárquico (ENG-23). Admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato
   do `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API
-  vive no `.env`. Odds em 28/06: fetch retornou 16 eventos mas 0 novos/atualizados (os confrontos do
-  mata-mata ainda não casaram com o feed) — 49 jogos no total, todos disputados.
+  vive no `.env`. Odds em 30/06: **62 jogos** no `odds.csv` (49 grupo + 13 KO, após ENG-28 destravar o
+  casamento do mata-mata).
 
 ## Decisões vivas
 
@@ -47,6 +52,15 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-30 — **R32 de 29/06 fechado: duas zebras de potência (Paraguai e Marrocos avançam).** J74
+  Alemanha **1×1** Paraguai → Paraguai nos pênaltis; J75 Holanda **1×1** Marrocos → Marrocos; J76
+  Brasil **2×1** Japão → Brasil. 76 jogos disputados. O tool acertou o lado de Brasil; Alemanha e
+  Holanda eram favoritas no modelo (não captura má fase/upset de potência — limitação conhecida).
+  blend-track inalterado (n=49; R32 fora do feed de odds). **Título: Argentina 29,8%, Espanha 19,9%,
+  França 13,0%, Brasil 12,3% (salta — bracket abriu), Portugal 7,6%.** Standing do usuário não
+  reconsultado nesta sessão (pedido foi só atualizar/mostrar a rodada). Hoje 30/06: J77 França×Suécia,
+  J78 Costa do Marfim×Noruega, J79 México×Equador.
 
 - 2026-06-29 — **J73 fechado (Canadá venceu nos 90'); caí para 4º. Cenário de risco rodado: NÃO subir
   o risco.** Resultado: África do Sul **0×1 Canadá** (Canadá 1–0 no tempo normal). O tool acertou o

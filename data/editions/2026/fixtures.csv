@@ -72,9 +72,9 @@ match_id,stage,group,date,home,away,neutral,third_groups,home_goals,away_goals,k
 71,group,J,2026-06-27,Jordan,Argentina,True,,1,3,
 72,group,L,2026-06-27,Panama,England,True,,0,2,
 73,R32,,2026-06-28,2A,2B,True,,0,1,Canada
-74,R32,,2026-06-29,1E,3rd,True,A|B|C|D|F,,,
-75,R32,,2026-06-29,1F,2C,True,,,,
-76,R32,,2026-06-29,1C,2F,True,,,,
+74,R32,,2026-06-29,1E,3rd,True,A|B|C|D|F,1,1,Paraguay
+75,R32,,2026-06-29,1F,2C,True,,1,1,Morocco
+76,R32,,2026-06-29,1C,2F,True,,2,1,Brazil
 77,R32,,2026-06-30,1I,3rd,True,C|D|F|G|H,,,
 78,R32,,2026-06-30,2E,2I,True,,,,
 79,R32,,2026-06-30,1A,3rd,True,C|E|F|H|I,,,

@@ -33,6 +33,29 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   empatada). Agora modela a prorrogação como Poisson (taxa de 90' × 30/90) e escolhe o desfecho mais
   provável (maximiza E[pts]). Efeito: "vai aos pênaltis" vira o modal na maioria dos KO (empate ~53%
   numa ET de 30 min), só favorito forte crava um lado. Camadas 1/3 e o avanço inalterados. (ENG-29)
+- **Rótulo da fase R32 estava errado: "32-avos" → "16-avos de final"** (`render._STAGE_LABEL`). A
+  rodada de 32 seleções tem **16 jogos** (1/16 da final), logo é "16-avos" — coerente com "oitavas"
+  (8 jogos) e "quartas" (4). Snapshots já versionados em `history/` ficam como estão (registros
+  imutáveis do que o tool emitiu no dia).
+- **Alocação dos melhores terceiros podia divergir da tabela oficial da FIFA** (`_assign_thirds`): o
+  casamento por restrição (backtracking) devolvia o **primeiro** emparelhamento válido, que não é
+  único — em 2026 saiu diferente do Annex C oficial (J74/J77/J81 com Bósnia/Paraguai/Suécia rodados).
+  Adicionado override por edição em `tournament.toml::[group_stage.third_allocation]` (`match_id →
+  grupo`), aplicado quando o conjunto de grupos bate com os terceiros classificados — usado no bracket
+  real (`sync`) e no determinístico/Monte Carlo (`format_engine`). 2026 cravado na row 67 (grupos
+  B/D/E/F/I/J/K/L), verificado vs bracket oficial (Yahoo/Sky) + Wikipedia. Tabela completa de 495
+  combinações segue pendente (SPEC §9.3).
+- **Suíte de testes resiliente ao avanço da Copa**: `test_sync_results_fills_unplayed_group_games`
+  esvazia 2 jogos no clone em vez de depender de partidas de grupo em aberto nos dados reais (quebrava
+  quando a fase de grupos terminava).
+- **Bônus de placar do Sistema I eram somados, não hierárquicos** (`scoring.points`): o app concede só
+  o MAIOR nível atingido (exato +5 > gols do vencedor +3 > saldo +2 > gols do perdedor +1), não a soma.
+  O bug inflava todo placar cravado (ex.: favorito 2×0 dava base+11 ≈ 13 em vez de base+5 = 7) e
+  **enviesava o `best_prediction` contra empates** (jogo decidido somava mais bônus que empate). Achado
+  por confronto com as telas "Pontos por Jogo" do app; validado em 12 jogos (8 exatos, 4 off ≤1 só na
+  base). Corrige eficiência (estava inflada) e faz o modelo voltar a palpitar empates. (ENG-23)
+- Fit do Dixon-Coles **converge** via gradiente analítico (antes esgotava o orçamento de avaliações
+  do scipy e parava longe do ótimo, sem sinal além do aviso). (ENG-16)
 
 ### Notas de calibração
 - **Curva de base subdeterminada** (ENG-26): 9 pontos de telas reais de jogo do R32 não desempatam
@@ -77,31 +100,6 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   título, final prevista Espanha×Argentina, jogos 50/50 a observar). Números da campanha/Brier/
   favoritos atualizados para o fim dos grupos (28/06): 2º lugar, 235 pts (72/104), eficiência 103%,
   blend-track n=49 (modelo 0,442 / blend 0,418).
-
-### Corrigido
-- **Rótulo da fase R32 estava errado: "32-avos" → "16-avos de final"** (`render._STAGE_LABEL`). A
-  rodada de 32 seleções tem **16 jogos** (1/16 da final), logo é "16-avos" — coerente com "oitavas"
-  (8 jogos) e "quartas" (4). Snapshots já versionados em `history/` ficam como estão (registros
-  imutáveis do que o tool emitiu no dia).
-- **Alocação dos melhores terceiros podia divergir da tabela oficial da FIFA** (`_assign_thirds`): o
-  casamento por restrição (backtracking) devolvia o **primeiro** emparelhamento válido, que não é
-  único — em 2026 saiu diferente do Annex C oficial (J74/J77/J81 com Bósnia/Paraguai/Suécia rodados).
-  Adicionado override por edição em `tournament.toml::[group_stage.third_allocation]` (`match_id →
-  grupo`), aplicado quando o conjunto de grupos bate com os terceiros classificados — usado no bracket
-  real (`sync`) e no determinístico/Monte Carlo (`format_engine`). 2026 cravado na row 67 (grupos
-  B/D/E/F/I/J/K/L), verificado vs bracket oficial (Yahoo/Sky) + Wikipedia. Tabela completa de 495
-  combinações segue pendente (SPEC §9.3).
-- **Suíte de testes resiliente ao avanço da Copa**: `test_sync_results_fills_unplayed_group_games`
-  esvazia 2 jogos no clone em vez de depender de partidas de grupo em aberto nos dados reais (quebrava
-  quando a fase de grupos terminava).
-- **Bônus de placar do Sistema I eram somados, não hierárquicos** (`scoring.points`): o app concede só
-  o MAIOR nível atingido (exato +5 > gols do vencedor +3 > saldo +2 > gols do perdedor +1), não a soma.
-  O bug inflava todo placar cravado (ex.: favorito 2×0 dava base+11 ≈ 13 em vez de base+5 = 7) e
-  **enviesava o `best_prediction` contra empates** (jogo decidido somava mais bônus que empate). Achado
-  por confronto com as telas "Pontos por Jogo" do app; validado em 12 jogos (8 exatos, 4 off ≤1 só na
-  base). Corrige eficiência (estava inflada) e faz o modelo voltar a palpitar empates. (ENG-23)
-- Fit do Dixon-Coles **converge** via gradiente analítico (antes esgotava o orçamento de avaliações
-  do scipy e parava longe do ótimo, sem sinal além do aviso). (ENG-16)
 
 ### Mudado
 - **Doc de estratégia/backtest realinhada à régua hierárquica** (auditoria pós-ENG-23): a tabela do

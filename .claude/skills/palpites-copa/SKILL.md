@@ -110,8 +110,10 @@ Mede quanto dos pontos que o tool renderia o usuário capturou. **Exige os ponto
 uv run python scripts/efficiency.py --edition 2026 --my-points <PTS> [--leader <PTS>] --compare-archive
 ```
 Para cada jogo disputado, reconstrói o palpite **as-of** (o que o tool mostrava na manhã do jogo) e
-o pontua pelo Sistema I contra o real → o **teto** que seguir o tool à risca renderia;
-`eficiência = seus_pontos / teto`.
+o pontua pelo Sistema I contra o real → o **teto** que seguir o tool à risca renderia. No mata-mata o
+placar dos 90' entra com o **peso de fase** (R32–SF ×2, final ×4) e o bônus de prorrogação/pênaltis é
+somado quando a fonte (`shootouts.csv`) confirma o desfecho (ENG-27); jogos empatados nos 90' sem
+shootout na fonte são pulados. `eficiência = seus_pontos / teto`.
 
 O script também imprime um **teto teórico (oráculo)** — cravar o placar exato de todo jogo — e duas
 capturas complementares: `tool / oráculo` (qualidade do modelo+blend) e `seus_pontos / oráculo` (sua

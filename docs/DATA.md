@@ -49,6 +49,7 @@ termos próprios, tratados aqui.
 |---|---|---|
 | Specs de edição (`tournament.toml`, `groups.csv`, `fixtures.csv`, `scoring.toml`) | **Sim** | Autorais; definem a edição |
 | `odds.csv` (odds **reais** coletadas) | **Não** (`.gitignore`) | ToS não permite redistribuir odds em repo público (§6); vive só local |
+| `shootouts.csv` (vencedores de pênaltis da edição, ENG-30) | **Sim** | Fato público e durável; captura manual da edição viva sob latência da fonte, verificada em ≥2 fontes. Distinto do `shootouts.csv` baixado do martj42 (ingestão, embutido no `historical_results.csv` gitignored) |
 | `history/<data>.{csv,md}` (runs **reais**) | **Sim** | Snapshots imutáveis e não-reproduzíveis |
 | `data/historical_results.csv` (cache de treino) | **Não** (`.gitignore`) | Regenerável por `fetch-data` |
 | `out/`, `*.reconstruido.*`, caches | **Não** | Regeneráveis |

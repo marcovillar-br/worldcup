@@ -117,8 +117,10 @@ Para cada jogo já disputado, reconstrói o palpite **as-of** (o que o tool most
 e o pontua contra o resultado real — a soma é o **teto** que seguir o tool à risca renderia;
 `eficiência = seus_pontos / teto`. `--compare-archive` confronta com os snapshots reais de
 `history/` e lista onde a reconstrução diverge (quanto do gap é ruído de reconstrução vs. dias sem
-snapshot arquivado). Cobre a fase de grupos com pontuação exata; no mata-mata pontua os 90' (os
-bônus de prorrogação/pênaltis não são reconstrutíveis dos dados reais — só o vencedor é guardado).
+snapshot arquivado). Cobre a fase de grupos com pontuação exata; no mata-mata pontua os 90' **com o
+peso de fase** (R32–SF ×2, final ×4) e soma os bônus de prorrogação/pênaltis (±3 ×peso) quando a fonte
+(`shootouts.csv`) confirma o desfecho; jogos empatados nos 90' ainda sem shootout na fonte são pulados
+(ENG-27).
 
 **Apresentação do projeto** — um deck HTML autocontido (tema "Placar Noturno", 16:9, navegável) que
 explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):

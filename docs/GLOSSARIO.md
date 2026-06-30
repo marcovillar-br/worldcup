@@ -23,9 +23,27 @@ Termos e conceitos que o produto manipula. Referência para o [`PRD.md`](PRD.md)
   e **pênaltis** +3 são camadas à parte (também somadas).
 - **Zebra** — resultado improvável (favorito tropeça). Como a base cresce com `1/p`, cravar a zebra
   rende muito mais pontos — daí a estratégia não ser sempre o favorito.
-- **Peso por fase / Equilíbrio gradual** — multiplicador de importância por etapa: grupos **1×**,
-  mata-mata **2×**, final **4×**. Não muda o placar ótimo de um jogo isolado; indica onde arriscar
-  decide o ranking (`scoring.toml [phase_weights]`).
+- **Peso por fase / Equilíbrio gradual** — multiplicador da pontuação por etapa: grupos **1×**,
+  R32–SF **2×**, final **4×** (`scoring.toml [phase_weights]`). Aplicado à **partida inteira** (base +
+  bônus) via `Scorer.weighted_points(...) = points(...) · weight(stage)` (ENG-27): não muda o placar
+  ótimo de um jogo isolado (multiplicador constante), mas o **teto/eficiência** do mata-mata é 2–4× o
+  de um jogo de grupo.
+- **Fases do mata-mata (R32/R16/QF/SF)** — siglas internas (do inglês *Round of 32/16*, *Quarter/
+  Semi-final*) e o nome em PT-BR: **R32 = 16-avos de final** (16 jogos), **R16 = oitavas** (8), **QF =
+  quartas** (4), **SF = semifinais** (2), `3rd_place` = disputa de 3º, `final`. ⚠️ Em PT-BR a rodada de
+  32 seleções é "16-avos" (1/16 da final), **não** "32-avos".
+- **Resolução de chaveamento** — cálculo **determinístico** do bracket de mata-mata a partir dos
+  resultados reais (standings dos grupos + `ko_outcome` dos KO disputados), sem o modelo
+  probabilístico — preenche os slots `1A`/`2B`/`3rd`/`W##`/`L##`. `sync._resolve_real_bracket` (do
+  feed) e `sync.resolve_live_bracket` (do próprio fixture, usado pelo `fetch_odds` para casar odds de
+  KO; ENG-28).
+- **Prorrogação (camada de mata-mata)** — após empate nos 90', a 2ª das 3 camadas independentes de
+  palpite (90' / prorrogação / pênaltis). `knockout.predict_knockout` prevê P(vence mandante / vai aos
+  pênaltis / vence visitante) por **Poisson independente** com taxa ≈ taxa de 90' × 30/90 (a ET tem
+  ~1/3 do tempo) e escolhe o desfecho mais provável (= E[pts]; ENG-29). Bônus +3 (×peso).
+- **Shootout / disputa de pênaltis** — cobranças que definem o vencedor de um jogo de KO empatado após
+  prorrogação. 3ª camada de palpite (bônus +3 ×peso). Dados em `shootouts.csv` (`match_id,winner`):
+  do martj42 (ingestão) ou do arquivo da edição (`Edition.shootouts`, captura manual sob latência).
 - **Pontos esperados (E[pts])** — média ponderada dos pontos de um palpite sobre todos os placares
   possíveis (pela matriz do modelo). O objetivo que o produto maximiza.
 - **Risk (risco / ousadia)** — knob de **estratégia** (não da régua do app): `best_prediction` maximiza

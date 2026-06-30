@@ -86,8 +86,9 @@ automatiza esse cálculo e o mantém atualizado.
 
 ### 6.2 Realimentação durante a Copa
 - **RF-08** — Baixar **automaticamente** os resultados reais já disputados, preencher grupos e
-  mata-mata (resolvendo o chaveamento pelos placares, com vencedor nos pênaltis) e repalpitar.
-  *(cli `sync-results` → `sync`)*
+  mata-mata (resolvendo o chaveamento pelos placares via `sync.resolve_live_bracket`, com vencedor nos
+  pênaltis vindo do `shootouts.csv` da fonte ou do `data/editions/<ano>/shootouts.csv` da edição sob
+  latência — ENG-30) e repalpitar. *(cli `sync-results` → `sync`)*
 - **RF-09** — Registrar um placar **manualmente** (ajuste pontual/correção), com vencedor de mata-mata
   via `--ko-winner`. *(cli `record`)*
 - **RF-10** — Ao realimentar, **fixar** o que já aconteceu (resultado entra no treino com peso alto e

@@ -96,6 +96,9 @@ class Edition(BaseModel):
     # odds de mercado opcionais por jogo (match_id -> odds decimais mandante/empate/visitante).
     # Carregadas de odds.csv se existir; ausência ⇒ blend desligado para o jogo (ENG-19).
     odds: dict[int, tuple[float, float, float]] = Field(default_factory=dict)
+    # vencedores de disputas de pênaltis por jogo de KO (match_id -> seleção canônica), capturados
+    # à mão quando a fonte oficial ainda não tem (latência). De shootouts.csv se existir (ENG-30).
+    shootouts: dict[int, str] = Field(default_factory=dict)
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -132,7 +135,9 @@ class Edition(BaseModel):
             f.model_copy(update={"home_goals": None, "away_goals": None, "ko_outcome": None}) if f.date >= cutoff else f
             for f in self.fixtures
         ]
-        return self.model_copy(update={"fixtures": fixtures})
+        future = {f.match_id for f in self.fixtures if f.date >= cutoff}
+        shootouts = {mid: w for mid, w in self.shootouts.items() if mid not in future}
+        return self.model_copy(update={"fixtures": fixtures, "shootouts": shootouts})
 
     # ---- validação estrutural ----
     @model_validator(mode="after")
@@ -222,6 +227,26 @@ def _load_odds(path: Path) -> dict[int, tuple[float, float, float]]:
     return odds
 
 
+def _load_shootouts(path: Path) -> dict[int, str]:
+    """Lê `shootouts.csv` (opcional): `match_id,winner` (vencedor dos pênaltis). Ausente ⇒ vazio.
+
+    Captura manual para a edição viva quando a fonte oficial ainda não trouxe o shootout (ENG-30).
+    Linhas sem vencedor são ignoradas; o nome é normalizado para o canônico.
+    """
+    if not path.exists():
+        return {}
+    from .teams import canonical
+
+    out: dict[int, str] = {}
+    with path.open(newline="") as fh:
+        for row in csv.DictReader(fh):
+            winner = (row.get("winner") or "").strip()
+            if not winner:
+                continue
+            out[int(row["match_id"])] = canonical(winner)
+    return out
+
+
 def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
     """Carrega e valida a edição `year` a partir de `data/editions/<year>/`."""
     directory = base_dir / str(year)
@@ -233,4 +258,13 @@ def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
     groups = _load_groups(directory / "groups.csv")
     fixtures = _load_fixtures(directory / "fixtures.csv")
     odds = _load_odds(directory / "odds.csv")
-    return Edition(spec=spec, groups=groups, fixtures=fixtures, scoring=scoring, directory=directory, odds=odds)
+    shootouts = _load_shootouts(directory / "shootouts.csv")
+    return Edition(
+        spec=spec,
+        groups=groups,
+        fixtures=fixtures,
+        scoring=scoring,
+        directory=directory,
+        odds=odds,
+        shootouts=shootouts,
+    )

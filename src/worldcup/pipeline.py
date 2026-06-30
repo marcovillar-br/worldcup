@@ -91,6 +91,25 @@ def _ko_layer_text(kp, edition_home: str, edition_away: str) -> tuple[str, str]:
     return et, pen
 
 
+def _final_ko_layers(f, shootouts: dict[int, str]) -> tuple[str, str, str]:
+    """(prorrogação, pênaltis, avança) de um jogo de KO **já disputado**, dos resultados reais (ENG-30).
+
+    `avança` vem sempre do `ko_outcome` (classificado real). O desfecho prorrogação/pênaltis: placar dos
+    90' decidido ⇒ "—"; empate nos 90' + shootout conhecido (fonte ou `shootouts.csv`) ⇒ "Vai aos
+    pênaltis" + vencedor; empate nos 90' sem shootout conhecido ⇒ vazio (não afirmar prorrogação sob
+    incerteza/latência da fonte).
+    """
+    avanca = display(f.ko_outcome) if f.ko_outcome else ""
+    if f.home_goals is None or f.away_goals is None:
+        return "", "", avanca
+    if f.home_goals != f.away_goals:
+        return "—", "—", avanca  # decidido nos 90'
+    pen_winner = shootouts.get(f.match_id)
+    if pen_winner:
+        return "Vai aos pênaltis", display(pen_winner), avanca
+    return "", "", avanca  # empate nos 90', desfecho ET/pênaltis ainda não capturado
+
+
 def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRun:
     """Executa o pipeline completo e devolve as linhas de palpite dos 104 jogos."""
     historical = load_historical()
@@ -151,6 +170,8 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
             row["status"] = "FINAL"
             row["placar_real"] = f"{f.home_goals}x{f.away_goals}"
             row["palpite"] = f"{f.home_goals}x{f.away_goals}"
+            if not f.is_group:  # KO disputado: mostra prorrogação/pênaltis/quem avançou reais (ENG-30)
+                row["prorrogacao"], row["penaltis"], row["avanca"] = _final_ko_layers(f, edition.shootouts)
 
         if home and away and not f.played:
             mat = _matrix(home, away, f)

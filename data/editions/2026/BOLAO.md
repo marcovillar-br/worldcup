@@ -21,6 +21,11 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   pênaltis (eliminou a Alemanha); J75 Holanda **1×1** Marrocos → **Marrocos avança** (eliminou a
   Holanda); J76 Brasil **2×1** Japão → **Brasil avança**. O tool pegou o lado do Brasil; as duas
   zebras de potência eram improváveis no modelo (favorece quem vem bem).
+- **Standing: 17º de 60 · 241 pts** (líder **299**) · **eficiência 105,7%** (teto as-of 228). Caiu de
+  4º→17º com o R32: J73–J76 zeraram para o usuário **e para o tool** (empates/zebras, 1×2 errado), e o
+  campo cravou exatos de KO (peso ×2 → +16 a +30 num jogo). **Líder está +71 ACIMA do teto do tool** ⇒
+  inalcançável por estratégia, é variância de exatos (regride). Execução intacta (>100%: pegou os +6 de
+  pênaltis que o teto nem credita por latência). Detalhe na entrada 2026-06-30 do Histórico.
 - **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
   melhor. Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
 - **Blend AGORA cobre o mata-mata (ENG-28, 30/06):** o `fetch_odds` só casava jogos de grupo — o
@@ -52,6 +57,18 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-30 (eficiência) — **Caiu para 17º/60 (241 pts, líder 299), MAS execução no teto (105,7%).**
+  Medido por `efficiency.py --my-points 241 --leader 299 --compare-archive` (já com ENG-27: peso de fase
+  ×2 no KO + bônus de pênaltis onde a fonte confirma). **Teto do tool as-of = 228**; seus 241 = **105,7%**
+  (acima do teto — inclui os +6 de pênaltis de J74/J75 que o teto não credita por latência do martj42, e
+  ruído de reconstrução Δ+7 nos 60 verificáveis; 16 jogos sem snapshot). **Líder 299 está +71 ACIMA do
+  teto** ⇒ nem seguir o tool à risca chegaria perto; é variância de exatos no KO (peso ×2 amplifica: uma
+  cravada = +16 a +30), não estratégia superior. **Queda 4º→17º:** J73–J76 zeraram para o usuário e para
+  o tool (1×2 errado em empates/zebras), enquanto o campo cravou exatos. **Veredito:** execução é o
+  problema **zero**; o caminho é líder regredir (cravar exato é ~7–10%, insustentável a +71) + variância
+  natural nos ~28 jogos restantes. Risco já descartado como alavanca (entrada 29/06). Oráculo 713; tool
+  captura 32% (resto é ruído irredutível), usuário 33,8%.
 
 - 2026-06-30 — **R32 de 29/06 fechado: duas zebras de potência (Paraguai e Marrocos avançam).** J74
   Alemanha **1×1** Paraguai → Paraguai nos pênaltis; J75 Holanda **1×1** Marrocos → Marrocos; J76

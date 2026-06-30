@@ -42,7 +42,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-26](#eng-26) | P2 | scoring | ⚪ | Recalibrar `base_log_coeff` (7,55→~8,4) com telas reais de jogo; ordem de arredondamento na fase ×2 |
 | [ENG-27](#eng-27) | P2 | scoring/efficiency | ✅ | Peso de fase (×2/×4) nunca aplicado ⇒ teto de mata-mata subcontado, eficiência infla no KO |
 | [ENG-28](#eng-28) | P2 | blend/odds | ✅ | `fetch_odds` só casa jogos de grupo ⇒ blend DESLIGADO em todo o mata-mata (peso 2×/4×) |
-| [ENG-29](#eng-29) | P3 | knockout | 🔴 | Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts] (ignora P(ET empatada)) |
+| [ENG-29](#eng-29) | P3 | knockout | ✅ | Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts] (ignora P(ET empatada)) |
 
 ---
 
@@ -844,7 +844,7 @@ Noruega** (segue o mercado). 114 testes verdes; ruff/mypy ok.
 **Commit:** bd8a4c0
 
 ## ENG-29
-**Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts]** · P3 · `knockout` · 🔴 todo
+**Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts]** · P3 · `knockout` · ✅ feito
 
 `knockout.predict_knockout` escolhe a **camada 2** (quem vence a prorrogação / vai aos pênaltis) por um
 **limiar fixo** sobre a probabilidade condicional: `extra_time = "home"` se `cond_home ≥ 0.58`, `"away"`
@@ -867,4 +867,14 @@ Validar contra desfechos reais de mata-mata (Copas passadas via `shootouts` + jo
 **Aceite:** a camada 2 passa a escolher por E[pts] (teste: distribuição de ET conhecida → escolha
 esperada, incl. caso favorito-moderado→pênaltis que o limiar erra); sem regressão no avanço previsto
 (`advancer`). `pytest` verde.
-**Commit:** —
+**Resolução (0f91d63):** `knockout._extra_time_probs(lam_home, lam_away)` modela a prorrogação como
+Poisson independente (taxa de 90' × 30/90, taxas via `_expected_goals` da matriz) e `predict_knockout`
+escolhe a camada 2 pelo **argmax** das três probabilidades (= E[pts], bônus fixo). Removido
+`_ET_DECISIVE_THRESHOLD`. Camada 3 (pênaltis) e `advancer` mantidos no `cond_home`. 7 testes novos
+(`tests/test_knockout.py`): recupera λ da matriz, probs de ET simétricas/normalizadas, favorito-moderado
+(cond_home≥0.58) → **penalties** (o caso que o limiar errava), favorito-forte → home, equilibrado →
+penalties, camada 3/avanço inalterados. **Efeito ao vivo:** dos R32, só J77 França×Suécia (favorito
+forte) crava um lado; os demais saem "vai aos pênaltis" — coerente com a estatística real (~metade dos
+jogos que chegam à ET vão a pênaltis). Validação contra Copas passadas ficou de fora (escopo); a
+aproximação Poisson-independente (DC ignorado na ET) é documentada no SPEC §6. 121 testes verdes.
+**Commit:** 0f91d63

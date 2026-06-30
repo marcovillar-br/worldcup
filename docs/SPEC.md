@@ -211,8 +211,10 @@ em três passos puros antes de virar palpite:
    Bate o 1×2-alvo **preservando** a distribuição condicional dos placares dentro de cada classe e a
    massa total — assim `best_prediction` (§5) e os bônus de placar exato seguem coerentes.
 
-Aplicado em `pipeline.run` só na geração do palpite dos jogos com odds; a simulação de campeão/avanço
-(§7) segue só com o modelo (odds em geral só existem para a rodada iminente). Sem odds ou `w=0` ⇒
+Aplicado em `pipeline.run` só na geração do palpite dos jogos com odds — **fase de grupos e mata-mata
+já definido pelo bracket real** (`scripts/fetch_odds.py` resolve os confrontos de KO via
+`sync.resolve_live_bracket` para casar as odds com os times resolvidos, ENG-28); a simulação de
+campeão/avanço (§7) segue só com o modelo (odds em geral só existem para a rodada iminente). Sem odds ou `w=0` ⇒
 matriz intacta (degradação graciosa). **Calibração de `w`:** o LOO-CV histórico multi-Copa é inviável
 (não há odds de seleção 2010–2018 grátis/legais), então adota-se um **prior de princípio** `w≈0,6`
 (odds de fechamento são quase-otimamente calibradas) e valida-se **prospectivamente** na própria Copa
@@ -330,6 +332,20 @@ base(0.50) = 3  + gols do vencedor 3  (não exato, não saldo, não perdedor) = 
 **Por que a zebra vale mais**: acertar **exato** um resultado de `p = 0.10` rende
 `base(0.10)=9 → 9 + 5 = 14 pts`, contra 7 do favorito — embora aconteça menos vezes (o trade-off é
 resolvido na escolha, §5).
+
+### 4.4 Peso de fase (ENG-27)
+
+O app pontua a **partida inteira** (base + bônus de placar + bônus de prorrogação/pênaltis) vezes o
+**peso da fase** — "Equilíbrio gradual": grupos **×1**, R32–SF (R16, quartas, semis, 3º lugar) **×2**,
+final **×4** (confirmado nas telas do app: *"PESO: ×2 · valores já incluem o peso"*). Os pesos moram
+em `scoring.toml::[phase_weights]` e são aplicados por `Scorer.weighted_points(pred, actual, probs,
+weight)` = `points(...) · ScoringConfig.weight(stage)`.
+
+O peso **não muda o placar ótimo** de um jogo isolado (multiplicador constante não altera o `argmax`
+da §5), mas é decisivo na **contabilidade**: o teto de pontos de um jogo de mata-mata é 2–4× o de um
+jogo de grupo, e é assim que `scripts/efficiency.py` calcula o teto/eficiência reais (R32+ ponderados;
+grupos intactos). Antes do ENG-27 o peso era definido mas **nunca aplicado** — o teto do mata-mata
+saía subcontado, inflando a eficiência.
 
 ---
 
@@ -472,6 +488,14 @@ Dois caminhos preenchem `home_goals/away_goals` (e `ko_outcome`) em `fixtures.cs
 No `predict` seguinte: os jogos disputados (a) entram no treino com peso alto (§3.2), (b) **fixam** a
 classificação/chaveamento reais em vez de simular, e (c) saem como `FINAL`; só os jogos restantes
 recebem palpite.
+
+**Desfecho real do mata-mata disputado (ENG-30).** Um jogo de KO `FINAL` exibe o resultado real das 3
+camadas: `pipeline._final_ko_layers` preenche **quem avançou** (`Fixture.ko_outcome`) e prorrogação/
+pênaltis — placar dos 90' decidido ⇒ "—"; empate ⇒ "vai aos pênaltis" + vencedor quando o shootout é
+conhecido; empate sem shootout conhecido ⇒ vazio (não afirma o desfecho sob latência da fonte). O
+vencedor dos pênaltis vem de `Edition.shootouts` (`match_id → seleção`), carregado do arquivo opcional
+`data/editions/<ano>/shootouts.csv` — **captura manual** para a edição viva enquanto a fonte oficial
+tem latência, preenchida só com placares **verificados em ≥2 fontes**.
 
 ---
 

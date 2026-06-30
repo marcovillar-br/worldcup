@@ -376,19 +376,25 @@ Cada jogo eliminatório tem 3 palpites independentes. A partir da matriz e de
 decidido):
 
 - **Camada 1 — placar dos 90'**: mesmo `best_prediction` da §5 (pode ser empate).
-- **Camada 2 — prorrogação**: `mandante` se `cond_home ≥ 0.58`; `visitante` se `cond_home ≤ 0.42`;
-  senão `vai aos pênaltis`.
+- **Camada 2 — prorrogação** (ENG-29): modela a prorrogação (30 min) como **Poisson independente**
+  com taxa = taxa de 90' × 30/90 por lado (as taxas saem dos gols esperados da matriz) e escolhe o
+  desfecho **mais provável** entre `mandante vence` / `empate → vai aos pênaltis` / `visitante vence`.
+  Como o bônus é fixo, o desfecho mais provável **maximiza E[pts]**. Por a prorrogação ser curta, o
+  empate (→ pênaltis) costuma ser o modal mesmo com favorito moderado; só um favorito **forte** crava
+  um lado. (Substitui o limiar fixo `cond_home ≥ 0.58`, que ignorava P(prorrogação empatada).)
 - **Camada 3 — pênaltis**: o lado com `cond_home ≥ 0.5` (quase moeda, leve vantagem ao mais forte).
 
-**Quem avança** (para montar o chaveamento):
+**Quem avança** (para montar o chaveamento, inalterado — usa `cond_home`):
 
 ```
 P(mandante avança) = P(mandante) + P(empate) · cond_home
 ```
 
-**Exemplo.** `probs = (0.55, 0.25, 0.20)` → `cond_home = 0.55/0.75 = 0.733`.
-`P(avança) = 0.55 + 0.25·0.733 = 0.733` → prorrogação **mandante**, pênaltis **mandante**, avança o
-mandante. Já `probs = (0.40, 0.30, 0.30)` → `cond_home = 0.571` → camada 2 = **vai aos pênaltis**.
+**Exemplo.** `probs = (0.55, 0.25, 0.20)` → `cond_home = 0.55/0.75 = 0.733` → `P(avança) = 0.55 +
+0.25·0.733 = 0.733`, avança o **mandante**, pênaltis **mandante**. A camada 2 depende dos **gols
+esperados**: com gols esperados moderados (ex.: ~1,3 × ~1,0) a prorrogação sai **vai aos pênaltis**
+(empate ~53% > favorito ~27%); só um placar esperado bem desigual (ex.: ~2,8 × ~0,6) crava
+**mandante**.
 
 ---
 

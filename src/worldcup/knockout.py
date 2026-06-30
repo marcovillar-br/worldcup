@@ -12,16 +12,48 @@ o modelo aponta como classificado (`advancer`) e a probabilidade de avanço.
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+
+import numpy as np
 
 from .scoring import Scorer, outcome_probs_from_matrix
 
-if TYPE_CHECKING:
-    import numpy as np
+# Prorrogação são 30 min ≈ 1/3 do tempo regular — escala as taxas de gol da ET (ENG-29).
+_ET_FRACTION = 30.0 / 90.0
 
-# Limiar para palpitar que um lado vence a prorrogação (senão, palpita "vai pros pênaltis").
-_ET_DECISIVE_THRESHOLD = 0.58
+
+def _expected_goals(matrix: np.ndarray) -> tuple[float, float]:
+    """Gols esperados (mandante, visitante) nos 90' a partir da matriz de placares."""
+    idx = np.arange(matrix.shape[0])
+    lam_home = float((matrix.sum(axis=1) * idx).sum())
+    lam_away = float((matrix.sum(axis=0) * idx).sum())
+    return lam_home, lam_away
+
+
+def _extra_time_probs(lam_home: float, lam_away: float) -> tuple[float, float, float]:
+    """P(mandante vence / empate→pênaltis / visitante vence) na **prorrogação**.
+
+    Aproxima a ET (30 min) por Poisson **independente** com taxa = taxa de 90' × 30/90 por lado. A
+    correção Dixon-Coles (baixos placares) é ignorada: é de 2ª ordem para o split vitória/empate/
+    derrota, e o que importa é capturar que a ET, sendo curta, **empata com frequência** (→ pênaltis)
+    — efeito que o limiar fixo antigo ignorava. Empate na ET = "vai aos pênaltis".
+    """
+    mu_h, mu_a = lam_home * _ET_FRACTION, lam_away * _ET_FRACTION
+    k_max = 12
+    ph = [math.exp(-mu_h) * mu_h**k / math.factorial(k) for k in range(k_max + 1)]
+    pa = [math.exp(-mu_a) * mu_a**k / math.factorial(k) for k in range(k_max + 1)]
+    p_home = p_draw = p_away = 0.0
+    for i in range(k_max + 1):
+        for j in range(k_max + 1):
+            p = ph[i] * pa[j]
+            if i > j:
+                p_home += p
+            elif i == j:
+                p_draw += p
+            else:
+                p_away += p
+    return p_home, p_draw, p_away
 
 
 @dataclass
@@ -59,15 +91,15 @@ def predict_knockout(home: str, away: str, matrix: np.ndarray, scorer: Scorer) -
     p_advance_home = p_home + p_draw * cond_home
     advancer = home if p_advance_home >= 0.5 else away
 
-    # camada 2: prorrogação — palpita o lado claramente mais forte, senão "vai pros pênaltis"
-    if cond_home >= _ET_DECISIVE_THRESHOLD:
-        extra_time = "home"
-    elif cond_home <= 1 - _ET_DECISIVE_THRESHOLD:
-        extra_time = "away"
-    else:
-        extra_time = "penalties"
+    # camada 2: desfecho da prorrogação por E[pts] — escolhe o desfecho MAIS PROVÁVEL da ET (o bônus
+    # é fixo, então maximizar E[pts] = maximizar P(acerto)). Modela P(empate na ET → pênaltis), que o
+    # limiar antigo ignorava: a ET tem 1/3 do tempo ⇒ muitos 0×0, então "vai aos pênaltis" costuma ser
+    # o modal mesmo com um favorito moderado (ENG-29).
+    lam_home, lam_away = _expected_goals(matrix)
+    et_home, et_draw, et_away = _extra_time_probs(lam_home, lam_away)
+    extra_time = max((("home", et_home), ("penalties", et_draw), ("away", et_away)), key=lambda kv: kv[1])[0]
 
-    # camada 3: pênaltis — quase moeda, leve vantagem ao mais forte
+    # camada 3: pênaltis — quase moeda, leve vantagem ao mais forte (argmax = lado mais provável)
     penalty_winner = "home" if cond_home >= 0.5 else "away"
 
     return KnockoutPrediction(

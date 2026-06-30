@@ -40,8 +40,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-24](#eng-24) | P2 | scoring | ⚪ | Base (1–13) usa a probabilidade interna do app (inobservável) ⇒ eficiência só aproximada |
 | [ENG-25](#eng-25) | P3 | format_engine | 🔴 | Tabela oficial completa (495 combinações) da alocação de terceiros (Annex C) |
 | [ENG-26](#eng-26) | P2 | scoring | ⚪ | Recalibrar `base_log_coeff` (7,55→~8,4) com telas reais de jogo; ordem de arredondamento na fase ×2 |
-| [ENG-27](#eng-27) | P2 | scoring/efficiency | 🟡 | Peso de fase (×2/×4) nunca aplicado ⇒ teto de mata-mata subcontado, eficiência infla no KO |
-| [ENG-28](#eng-28) | P2 | blend/odds | 🟡 | `fetch_odds` só casa jogos de grupo ⇒ blend DESLIGADO em todo o mata-mata (peso 2×/4×) |
+| [ENG-27](#eng-27) | P2 | scoring/efficiency | ✅ | Peso de fase (×2/×4) nunca aplicado ⇒ teto de mata-mata subcontado, eficiência infla no KO |
+| [ENG-28](#eng-28) | P2 | blend/odds | ✅ | `fetch_odds` só casa jogos de grupo ⇒ blend DESLIGADO em todo o mata-mata (peso 2×/4×) |
 | [ENG-29](#eng-29) | P3 | knockout | 🔴 | Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts] (ignora P(ET empatada)) |
 
 ---
@@ -753,7 +753,7 @@ de forma limpa (baixo valor — o resíduo é da ordem do ruído da base). Print
 **Commit:** —
 
 ## ENG-27
-**Peso de fase (×2/×4) nunca aplicado na pontuação ⇒ teto de mata-mata subcontado, eficiência infla no KO** · P2 · `scoring`/`efficiency` · 🟡 fazendo
+**Peso de fase (×2/×4) nunca aplicado na pontuação ⇒ teto de mata-mata subcontado, eficiência infla no KO** · P2 · `scoring`/`efficiency` · ✅ feito
 
 O app pontua o mata-mata com **peso de fase**: R32–SF **×2**, final **×4** (grupos ×1) — sobre a
 **partida inteira** (base + bônus de placar + bônus de prorrogação/pênaltis). Confirmado nas telas
@@ -806,11 +806,11 @@ na fonte) + `_actual_ko_outcome` (regulação/pênaltis/ET/latência) → soma `
 e ao oráculo; **guarda de latência** (jogo empatado nos 90' fora da fonte é pulado e listado, nunca
 inferido). 5 testes em `tests/test_efficiency.py` (regulação, pênaltis, ET, latência, bônus ×2 no R32).
 Smoke 2026: J74/J75 (a pênaltis, fonte ainda em 25/06) corretamente pulados por latência; pontuam
-quando o martj42 alcançar. **A marcar ✅ no commit do fix.**
-**Commit:** —
+quando o martj42 alcançar.
+**Commit:** bd8a4c0
 
 ## ENG-28
-**`fetch_odds` só casa jogos de grupo ⇒ blend desligado em todo o mata-mata** · P2 · `blend`/`odds` · 🟡 fazendo
+**`fetch_odds` só casa jogos de grupo ⇒ blend desligado em todo o mata-mata** · P2 · `blend`/`odds` · ✅ feito
 
 O blend com odds (ENG-19) é a única alavanca de acurácia **validada** (Brier 0,418 vs 0,442 do modelo
 puro). Mas `scripts/fetch_odds.py::map_to_fixtures` casa eventos→fixtures **só** com jogos de grupo:
@@ -840,8 +840,8 @@ martj42); `fetch_odds._matchable_fixtures` inclui os confrontos de KO definidos 
 times reais, J77=France×Sweden) + `test_map_to_fixtures_matches_resolved_knockout_game` (odds de KO
 alinhadas, robusto à orientação do feed). Validado ao vivo: `fetch_odds` mesclou **+13 jogos de KO**
 (odds.csv 49→62) e o `predict` re-rodado blendou os KO — **J78 mudou o avanço de Costa do Marfim para
-Noruega** (segue o mercado). 114 testes verdes; ruff/mypy ok. **A marcar ✅ no commit do fix.**
-**Commit:** —
+Noruega** (segue o mercado). 114 testes verdes; ruff/mypy ok.
+**Commit:** bd8a4c0
 
 ## ENG-29
 **Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts]** · P3 · `knockout` · 🔴 todo

@@ -40,6 +40,11 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   Simulador. Mantido `base_log_coeff = 7,55` + round; resíduo ±1/jogo é limitação aceita (ver SPEC §4.1).
 
 ### Adicionado
+- **Desfecho real dos jogos de mata-mata já disputados** (`pipeline._final_ko_layers`): jogos de KO
+  FINAL agora mostram **quem avançou** (`ko_outcome`) e prorrogação/pênaltis reais — placar dos 90'
+  decidido ⇒ "—"; empate ⇒ "vai aos pênaltis" + vencedor quando o shootout é conhecido. Captura manual
+  via `data/editions/<ano>/shootouts.csv` (`match_id,winner`, em `Edition.shootouts`) para a edição viva
+  quando a fonte oficial tem latência — preenchido **só com placares verificados em ≥2 fontes**. (ENG-30)
 - **Blend com odds de mercado** (`blend.py`): des-vig → pool logarítmico → reescala da matriz, com
   `odds.csv` por jogo, `scoring.toml::blend_weight` (2026 = 0.6), CLI `predict --blend-weight` e
   `scripts/fetch_odds.py` (The Odds API, chave no `.env`). (ENG-19)

@@ -43,6 +43,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-27](#eng-27) | P2 | scoring/efficiency | ✅ | Peso de fase (×2/×4) nunca aplicado ⇒ teto de mata-mata subcontado, eficiência infla no KO |
 | [ENG-28](#eng-28) | P2 | blend/odds | ✅ | `fetch_odds` só casa jogos de grupo ⇒ blend DESLIGADO em todo o mata-mata (peso 2×/4×) |
 | [ENG-29](#eng-29) | P3 | knockout | ✅ | Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts] (ignora P(ET empatada)) |
+| [ENG-30](#eng-30) | P3 | pipeline/render | 🟡 | Jogos de KO FINAL não mostram prorrogação/pênaltis/quem avançou (dados existem) |
 
 ---
 
@@ -878,3 +879,28 @@ forte) crava um lado; os demais saem "vai aos pênaltis" — coerente com a esta
 jogos que chegam à ET vão a pênaltis). Validação contra Copas passadas ficou de fora (escopo); a
 aproximação Poisson-independente (DC ignorado na ET) é documentada no SPEC §6. 121 testes verdes.
 **Commit:** 0f91d63
+
+## ENG-30
+**Jogos de mata-mata FINAL não mostram prorrogação/pênaltis/quem avançou** · P3 · `pipeline`/`render` · 🟡 fazendo
+
+Para um jogo de KO **já disputado** (`status=FINAL`), o `pipeline.run` preenche só o placar dos 90'
+(`palpite`/`placar_real`) e deixa **`prorrogacao`/`penaltis`/`avanca` vazios** (o ramo que os preenche é
+`not f.played`). O `avanca` real **existe** (`Fixture.ko_outcome` = quem avançou; J73 Canadá, J74
+Paraguai, J75 Marrocos, J76 Brasil) — é só não estar sendo usado nos FINAL. O desfecho real
+prorrogação/pênaltis é parcial: placar 90' decidido ⇒ não houve; 90' empate ⇒ foi a prorrogação/pênaltis,
+mas a **fonte (martj42) tem latência** (ENG-15/ENG-27), então o ET-vs-pênaltis não vem automático na hora.
+
+**Refs:** `pipeline.run` (ramo `not f.played`, linhas ~150/168), `render` (colunas já existem:
+`CSV_COLUMNS`, tabelas MD/HTML), `Fixture.ko_outcome`, `Edition.odds` (padrão de arquivo opcional por
+edição a espelhar), `efficiency._actual_ko_outcome` (mesma lógica de desfecho real do ENG-27).
+**Correção proposta:**
+1. preencher `avanca` dos jogos de KO FINAL com o classificado real (`ko_outcome`) — ganho limpo.
+2. desfecho prorrogação/pênaltis nos FINAL: 90' decidido ⇒ "—"; 90' empate + shootout conhecido ⇒
+   "vai aos pênaltis" + vencedor; senão vazio (não afirmar ET sob incerteza).
+3. **captura/armazenamento** dos shootouts da edição viva (latência da fonte): arquivo opcional
+   `data/editions/<ano>/shootouts.csv` (`match_id,winner`), carregado em `Edition.shootouts`
+   (espelha `odds.csv`); preenchido de **fontes confiáveis verificadas em ≥2** quando a fonte oficial
+   ainda não tem (regra de `confirmar-placares-multiplas-fontes`).
+**Aceite:** um jogo de KO FINAL decidido nos pênaltis mostra `avanca`/prorrogação/pênaltis corretos;
+um decidido nos 90' mostra avanço + "—"; teste cobre os dois + a carga do `shootouts.csv`. `pytest` verde.
+**Commit:** —

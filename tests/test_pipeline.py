@@ -52,3 +52,38 @@ def test_pipeline_run_e2e_invariants(monkeypatch):
         assert r["avanca"]  # quem avança preenchido
 
     assert abs(sum(result.champion_prob.values()) - 1.0) < 0.02  # probabilidades de título normalizadas
+
+
+def test_final_ko_layers_real_outcomes():
+    # ENG-30: jogo de KO já disputado mostra prorrogação/pênaltis/quem avançou reais.
+    from worldcup.edition import Fixture
+    from worldcup.pipeline import _final_ko_layers
+
+    def ko(match_id, home, away, hg, ag, winner):
+        return Fixture(
+            match_id=match_id,
+            stage="R32",
+            date="2026-06-29",
+            home=home,
+            away=away,
+            home_goals=hg,
+            away_goals=ag,
+            ko_outcome=winner,
+        )
+
+    # decidido nos 90' → "—"/"—", avança o vencedor real
+    assert _final_ko_layers(ko(76, "Brazil", "Japan", 2, 1, "Brazil"), {}) == ("—", "—", "Brasil")
+    # empate nos 90' + shootout capturado → "Vai aos pênaltis" + vencedor
+    pen = ko(74, "Germany", "Paraguay", 1, 1, "Paraguay")
+    assert _final_ko_layers(pen, {74: "Paraguay"}) == ("Vai aos pênaltis", "Paraguai", "Paraguai")
+    # empate nos 90' SEM shootout conhecido → prorrogação/pênaltis vazios, mas avança conhecido
+    assert _final_ko_layers(ko(75, "Netherlands", "Morocco", 1, 1, "Morocco"), {}) == ("", "", "Marrocos")
+
+
+def test_edition_loads_shootouts():
+    from worldcup.edition import load_edition
+
+    sh = load_edition(2026).shootouts
+    # capturado de fontes verificadas (ESPN/Sky/Al Jazeera): J74 Paraguai, J75 Marrocos a pênaltis
+    assert sh.get(74) == "Paraguay"
+    assert sh.get(75) == "Morocco"

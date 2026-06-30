@@ -105,6 +105,12 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   redistribuir odds em repo público (ver `docs/DATA.md` §6); vive só local, e o veredito de blend é
   reproduzível localmente. Mantenha o arquivo (não o apague); **nunca** versione odds nem a chave
   (que vive no `.env`).
+- `shootouts.csv` — **opcional** (ENG-30): `match_id,winner` (vencedor de disputa de pênaltis, nome
+  canônico). Carregado em `Edition.shootouts`; usado para mostrar o desfecho real (prorrogação/pênaltis/
+  quem avançou) dos jogos de KO **já disputados** quando a fonte oficial ainda tem latência (ENG-15).
+  **Captura manual:** preencha **só com placares verificados em ≥2 fontes confiáveis** (regra
+  `confirmar-placares-multiplas-fontes`). Versionado (fato público, durável); linhas sem vencedor são
+  ignoradas. `Edition.as_of()` descarta os shootouts de jogos a partir da data (consistência).
 - `BOLAO.md` — **memória de campanha** do bolão (agnóstica a ferramenta): decisões vivas que não
   são rederiváveis de dados/código (`risk` escolhido, situação no ranking, regras do bolão).
   **Leia no início da sessão e atualize quando uma decisão de campanha acontecer.**

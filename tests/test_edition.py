@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from worldcup.edition import _load_odds, load_edition
+from worldcup.edition import _load_odds, _load_shootouts, load_edition
 
 
 def test_as_of_clears_results_from_cutoff_onward():
@@ -53,6 +53,15 @@ def test_load_odds_parses_and_skips_blanks(tmp_path):
 
 def test_load_odds_missing_file_is_empty(tmp_path):
     assert _load_odds(tmp_path / "nope.csv") == {}
+
+
+def test_load_shootouts(tmp_path):
+    # ENG-30: match_id,winner (canônico); linhas sem vencedor ignoradas; ausente ⇒ vazio
+    path = tmp_path / "shootouts.csv"
+    path.write_text("match_id,winner\n74,Paraguay\n75,Morocco\n88,\n")
+    sh = _load_shootouts(path)
+    assert sh == {74: "Paraguay", 75: "Morocco"}  # 88 (sem vencedor) ignorado
+    assert _load_shootouts(tmp_path / "nope.csv") == {}
 
 
 def test_2026_blend_weight_prior():

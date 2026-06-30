@@ -43,7 +43,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-27](#eng-27) | P2 | scoring/efficiency | ✅ | Peso de fase (×2/×4) nunca aplicado ⇒ teto de mata-mata subcontado, eficiência infla no KO |
 | [ENG-28](#eng-28) | P2 | blend/odds | ✅ | `fetch_odds` só casa jogos de grupo ⇒ blend DESLIGADO em todo o mata-mata (peso 2×/4×) |
 | [ENG-29](#eng-29) | P3 | knockout | ✅ | Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts] (ignora P(ET empatada)) |
-| [ENG-30](#eng-30) | P3 | pipeline/render | 🟡 | Jogos de KO FINAL não mostram prorrogação/pênaltis/quem avançou (dados existem) |
+| [ENG-30](#eng-30) | P3 | pipeline/render | ✅ | Jogos de KO FINAL não mostram prorrogação/pênaltis/quem avançou (dados existem) |
 
 ---
 
@@ -881,7 +881,7 @@ aproximação Poisson-independente (DC ignorado na ET) é documentada no SPEC §
 **Commit:** 0f91d63
 
 ## ENG-30
-**Jogos de mata-mata FINAL não mostram prorrogação/pênaltis/quem avançou** · P3 · `pipeline`/`render` · 🟡 fazendo
+**Jogos de mata-mata FINAL não mostram prorrogação/pênaltis/quem avançou** · P3 · `pipeline`/`render` · ✅ feito
 
 Para um jogo de KO **já disputado** (`status=FINAL`), o `pipeline.run` preenche só o placar dos 90'
 (`palpite`/`placar_real`) e deixa **`prorrogacao`/`penaltis`/`avanca` vazios** (o ramo que os preenche é
@@ -903,4 +903,14 @@ edição a espelhar), `efficiency._actual_ko_outcome` (mesma lógica de desfecho
    ainda não tem (regra de `confirmar-placares-multiplas-fontes`).
 **Aceite:** um jogo de KO FINAL decidido nos pênaltis mostra `avanca`/prorrogação/pênaltis corretos;
 um decidido nos 90' mostra avanço + "—"; teste cobre os dois + a carga do `shootouts.csv`. `pytest` verde.
-**Commit:** —
+**Resolução (01e0ba9):** `Edition.shootouts` (campo + `_load_shootouts`, espelha `odds.csv`; `as_of`
+descarta os de jogos futuros) e `pipeline._final_ko_layers(f, shootouts)` preenchem os FINAL de KO:
+`avanca` sempre do `ko_outcome`; prorrogação/pênaltis = "—" (90' decidido) / "Vai aos pênaltis" + vencedor
+(empate + shootout conhecido) / vazio (empate sem shootout — não afirma sob latência). As colunas já
+existiam no `render` (CSV/MD/HTML). Captura: `data/editions/2026/shootouts.csv` com J74 Paraguai e J75
+Marrocos, **verificados em ≥2 fontes** (ESPN/Sky/Al Jazeera/NBC/CBS: Paraguai 4-3, Marrocos 3-2 nos
+pênaltis). 4 testes (`_final_ko_layers` reg/pênaltis/incerto + carga do shootouts.csv + edição 2026).
+Saída ao vivo: J73 —/—/Canadá, J74/J75 pênaltis+vencedor, J76 —/—/Brasil. **Limitação aceita:** jogos
+decididos **dentro da prorrogação** (sem pênaltis) seguem vazios até captura/fonte (nenhum em 2026 até
+agora). 124 testes verdes.
+**Commit:** 01e0ba9

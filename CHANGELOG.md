@@ -28,6 +28,11 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   31 jogos de KO** (peso 2×/4×). Agora resolve o bracket pelos resultados reais do fixture (sem rede,
   sem modelo) e casa os confrontos de KO já definidos, alinhando as odds pelos times resolvidos.
   `odds.csv` 49→62 jogos; ex.: o palpite de avanço de J78 passou a seguir o mercado. (ENG-28)
+- **Palpite de prorrogação por E[pts]** (`knockout.predict_knockout`): a camada 2 (quem vence a
+  prorrogação / vai aos pênaltis) era um limiar fixo (`cond_home ≥ 0.58`) que ignorava P(prorrogação
+  empatada). Agora modela a prorrogação como Poisson (taxa de 90' × 30/90) e escolhe o desfecho mais
+  provável (maximiza E[pts]). Efeito: "vai aos pênaltis" vira o modal na maioria dos KO (empate ~53%
+  numa ET de 30 min), só favorito forte crava um lado. Camadas 1/3 e o avanço inalterados. (ENG-29)
 
 ### Notas de calibração
 - **Curva de base subdeterminada** (ENG-26): 9 pontos de telas reais de jogo do R32 não desempatam

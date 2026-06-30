@@ -154,6 +154,22 @@ class Scorer:
             bonus += float(c.get("penalties", 3.0))
         return bonus
 
+    def weighted_points(
+        self,
+        pred: tuple[int, int],
+        actual: tuple[int, int],
+        probs: tuple[float, float, float],
+        weight: float = 1.0,
+    ) -> float:
+        """`points()` já multiplicado pelo **peso de fase** do app (grupos ×1, R32–SF ×2, final ×4).
+
+        O app pontua a partida inteira (base + bônus) vezes o peso da fase — confirmado nas telas
+        "Pontos por Jogo" do R32 ("PESO: ×2 · valores já incluem o peso"). Fonte única do peso:
+        `ScoringConfig.weight(stage)`. Não afeta a *escolha* do palpite (multiplicador constante num
+        jogo isolado não muda o argmax do `best_prediction`), só a contabilidade de pontos/teto.
+        """
+        return self.points(pred, actual, probs) * weight
+
     # ----------------------------------------------------------- escolha
     def expected_points(self, pred: tuple[int, int], matrix: np.ndarray) -> float:
         """E[pontos] do palpite `pred` integrando sobre a matriz de placares."""

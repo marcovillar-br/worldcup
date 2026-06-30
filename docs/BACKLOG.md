@@ -39,6 +39,10 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-23](#eng-23) | P1 | scoring | ✅ | Bônus de placar somados em vez de hierárquicos (inflam pontos, enviesam contra empate) |
 | [ENG-24](#eng-24) | P2 | scoring | ⚪ | Base (1–13) usa a probabilidade interna do app (inobservável) ⇒ eficiência só aproximada |
 | [ENG-25](#eng-25) | P3 | format_engine | 🔴 | Tabela oficial completa (495 combinações) da alocação de terceiros (Annex C) |
+| [ENG-26](#eng-26) | P2 | scoring | ⚪ | Recalibrar `base_log_coeff` (7,55→~8,4) com telas reais de jogo; ordem de arredondamento na fase ×2 |
+| [ENG-27](#eng-27) | P2 | scoring/efficiency | 🟡 | Peso de fase (×2/×4) nunca aplicado ⇒ teto de mata-mata subcontado, eficiência infla no KO |
+| [ENG-28](#eng-28) | P2 | blend/odds | 🟡 | `fetch_odds` só casa jogos de grupo ⇒ blend DESLIGADO em todo o mata-mata (peso 2×/4×) |
+| [ENG-29](#eng-29) | P3 | knockout | 🔴 | Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts] (ignora P(ET empatada)) |
 
 ---
 
@@ -673,3 +677,194 @@ ramificações do Monte Carlo (hoje aproximadas pelo backtracking). **Refs:** `f
 alocação bate com a tabela FIFA; teste com ≥3 combinações conhecidas (inclui a row 67 de 2026).
 **Fonte:** Wikipedia "2026 FIFA World Cup knockout stage" + documento oficial FIFA (Annex). Trabalho
 sobretudo de **transcrição confiável** da tabela.
+
+## ENG-26
+**Recalibrar `base_log_coeff` (7,55→~8,4) com telas reais de jogo; investigar ordem de arredondamento na fase ×2** · P2 · `scoring` · ⚪ descartado (subdeterminado, converge com [ENG-24])
+
+A curva de base do app, `base = 1 + a·log10(1/p)`, foi calibrada no [ENG-14] em `a=7.55` a partir de
+**4 pontos do Simulador de Pontos** (tela "e se"). Três telas **reais de jogo** do R32 (Copa 2026,
+30/06) — "Pontos por Jogo"/"Editar Palpite" do **J74 Alemanha×Paraguai**, **J78 Costa do
+Marfim×Noruega** e **J79 México×Equador**, todas peso **×2**, base ponderada / 2 = base unitária —
+dão **9 pontos** que implicam um coeficiente **maior**:
+
+| Jogo | Resultado | p exibido | base unit (app) | a implícito |
+|------|-----------|-----------|------------------|-------------|
+| J74 | Paraguai | 11% | 9 | 8,35 |
+| J74 | Empate | 19% | 7 | 8,32 |
+| J78 | Costa do Marfim | 26% | 6 | 8,55 |
+| J79 | Equador | 26% | 6 | 8,55 |
+| J78 | Empate | 27% | 6 | 8,79 |
+| J79 | Empate | 32% | 5 | 8,08 |
+| J79 | México | 42% | 4 | 7,96 |
+| J78 | Noruega | 47% | 3 | 6,10 ⚠️ favorito (ruidoso) |
+| J74 | Alemanha | 70% | 3 | 12,91 ⚠️ favorito (ruidoso) |
+
+Os **7 pontos informativos** (p≤45%) ajustam **a=8,40** com **SSE=0,12** (vs 2,16 do 7,55 atual —
+18× pior) e **a=8,40 reproduz a base ponderada 7 de 9 na mosca** — todos com p≤45%. Só erram os dois
+**favoritos** (47%→prev 8/app 6; 70%→prev 5/app 6): provável **piso na base do favorito** (ambos dão
+unit 3 para p bem diferentes) ou arredondamento do "%" exibido — faixa que **menos** importa para o
+`best_prediction` (o favorito é escolhido de qualquer jeito). Consistência confirmada: J78 CdM e J79
+Equador, **ambos p=26% → base 6** (o app é determinístico em p). Com **a=7,55 atual erram os 9**
+(sempre para baixo, −1 a −2 ponderado); no J74 o nosso teto sai 29 vs **30** do app ("Máximo possível").
+**Coeficiente essencialmente fixado em ≈8,40** — falta só a implementação/validação (abaixo).
+
+**Por que não é o [ENG-24] (⚪ descartado) nem o [ENG-14] (✅):** o ENG-24 tratou da **probabilidade
+de entrada** inobservável (fonte de erro irredutível) e concluiu que a curva erra "nos dois sentidos";
+este item é sobre a **curva** (fonte 2), com **evidência nova de telas reais de jogo** (não Simulador)
+que mostra erro **sistemático para baixo** na faixa que decide picks. O ENG-14 antecipou exatamente
+isto ("com mais pontos dá para apertar o coeficiente"). **Consequência que o ENG-24 não pesou:** base
+de zebra baixa **rebaixa o E[pts] do palpite-zebra** vs. favorito (a base escala com a raridade do
+resultado, e o `best_prediction` escolhe entre 1/X/2 por E[pts]) — logo pode **enviesar a escolha
+contra upsets**, o que é **decisão**, não só contabilidade de eficiência.
+
+**Sub-questão nova (fase ×2/×4):** determinar se o app arredonda a base **no unitário e depois
+multiplica** pelo peso, ou **multiplica e depois arredonda** — muda o valor em jogos de mata-mata e a
+contabilidade de teto. As telas do R32 (peso ×2) permitem distinguir: ex. Paraguai p=0,11 dá 18
+ponderado; unit-round-then-×2 (9→18) e fit-then-×2 (≈18,1→18) coincidem aqui, mas pontos de fronteira
+resolvem a ambiguidade — coletar um caso onde as duas ordens divergem.
+
+**Refs:** `scoring.Scorer._base_points` (`base_log_coeff`), `data/editions/2026/scoring.toml`
+(`[sistema_i].base_log_coeff = 7.55`), `scripts/efficiency.py` (teto/eficiência consomem a base),
+[ENG-14] (curva original), [ENG-23] (bônus hierárquicos), [ENG-24] (erro de prob. de entrada).
+**Correção proposta (coleta essencialmente concluída — a≈8,40 fixado em 7/7 pontos p≤45%):**
+trocar `base_log_coeff` 7,55→**8,40**; decidir se a log pura basta ou se há **piso no favorito**
+(p≥47% → unit 3; opcional, faixa de baixo impacto); decidir a **ordem de arredondamento** (unit-round
+-then-×2 vs ×2-then-round) — os 9 pontos atuais não a desempatam (coincidem na faixa coletada),
+precisa de **um** ponto de fronteira; medir o impacto no `best_prediction` (algum pick muda? fica mais
+ousado em zebra?); re-rodar backtest/LOO-CV (não regredir os pontos do bolão); re-rodar `efficiency.py`
+(teto sobe ~1/jogo, eficiência cai do >100% — **interage com o [ENG-27]**, fazer junto).
+**Aceite:** `_base_points` reproduz a base das telas reais dentro de **±0,5 pt** (já satisfeito a
+8,40 nos 7 informativos; favorito documentado como resíduo/piso); ordem de arredondamento decidida e
+testada; teste de regressão trava o novo coeficiente (mudança re-roda o LOO-CV, como o [ENG-17]);
+SPEC §4 atualizado.
+**Coleta — restrição descoberta (30/06):** a base detalhada (tela "Pontos por Jogo"/"Editar Palpite")
+só aparece em jogos **ainda não realizados**; **não** há pontuação detalhada retroativa no app. Logo a
+coleta de pontos de calibração é **só na janela pré-jogo** — capturar nos confrontos do dia/véspera, não
+depois.
+**Decisão (30/06 — ⚪ descartado, subdeterminado):** com os 9 pontos, o ajuste é **confundido**:
+`a≈8,40` com arredondamento *round* e `a=7,55` com arredondamento *ceil* explicam o live **igualmente
+bem** (≈7/8), e **as duas hipóteses quebram** os pontos do Simulador (`0.50→3`, `0.15→7`) — nenhuma
+combinação (coeficiente, arredondamento) concilia as duas fontes do app. Somado à probabilidade de
+entrada inobservável ([ENG-24]), a curva é **subdeterminada** pelos dados. Mantém-se `a=7,55` + round;
+o resíduo ±1/jogo é **limitação aceita**, igual ao [ENG-24] (este item **converge** com aquele).
+Registrado em SPEC §4.1. **Reabrir só** se um ponto de **fronteira** pré-jogo desempatar ceil vs round
+de forma limpa (baixo valor — o resíduo é da ordem do ruído da base). Prints em `tmp/` (não versionar).
+**Commit:** —
+**Commit:** —
+
+## ENG-27
+**Peso de fase (×2/×4) nunca aplicado na pontuação ⇒ teto de mata-mata subcontado, eficiência infla no KO** · P2 · `scoring`/`efficiency` · 🟡 fazendo
+
+O app pontua o mata-mata com **peso de fase**: R32–SF **×2**, final **×4** (grupos ×1) — sobre a
+**partida inteira** (base + bônus de placar + bônus de prorrogação/pênaltis). Confirmado nas telas
+do app (J74 30/06: "PONTOS POR ACERTAR O VENCEDOR · PESO: ×2 · valores já incluem o peso", base
+6/14/18 = unit 3/7/9 ×2; tutorial "E se tiver prorrogação e pênaltis?": Prorrogação +6 / Pênaltis +6
+com seletor Peso 1/**2**/4). Nosso modelo **define** esse peso (`scoring.toml::[phase_weights]`
+group=1, R32=R16=QF=SF=2, "3rd_place"=2, final=4) e expõe `ScoringConfig.weight(stage)`
+(`edition.py:86`) — **mas nada o chama**: `grep '\.weight('` em `src/` e `scripts/` retorna só a
+definição. A pontuação (`scoring.Scorer.points`/`knockout_bonus`) devolve valores **unitários** e
+nenhum consumidor multiplica pela fase.
+
+**Impacto (material agora — R32 em curso, J73–J76 disputados):**
+- `scripts/efficiency.py` (`asof_scores`, linha ~119) pontua o KO com `scorer.points(...)` **a ×1** e
+  ainda **descarta o bônus de prorrogação/pênaltis** (comentário "mata-mata: sem bônus"). Logo o
+  **teto** de cada jogo de mata-mata é subcontado (×1 em vez de ×2/×4, e sem os +6/+6).
+- Os **pontos reais do usuário** (`--my-points`, vindos do app) **já são ponderados** (×2 no R32).
+  Então a eficiência = (real ponderado) / (teto não-ponderado) **infla** conforme o mata-mata avança
+  — viés sistemático, não ruído. É a mesma classe de auto-engano do [ENG-23] (eficiência inflada por
+  bug de pontuação → conclusão falsa de "deixou pontos na mesa"). O "~103%" do BOLAO já começa a
+  carregar esse componente.
+
+**Refs:** `edition.ScoringConfig.weight` (definido, nunca chamado), `data/editions/2026/scoring.toml`
+`[phase_weights]`, `scripts/efficiency.py::asof_scores`/`archive_scores`, `scoring.Scorer.points`/
+`knockout_bonus`, `backtest.run_backtest` (loop de pontos, linha ~161 — também não pondera, **mas**
+o martj42 não traz a fase: ponderar o backtest é inviável/fora de escopo, ver [ENG-12]/SPEC §9.2).
+**Correção proposta:**
+1. *(limpo, alto valor)* aplicar `edition.scoring.weight(f.stage)` ao pontuar cada jogo no
+   `efficiency.py` (a fase vem do `fixtures.csv` na edição viva — trivial). O teto do KO passa a
+   refletir ×2/×4. Centralizar o peso num único ponto (ex.: helper `weighted_points(stage, …)`) para
+   não espalhar a multiplicação.
+2. *(limitado por dado — igual [ENG-12]/SPEC §9.2)* somar o `knockout_bonus` ao teto onde o desfecho
+   é determinável: jogos a **pênaltis** (via `penalty_winner` do fixture/`ko_outcome`) recebem o bônus
+   ponderado; jogos decididos **dentro da prorrogação** não são separáveis (sem flag de ET) e ficam de
+   fora, documentado. Decididos nos **90'** não recebem bônus de KO (correto — não houve ET/pênaltis).
+**Aceite:** num jogo de R32, o teto de `efficiency.py` == 2× o teto unitário (e ×4 na final); teste
+de regressão com um jogo de KO ponderado (inclui um caso a pênaltis com o bônus +6/+6 ponderado);
+re-rodar a eficiência da 2026 e registrar no BOLAO o número **corrigido** (deve cair do ">100%"). A
+ponderação do backtest fica explicitamente fora de escopo (sem fase no martj42). `pytest` verde.
+**Progresso (working tree, 30/06):** parte 1 (peso de fase) **implementada**: `Scorer.weighted_points`
+(`points()` × peso, fonte única `ScoringConfig.weight`); `efficiency.py` pondera o placar dos 90' do KO
+no `asof_scores`, no oráculo e no `archive_scores`. Testes novos: `test_weighted_points_applies_phase_weight`
+(×1/×2/×4 e zero ponderado segue zero) + `test_2026_phase_weights` (trava grupos×1/R32–SF×2/final×4 da
+config, antes código morto). 107 testes verdes; ruff/mypy ok. Smoke: teto 2026 = 228 (os 4 KO atuais
+zeraram o 1×2, ×2 não muda; passa a valer quando o tool acertar um KO). Docs: CHANGELOG, SPEC §4.1,
+docstring/avisos do `efficiency.py`. **Parte 2 (bônus de prorrogação/pênaltis no teto) — IMPLEMENTADA** (working tree, 30/06): reavaliada
+após a pergunta sobre a fonte — o desfecho ET/pênaltis **é** recuperável do martj42 (placar 90' +
+`shootouts`; empate-90'-sem-shootout ⇒ decidido na prorrogação) para a edição viva, ao contrário do
+escopo inicial. `efficiency.py`: `_penalty_lookup` (mapa data+par → vencedor dos pênaltis, presença =
+na fonte) + `_actual_ko_outcome` (regulação/pênaltis/ET/latência) → soma `knockout_bonus` ×peso ao teto
+e ao oráculo; **guarda de latência** (jogo empatado nos 90' fora da fonte é pulado e listado, nunca
+inferido). 5 testes em `tests/test_efficiency.py` (regulação, pênaltis, ET, latência, bônus ×2 no R32).
+Smoke 2026: J74/J75 (a pênaltis, fonte ainda em 25/06) corretamente pulados por latência; pontuam
+quando o martj42 alcançar. **A marcar ✅ no commit do fix.**
+**Commit:** —
+
+## ENG-28
+**`fetch_odds` só casa jogos de grupo ⇒ blend desligado em todo o mata-mata** · P2 · `blend`/`odds` · 🟡 fazendo
+
+O blend com odds (ENG-19) é a única alavanca de acurácia **validada** (Brier 0,418 vs 0,442 do modelo
+puro). Mas `scripts/fetch_odds.py::map_to_fixtures` casa eventos→fixtures **só** com jogos de grupo:
+`unplayed = {... for f in edition.fixtures if f.is_group and not f.played}`. Logo `odds.csv` tem **0
+match_id de mata-mata** (verificado: 49 grupo, 0 KO) e **todo** o R32→final sai **100% modelo**, sem o
+mercado — justamente nos **31 jogos de peso 2×/4×**, onde acurázia rende mais. Hoje o `fetch_odds`
+puxou 13 eventos (os R32) e mesclou **0**. Causa estrutural: (a) o filtro `is_group`; (b) os fixtures de
+KO guardam **slots** (`1A`, `W73`), não times — casar com o feed (nomes reais) exige **resolver o
+bracket** dos confrontos já determinados pelos resultados reais.
+
+**Refs:** `fetch_odds.map_to_fixtures` (filtro `is_group`, alinhamento `price[f.home]`),
+`sync._resolve_real_bracket` (resolução do bracket por resultados reais), `pipeline.run` (consome
+`odds.csv` por match_id, alinhado à orientação home/away).
+**Correção proposta:** resolver os confrontos de KO a partir dos **resultados reais do próprio fixture**
+(standings de grupo + `ko_outcome` dos KO disputados — sem rede, sem modelo, mais fresco que o martj42,
+que tem latência) e incluir no casamento de odds os jogos de KO **não disputados** cujos dois times já
+estão determinados; alinhar as odds pelos **times resolvidos** (não pelos slots). Função
+`sync.resolve_live_bracket(edition)` reusável.
+**Aceite:** com odds disponíveis para um confronto de R32 já definido (ex.: França×Suécia), `fetch_odds`
+grava o match_id de KO em `odds.csv` com as odds alinhadas à orientação do fixture; `predict` blenda esse
+jogo (matriz ≠ modelo puro). Teste do resolvedor (bracket real → confrontos esperados) + do casamento de
+um evento de KO. `pytest` verde.
+**Progresso (working tree, 30/06) — IMPLEMENTADO:** `sync.resolve_live_bracket(edition)` resolve o
+bracket pelos resultados reais do fixture (standings + `ko_outcome`; sem rede/modelo, mais fresco que o
+martj42); `fetch_odds._matchable_fixtures` inclui os confrontos de KO definidos e alinha as odds pelos
+**times resolvidos**. Testes: `test_resolve_live_bracket_resolves_r32_from_real_results` (16 confrontos,
+times reais, J77=France×Sweden) + `test_map_to_fixtures_matches_resolved_knockout_game` (odds de KO
+alinhadas, robusto à orientação do feed). Validado ao vivo: `fetch_odds` mesclou **+13 jogos de KO**
+(odds.csv 49→62) e o `predict` re-rodado blendou os KO — **J78 mudou o avanço de Costa do Marfim para
+Noruega** (segue o mercado). 114 testes verdes; ruff/mypy ok. **A marcar ✅ no commit do fix.**
+**Commit:** —
+
+## ENG-29
+**Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts]** · P3 · `knockout` · 🔴 todo
+
+`knockout.predict_knockout` escolhe a **camada 2** (quem vence a prorrogação / vai aos pênaltis) por um
+**limiar fixo** sobre a probabilidade condicional: `extra_time = "home"` se `cond_home ≥ 0.58`, `"away"`
+se `≤ 0.42`, senão `"penalties"` (`_ET_DECISIVE_THRESHOLD = 0.58`). Não modela a probabilidade de a
+**prorrogação terminar empatada** (→ pênaltis): como a ET são 30 min (~1/3 do jogo), uma fração grande
+termina nivelada, então "vai aos pênaltis" costuma ser o desfecho **mais provável**, e o limiar 0,58 só
+o escolhe numa banda estreita de `cond_home`. Para um favorito moderado (`cond_home`≈0,62) crava "vence
+na prorrogação" quando o modal real talvez seja pênaltis — escolha **sub-ótima em E[pts]**. Idem a
+camada 3 (vencedor dos pênaltis), hoje só "lado mais forte" — para uma aposta binária é o argmax certo,
+então menos crítico. **Relevância confirmada:** o bônus vale **+6/+12/+24** (×2 R32, ×4 final) e o
+usuário pontua nele (capturou +6 em 29/06, J74/J75 a pênaltis).
+
+**Refs:** `knockout.predict_knockout` (camadas 2 e 3, `_ET_DECISIVE_THRESHOLD`),
+`scoring.Scorer.knockout_bonus` (a régua que se quer maximizar), `model.score_matrix` (taxas de 90').
+**Correção proposta:** modelo explícito de gols da **prorrogação** — Poisson com taxa ≈ taxa de 90' ×
+(30/90) por lado (reusando as forças do `score_matrix`), computar `P(home vence ET)`, `P(ET empatada →
+pênaltis)`, `P(away vence ET)` e escolher a camada 2 por **E[pts]** (argmax da probabilidade do desfecho,
+já que o bônus é fixo). Camada 3: P(vencedor dos pênaltis) ~ moeda com leve viés à força — manter argmax.
+Validar contra desfechos reais de mata-mata (Copas passadas via `shootouts` + jogos não-decididos nos 90').
+**Aceite:** a camada 2 passa a escolher por E[pts] (teste: distribuição de ET conhecida → escolha
+esperada, incl. caso favorito-moderado→pênaltis que o limiar erra); sem regressão no avanço previsto
+(`advancer`). `pytest` verde.
+**Commit:** —

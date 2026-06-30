@@ -31,3 +31,39 @@ def test_read_write_round_trip(tmp_path):
 
 def test_read_existing_missing_is_empty(tmp_path):
     assert fetch_odds.read_existing(tmp_path / "nope.csv") == {}
+
+
+def _h2h_event(home, away, home_price, draw_price, away_price):
+    return {
+        "home_team": home,
+        "away_team": away,
+        "bookmakers": [
+            {
+                "key": "pinnacle",
+                "markets": [
+                    {
+                        "key": "h2h",
+                        "outcomes": [
+                            {"name": home, "price": home_price},
+                            {"name": away, "price": away_price},
+                            {"name": "Draw", "price": draw_price},
+                        ],
+                    }
+                ],
+            }
+        ],
+    }
+
+
+def test_map_to_fixtures_matches_resolved_knockout_game():
+    # ENG-28: jogo de mata-mata resolvido pelo bracket real entra no casamento, com odds alinhadas.
+    from worldcup.edition import load_edition
+
+    ed = load_edition(2026).as_of("2026-06-28")  # grupos completos, R32 resolvível (J77 = France x Sweden)
+    ev = _h2h_event("France", "Sweden", 1.30, 6.20, 11.0)
+    odds, _fallback, _skipped = fetch_odds.map_to_fixtures([ev], ed, "pinnacle")
+    assert odds[77] == (1.30, 6.20, 11.0)  # alinhado (mandante France, visitante Sweden)
+    # orientação invertida no feed continua alinhando pelos NOMES (não pela ordem da API)
+    ev_rev = _h2h_event("Sweden", "France", 11.0, 6.20, 1.30)
+    odds_rev, _f, _s = fetch_odds.map_to_fixtures([ev_rev], ed, "pinnacle")
+    assert odds_rev[77] == (1.30, 6.20, 11.0)

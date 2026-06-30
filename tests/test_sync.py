@@ -173,3 +173,19 @@ def test_edition_results_lists_rematch_and_filters_non_wc(monkeypatch):
     scores, shootouts = sync._edition_results(2026)
     assert len(scores[("Brazil", "Haiti")]) == 2  # reencontro vira lista, não sobrescreve
     assert shootouts[frozenset({"Brazil", "Haiti"})] == "Brazil"
+
+
+def test_resolve_live_bracket_resolves_r32_from_real_results():
+    # ENG-28: resolve os confrontos de KO só com os resultados reais do fixture (sem rede/modelo).
+    # as_of(28/06): grupos completos, R32 ainda não disputado → os 16 confrontos saem determinados.
+    ed = load_edition(2026).as_of("2026-06-28")
+    br = sync.resolve_live_bracket(ed)
+    r32 = {m: v for m, v in br.items() if 73 <= m <= 88}
+    assert len(r32) == 16  # todos os 16-avos resolvidos
+    teams = set(ed.teams)
+    for home, away in r32.values():  # times resolvidos são seleções reais (não slots)
+        assert home in teams
+        assert away in teams
+        assert home != away
+    # confronto conhecido (bracket oficial corrigido no ENG-25), robusto à orientação
+    assert frozenset(r32[77]) == frozenset({"France", "Sweden"})

@@ -271,6 +271,15 @@ Essa é a régua **fiel do app** e **não depende de `risk`** — o risco mora n
 > refinar com mais pontos do Simulador se necessário. (Backlog ENG-14.) Pontos do Simulador colhidos em
 > 26/06/2026 mostram que **nenhuma** curva log+arredondamento passa por `0.45→3` **e** `0.10→9` ao mesmo
 > tempo (o app usa régua/tabela própria); o resíduo é ±1 no meio da curva.
+>
+> **Atualização (30/06/2026, ENG-26):** 9 pontos de **telas reais de jogo** do R32 (não do Simulador)
+> isolam o resíduo mas **não** o resolvem. Eles ajustam bem `a≈8,40` *com arredondamento round*, mas
+> `a=7,55` *com arredondamento **ceil*** ajusta igualmente bem (7/8) — as duas hipóteses (coeficiente
+> maior vs. arredondar pra cima) são **confundidas**, e **ambas quebram** os pontos do Simulador
+> (`0.50→3`, `0.15→7`). Soma-se a isso a probabilidade de entrada inobservável (ENG-24). Conclusão:
+> a curva de base do app é **subdeterminada** pelos dados disponíveis; mantém-se `a=7,55` + round e o
+> resíduo ±1 como **limitação aceita** (ENG-24/ENG-26). Não recalibrar sem desempatar o arredondamento
+> com um ponto de fronteira pré-jogo.
 
 > **Limite de observabilidade (ENG-24).** A base é função da **probabilidade do app**, calculada
 > internamente e **diferente da nossa** (modelo + blend) — e **não exposta**. Mesmo com a fórmula

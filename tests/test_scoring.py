@@ -140,3 +140,17 @@ def test_knockout_bonus_extra_time_and_penalties():
 def test_knockout_bonus_only_for_sistema_i():
     s = Scorer(ScoringConfig(system="so_vencedor"))
     assert s.knockout_bonus("penalties", "home", "penalties", "home") == 0.0
+
+
+def test_weighted_points_applies_phase_weight():
+    # ENG-27: o app pontua a partida inteira (base + bônus) vezes o peso de fase.
+    s = _scorer()
+    probs = (0.25, 0.25, 0.50)
+    base = s.points((0, 3), (1, 3), probs)  # base(0.50→3) + gols_vencedor(3) = 6
+    assert base == 6.0
+    assert s.weighted_points((0, 3), (1, 3), probs, 1.0) == base  # grupos ×1
+    assert s.weighted_points((0, 3), (1, 3), probs, 2.0) == 2 * base  # R32–SF ×2
+    assert s.weighted_points((0, 3), (1, 3), probs, 4.0) == 4 * base  # final ×4
+    assert s.weighted_points((0, 3), (1, 3), probs) == base  # default = ×1
+    # zerar o 1x2 zera mesmo ponderado (não inventa pontos)
+    assert s.weighted_points((2, 0), (0, 1), probs, 4.0) == 0.0

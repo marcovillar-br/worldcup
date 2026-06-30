@@ -24,9 +24,12 @@ Limitações:
     não exatos (confirmado: na validação contra o app, ~1/3 dos jogos erraram por ≤1 só na base).
     Ver `docs/SPEC.md` §4.
   - Fase de grupos: bônus de placar exatos; base aproximada (acima).
-  - Mata-mata: pontua o placar dos **90'**; os bônus de prorrogação/pênaltis NÃO são pontuados
-    (os dados reais guardam só o vencedor do confronto, não a camada que o decidiu — daí não
-    serem reconstrutíveis). Um aviso é impresso se houver jogo de mata-mata disputado.
+  - Mata-mata: pontua o placar dos **90'** já com o **peso de fase** do app (R32–SF ×2, final ×4) e
+    **os bônus de prorrogação/pênaltis** (+3/+3 ×peso), reconstruindo o desfecho da fonte: placar dos
+    90' (results) + `shootouts` — empate-90'-sem-shootout ⇒ decidido na prorrogação (ENG-27). Só
+    pontua onde a fonte (martj42) **já confirma** o jogo; jogos empatados nos 90' ainda não chegados à
+    fonte (latência, ENG-15) são pulados e listados (não se infere ET vs pênaltis sem o dado). O
+    *placar* da prorrogação não existe na fonte — mas o bolão também não o pontua (só o desfecho).
 
 `--compare-archive`: além do as-of, pontua os snapshots **reais** arquivados em `history/`
 (`<data>.csv`, sem sufixo `.reconstruido`) e lista os jogos onde a reconstrução diverge do que
@@ -51,6 +54,7 @@ from worldcup.format_engine import MatrixCache, deterministic_bracket, monte_car
 from worldcup.knockout import predict_knockout
 from worldcup.model import DixonColesModel, FitConfig
 from worldcup.scoring import Scorer, outcome_probs_from_matrix
+from worldcup.teams import canonical
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -62,6 +66,51 @@ def _parse_score(s: str) -> tuple[int, int]:
 
 def _pct(s: str) -> float:
     return float(s.strip().rstrip("%")) / 100.0
+
+
+def _penalty_lookup(historical) -> dict[tuple[str, frozenset[str]], str]:
+    """Mapa (data, {mandante,visitante}) → vencedor dos pênaltis (canônico; '' se foi sem disputa).
+
+    A **presença** da chave significa que o jogo já está na fonte (martj42); a ausência ⇒ ainda não
+    chegou (latência, ENG-15) e não dá para inferir ET vs pênaltis. Construído uma vez.
+    """
+    pens: dict[tuple[str, frozenset[str]], str] = {}
+    for _, r in historical.iterrows():
+        key = (str(r["date"]), frozenset({canonical(str(r["home_team"])), canonical(str(r["away_team"]))}))
+        pens[key] = canonical(str(r["penalty_winner"])) if str(r.get("penalty_winner", "") or "") else ""
+    return pens
+
+
+def _actual_ko_outcome(
+    hg: int,
+    ag: int,
+    date: str,
+    ko_outcome: str | None,
+    home: str,
+    away: str,
+    pens: dict[tuple[str, frozenset[str]], str],
+) -> tuple[str | None, str | None]:
+    """Desfecho real (prorrogação/pênaltis) de um jogo de KO, do placar dos 90' + fonte (ENG-27 parte 2).
+
+    Devolve `(extra_time, penalty_winner)` no vocabulário do `Scorer.knockout_bonus`:
+      - placar dos 90' **decidido** (≠ empate)           → `(None, None)` — não houve ET/pênaltis;
+      - 90' **empate**, na fonte **com** shootout        → `("penalties", "home"|"away")`;
+      - 90' **empate**, na fonte **sem** shootout        → `("home"|"away", None)` — decidido na prorrogação
+        (vencedor = quem avançou, `ko_outcome`);
+      - 90' **empate**, **fora** da fonte (latência)     → `(None, None)` — não inferir, não pontuar.
+    """
+    if hg != ag:
+        return None, None  # decidido nos 90 min — sem camada de ET/pênaltis
+    key = (str(date), frozenset({canonical(home), canonical(away)}))
+    if key not in pens:
+        return None, None  # a fonte ainda não confirmou o jogo (latência) — não inferir
+    pen_winner = pens[key]
+    if pen_winner:
+        return "penalties", ("home" if pen_winner == canonical(home) else "away")
+    adv = canonical(ko_outcome) if ko_outcome else None
+    if adv is None:
+        return None, None
+    return ("home" if adv == canonical(home) else "away"), None
 
 
 def asof_scores(edition: Edition, sims: int) -> dict[int, dict]:
@@ -76,6 +125,7 @@ def asof_scores(edition: Edition, sims: int) -> dict[int, dict]:
     by_id = {f.match_id: f for f in edition.fixtures}
     dates = sorted({f.date for f in played})
     historical = load_historical()
+    pens = _penalty_lookup(historical)  # ENG-27 parte 2: desfecho ET/pênaltis da fonte
     blend_weight = edition.scoring.blend_weight
 
     out: dict[int, dict] = {}
@@ -113,10 +163,19 @@ def asof_scores(edition: Edition, sims: int) -> dict[int, dict]:
             if f.is_group:
                 p = scorer.best_prediction(mat)
                 pred = (p.home_goals, p.away_goals)
+                kp = None
             else:
                 kp = predict_knockout(home, away, mat, scorer)
                 pred = (kp.home_goals, kp.away_goals)
-            pts = scorer.points(pred, actual, probs)  # 90' (mata-mata: sem bônus de prorrog./pênaltis)
+            # peso de fase do app (R32–SF ×2, final ×4; ENG-27). O placar dos 90' entra ponderado.
+            w = edition.scoring.weight(f.stage)
+            pts = scorer.weighted_points(pred, actual, probs, w)
+            # bônus de mata-mata (prorrogação/pênaltis), ponderado, onde a fonte confirma o desfecho.
+            act_et, act_pen = (None, None)
+            if kp is not None:
+                act_et, act_pen = _actual_ko_outcome(actual[0], actual[1], f.date, real.ko_outcome, home, away, pens)
+                if act_et is not None:
+                    pts += scorer.knockout_bonus(kp.extra_time, kp.penalty_winner, act_et, act_pen) * w
             out[f.match_id] = {
                 "palpite": f"{pred[0]}x{pred[1]}",
                 "real": f"{actual[0]}x{actual[1]}",
@@ -124,6 +183,8 @@ def asof_scores(edition: Edition, sims: int) -> dict[int, dict]:
                 "pts": pts,
                 "stage": f.stage,
                 "ko": not f.is_group,
+                "act_et": act_et,
+                "act_pen": act_pen,
             }
     return out
 
@@ -154,7 +215,8 @@ def archive_scores(edition: Edition) -> dict[int, float]:
             continue  # bônus de mata-mata fora de escopo
         pred = _parse_score(row["palpite"])
         probs = (_pct(row["P_mandante"]), _pct(row["P_empate"]), _pct(row["P_visitante"]))
-        out[f.match_id] = scorer.points(pred, (f.home_goals, f.away_goals), probs)
+        w = edition.scoring.weight(f.stage)  # ENG-27 (no-op nos grupos ×1; coerente se um dia incluir KO)
+        out[f.match_id] = scorer.weighted_points(pred, (f.home_goals, f.away_goals), probs, w)
     return out
 
 
@@ -202,7 +264,12 @@ def main(argv: list[str] | None = None) -> int:
     oracle = 0.0
     for s in scores.values():
         real = _parse_score(s["real"])
-        oracle += scorer.points(real, real, s["probs"])
+        w = edition.scoring.weight(s["stage"])
+        oracle += scorer.weighted_points(real, real, s["probs"], w)
+        # teto do bônus KO: cravar o desfecho real (prorrogação +3, e nos pênaltis +3 do vencedor) ×peso
+        act_et, act_pen = s.get("act_et"), s.get("act_pen")
+        if act_et is not None:
+            oracle += scorer.knockout_bonus(act_et, act_pen, act_et, act_pen) * w
 
     print(f"\nJogos pontuados: {len(scores)}")
     cfg = f"risk {edition.scoring.risk} + blend {edition.scoring.blend_weight}"
@@ -214,8 +281,17 @@ def main(argv: list[str] | None = None) -> int:
     print("    de incerteza. O bônus de placar é exato; a base não. Teto e eficiência são estimativas")
     print("    (ENG-24 / SPEC §4) — não leia o % como cravado.")
     if has_ko:
-        print("⚠️  Mata-mata presente: o placar dos 90' foi pontuado, mas os bônus de prorrogação/")
-        print("    pênaltis NÃO entram (dados reais guardam só o vencedor) — o teto de KO é subestimado.")
+        latent = [
+            mid
+            for mid, s in scores.items()
+            if s["ko"] and s.get("act_et") is None and _parse_score(s["real"])[0] == _parse_score(s["real"])[1]
+        ]
+        print("ℹ️  Mata-mata: placar dos 90' com PESO DE FASE (R32–SF ×2, final ×4) E o bônus de prorrogação/")
+        print("    pênaltis (+3/+3 ×peso) onde a fonte (martj42 shootouts) confirma o desfecho (ENG-27).")
+        if latent:
+            ids = ", ".join("J" + str(m) for m in sorted(latent))
+            print(f"    {len(latent)} jogo(s) empatado(s) nos 90' ainda sem shootout na fonte (latência) →")
+            print(f"    bônus de KO não pontuado neste teto: {ids}")
     if args.compare_archive:
         arch_ids = [m for m in scores if m in archive]
         if arch_ids:

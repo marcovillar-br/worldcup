@@ -11,19 +11,25 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-28)
+## Estado atual (atualizado em 2026-06-30)
 
-- **72 de 104 jogos disputados (J1–J72) — FASE DE GRUPOS COMPLETA.** J67–J72 (27/06, grupos J/K/L)
-  sincronizados pela fonte pública do `sync-results` (6 jogos de grupo preenchidos). Começa o
-  **mata-mata (16-avos, R32)**: J73 (África do Sul × Canadá) é hoje 28/06; o resto do R32 vai até
-  02/07.
-- **Standing: 2º de 60** · **235 pts** (líder 259) · **eficiência ~103%** (teto as-of 228; segue o
-  blend). Líder 31 pts acima do teto do tool ⇒ variância de exatos a favor dele, não erro de execução
-  (detalhe na entrada 2026-06-28 do Histórico).
+- **76 de 104 jogos disputados (J1–J76).** Fase de grupos completa + J73–J76 do mata-mata
+  sincronizados pela fonte pública do `sync-results`. **16-avos (R32)** em andamento: hoje
+  30/06 são **J77 França × Suécia**, **J78 Costa do Marfim × Noruega** e **J79 México × Equador**; o
+  resto do R32 vai até 03/07.
+- **Ontem (29/06): duas zebras no R32.** J74 Alemanha **1×1** Paraguai → **Paraguai avança** nos
+  pênaltis (eliminou a Alemanha); J75 Holanda **1×1** Marrocos → **Marrocos avança** (eliminou a
+  Holanda); J76 Brasil **2×1** Japão → **Brasil avança**. O tool pegou o lado do Brasil; as duas
+  zebras de potência eram improváveis no modelo (favorece quem vem bem).
 - **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
-  melhor (delta cresce). Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
-- Favorito ao título: **Argentina (29,8%)**; Espanha **19,9%**, França 11,5%, Brasil 8,8%.
-  (Probabilidades comprimem ao entrar no mata-mata; números pós-correção do bracket, ver abaixo.)
+  melhor. Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
+- **Blend AGORA cobre o mata-mata (ENG-28, 30/06):** o `fetch_odds` só casava jogos de grupo — o
+  blend estava **desligado em todos os 31 jogos de KO (peso 2×/4×)**. Corrigido: resolve o bracket
+  pelos resultados reais e casa os confrontos de KO definidos. `odds.csv` foi de 49→**62 jogos** (+13
+  KO). Efeito imediato: **J78 mudou de "avança Costa do Marfim" para "avança Noruega"** (mercado tem
+  Noruega favorita, 2.17). Os palpites de KO agora saem blendados; a sim de campeão segue DC-only.
+- Favorito ao título (30/06): **Argentina (29,8%)**; Espanha **19,9%**, França 13,0%, **Brasil 12,3%**
+  (sobe forte — bracket abriu com Alemanha/Holanda fora), Portugal 7,6%.
 - **Bracket R32 corrigido (ENG-25, 28/06):** a alocação dos terceiros divergia da tabela oficial da
   FIFA — J74/J77/J81 saíam com Bósnia/Paraguai/Suécia rodados. Cravada a alocação oficial (row 67,
   grupos B/D/E/F/I/J/K/L) em `tournament.toml`. Agora: J74 Alemanha×**Paraguai**, J77 França×**Suécia**,
@@ -31,8 +37,8 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 - **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19). Scorer
   hierárquico (ENG-23). Admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato
   do `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API
-  vive no `.env`. Odds em 28/06: fetch retornou 16 eventos mas 0 novos/atualizados (os confrontos do
-  mata-mata ainda não casaram com o feed) — 49 jogos no total, todos disputados.
+  vive no `.env`. Odds em 30/06: **62 jogos** no `odds.csv` (49 grupo + 13 KO, após ENG-28 destravar o
+  casamento do mata-mata).
 
 ## Decisões vivas
 
@@ -46,6 +52,31 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-06-30 — **R32 de 29/06 fechado: duas zebras de potência (Paraguai e Marrocos avançam).** J74
+  Alemanha **1×1** Paraguai → Paraguai nos pênaltis; J75 Holanda **1×1** Marrocos → Marrocos; J76
+  Brasil **2×1** Japão → Brasil. 76 jogos disputados. O tool acertou o lado de Brasil; Alemanha e
+  Holanda eram favoritas no modelo (não captura má fase/upset de potência — limitação conhecida).
+  blend-track inalterado (n=49; R32 fora do feed de odds). **Título: Argentina 29,8%, Espanha 19,9%,
+  França 13,0%, Brasil 12,3% (salta — bracket abriu), Portugal 7,6%.** Standing do usuário não
+  reconsultado nesta sessão (pedido foi só atualizar/mostrar a rodada). Hoje 30/06: J77 França×Suécia,
+  J78 Costa do Marfim×Noruega, J79 México×Equador.
+
+- 2026-06-29 — **J73 fechado (Canadá venceu nos 90'); caí para 4º. Cenário de risco rodado: NÃO subir
+  o risco.** Resultado: África do Sul **0×1 Canadá** (Canadá 1–0 no tempo normal). O tool acertou o
+  **classificado** (Canadá, as-of 28/06) mas o palpite de 90' era **0×0** indo à prorrogação → fez **0
+  pts** no jogo. **Standing: 235 pts, 4º de 60** (era 2º); **líder saltou para 275 (+16 num jogo só** =
+  cravou o Canadá 1–0 + bônus de KO). Eficiência segue **103,1%** (teto as-of 228) — execução intacta, o
+  gap é variância. **Líder está 47 pts ACIMA do teto do tool** ⇒ inalcançável por estratégia; surfa
+  exatos (regride). **Cenário risk 0.5 vs alto nos 15 R32 restantes (J74–J88), script
+  `scratchpad/scenario_risk.py`:** risk 0.5 → ΣE[pts] **42,4**, Σ P(exato) **2,30**, SD-carteira **11,9**;
+  risk 0.65 → 38,4 (**−4,0**), P(exato) 2,32, SD 14,8; risk 0.8 → 36,1 (**−6,3**), P(exato) **2,24** (cai!),
+  SD 15,4. **Veredito: o botão de risco é a ferramenta errada** — (a) NÃO aumenta a chance de cravar
+  exato (Σ P(exato) fica ~2,3 e até cai), só empurra palpites para empates 1×1/0×0; (b) a variância que
+  compra é paga **1:1 em E[pts]**, então a caçada dos 40 pts continua a **~2,4 σ** com ou sem risco. O que
+  o líder fez (cravar exato não-modal) o risco **não replica**. Mantido **`risk 0.5`**; caminho ao título
+  = líder regredir + variância natural dos ~31 jogos restantes, não sabotar o E[pts]. Reafirma a decisão
+  viva de risco com quantificação específica do cenário de recuperação.
 
 - 2026-06-28 (correção) — **Bracket do R32 estava com 3 confrontos errados; corrigido (ENG-25).** O
   casamento por restrição dos terceiros (`_assign_thirds`) escolhia um emparelhamento válido **porém

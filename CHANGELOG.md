@@ -12,6 +12,28 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
+### Corrigido
+- **Peso de fase aplicado na contabilidade de pontos/teto** (`Scorer.weighted_points` +
+  `scripts/efficiency.py`): o app pontua o mata-mata vezes o peso da fase (R32–SF ×2, final ×4) e
+  isso **nunca era aplicado** (`ScoringConfig.weight` existia, mas ninguém o chamava) — o teto/eficiência
+  subcontava cada jogo de KO, inflando a eficiência conforme o mata-mata avança. Agora o placar dos 90'
+  do KO entra ponderado. A pontuação da **fase de grupos é idêntica** (peso ×1). (ENG-27 parte 1)
+- **Bônus de prorrogação/pênaltis no teto de eficiência** (`scripts/efficiency.py`): reconstrói o
+  desfecho da fonte — placar dos 90' (results) + `shootouts`, com a inferência *empate-90'-sem-shootout
+  ⇒ decidido na prorrogação* — e soma `knockout_bonus` (+3/+3 ×peso) ao teto. Guarda de **latência**:
+  jogos empatados nos 90' ainda não confirmados pela fonte (martj42 atrasada) são pulados e listados,
+  nunca inferidos. O oráculo também ganha o teto do bônus de KO. (ENG-27 parte 2)
+- **Blend com odds agora cobre o mata-mata** (`sync.resolve_live_bracket` + `scripts/fetch_odds.py`):
+  o casamento de odds era hardcoded para `is_group`, deixando o blend (ENG-19) **desligado em todos os
+  31 jogos de KO** (peso 2×/4×). Agora resolve o bracket pelos resultados reais do fixture (sem rede,
+  sem modelo) e casa os confrontos de KO já definidos, alinhando as odds pelos times resolvidos.
+  `odds.csv` 49→62 jogos; ex.: o palpite de avanço de J78 passou a seguir o mercado. (ENG-28)
+
+### Notas de calibração
+- **Curva de base subdeterminada** (ENG-26): 9 pontos de telas reais de jogo do R32 não desempatam
+  "coeficiente maior" vs "arredondamento ceil" (hipóteses confundidas) e ambas conflitam com o
+  Simulador. Mantido `base_log_coeff = 7,55` + round; resíduo ±1/jogo é limitação aceita (ver SPEC §4.1).
+
 ### Adicionado
 - **Blend com odds de mercado** (`blend.py`): des-vig → pool logarítmico → reescala da matriz, com
   `odds.csv` por jogo, `scoring.toml::blend_weight` (2026 = 0.6), CLI `predict --blend-weight` e

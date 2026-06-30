@@ -23,7 +23,7 @@ import numpy as np
 
 from .edition import EDITIONS_DIR, Edition, load_edition
 from .fetch_data import DEFAULT_URL, download_from_urls, download_shootouts
-from .format_engine import group_standings
+from .format_engine import TeamStats, group_standings
 from .teams import canonical
 
 
@@ -155,6 +155,77 @@ def _resolve_real_bracket(edition: Edition, scores, shootouts) -> dict[int, tupl
         hg, ag = res
         w = _winner(home, away, hg, ag, shootouts)
         if w:
+            ko_winner[f.match_id] = w
+            losers[f.match_id] = away if w == home else home
+    return resolved
+
+
+def resolve_live_bracket(edition: Edition) -> dict[int, tuple[str, str]]:
+    """Confrontos de mata-mata resolvidos só com os **resultados reais já no fixture** da edição.
+
+    Diferente de `_resolve_real_bracket` (que recebe `scores`/`shootouts` de uma fonte externa), esta
+    usa o próprio fixture: standings dos grupos completos + `ko_outcome` dos KO já disputados para
+    propagar vencedores/perdedores. Sem rede e sem modelo — e mais **fresca** que o martj42 (que tem
+    latência). Devolve `{match_id: (mandante, visitante)}` só dos confrontos **totalmente
+    determinados** (ambos os times conhecidos). Usada pelo `fetch_odds` para casar odds de KO (ENG-28).
+    """
+    spec = edition.spec.group_stage
+    rng = np.random.default_rng(0)
+
+    winners: dict[str, str] = {}
+    runners: dict[str, str] = {}
+    thirds_by_group: dict[str, TeamStats] = {}
+    all_groups_complete = True
+    for g, teams in edition.groups.items():
+        games: dict[tuple[str, str], tuple[int, int]] = {}
+        complete = True
+        for f in edition.group_fixtures():
+            if f.group != g:
+                continue
+            if f.home_goals is None or f.away_goals is None:
+                complete = False
+                break
+            games[(f.home, f.away)] = (f.home_goals, f.away_goals)
+        if not complete:
+            all_groups_complete = False
+            continue
+        st = group_standings(teams, games, spec.tiebreakers, rng)
+        winners[g], runners[g], thirds_by_group[g] = st[0].team, st[1].team, st[2]
+
+    third_team_by_match: dict[int, str] = {}
+    if all_groups_complete and spec.best_thirds:
+        from .format_engine import _assign_thirds
+
+        ranked = sorted(thirds_by_group.items(), key=lambda kv: (-kv[1].points, -kv[1].gd, -kv[1].gf))[
+            : spec.best_thirds
+        ]
+        ko = edition.knockout_fixtures()
+        slots = [(f.match_id, f.third_groups) for f in ko if f.away == "3rd"]
+        assign = _assign_thirds(slots, [g for g, _ in ranked], spec.third_allocation)
+        third_team_by_match = {mid: thirds_by_group[g].team for mid, g in assign.items()}
+
+    ko_winner: dict[int, str] = {}
+    losers: dict[int, str] = {}
+    resolved: dict[int, tuple[str, str]] = {}
+
+    def slot_team(slot: str, match_id: int) -> str | None:
+        if slot == "3rd":
+            return third_team_by_match.get(match_id)
+        if slot.startswith("W"):
+            return ko_winner.get(int(slot[1:]))
+        if slot.startswith("L"):
+            return losers.get(int(slot[1:]))
+        pos, g = slot[0], slot[1:]
+        return winners.get(g) if pos == "1" else runners.get(g)
+
+    for f in sorted(edition.knockout_fixtures(), key=lambda x: x.match_id):
+        home = slot_team(f.home, f.match_id)
+        away = slot_team(f.away, f.match_id)
+        if not home or not away:
+            continue
+        resolved[f.match_id] = (home, away)
+        if f.home_goals is not None and f.away_goals is not None and f.ko_outcome:
+            w = canonical(f.ko_outcome)
             ko_winner[f.match_id] = w
             losers[f.match_id] = away if w == home else home
     return resolved

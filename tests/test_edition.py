@@ -58,3 +58,16 @@ def test_load_odds_missing_file_is_empty(tmp_path):
 def test_2026_blend_weight_prior():
     # prior de princípio do ENG-19 (Gate 2): w≈0.6 travado — mudar deve ser deliberado
     assert load_edition(2026).scoring.blend_weight == 0.6
+
+
+def test_2026_phase_weights():
+    # ENG-27: peso de fase do app (Equilíbrio gradual) — grupos ×1, eliminatórias ×2, final ×4.
+    # Travado porque é consumido na contabilidade de pontos/teto (efficiency.py); mudar é deliberado.
+    cfg = load_edition(2026).scoring
+    assert cfg.weight("group") == 1.0
+    assert cfg.weight("R32") == 2.0
+    assert cfg.weight("R16") == 2.0
+    assert cfg.weight("QF") == 2.0
+    assert cfg.weight("SF") == 2.0
+    assert cfg.weight("final") == 4.0
+    assert cfg.weight("fase_inexistente") == 1.0  # default seguro

@@ -4,7 +4,8 @@
 Rotina por rodada do blend com odds (ver BOLAO.md). Faz:
   1. lê a chave `ODDS_API_KEY` (do ambiente ou do `.env` na raiz);
   2. baixa as odds h2h (decimal) da Copa (`soccer_fifa_world_cup`);
-  3. casa cada evento com um jogo de grupo **ainda não disputado** do fixture (por nomes canônicos);
+  3. casa cada evento com um jogo **ainda não disputado** — de grupo, ou de mata-mata já definido pelo
+     bracket real (ENG-28) — do fixture (por nomes canônicos);
   4. extrai a odd da **Pinnacle** (casa sharp; mediana das casas como fallback);
   5. **MESCLA** no `odds.csv` existente — atualiza/adiciona os jogos atuais e **preserva** os que
      saíram da lista (já disputados): senão o `blend-track` perderia o tally acumulado.
@@ -25,6 +26,7 @@ import urllib.request
 from pathlib import Path
 
 from worldcup.edition import EDITIONS_DIR, Edition, load_edition
+from worldcup.sync import resolve_live_bracket
 from worldcup.teams import canonical
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -113,12 +115,31 @@ def _median_price_map(event: dict) -> dict[str, list[float]]:
     return acc
 
 
+def _matchable_fixtures(edition: Edition) -> dict[frozenset[str], tuple[int, str, str]]:
+    """Jogos **não disputados** casáveis com o feed de odds → `{par de times: (match_id, mandante, visitante)}`.
+
+    Grupos: os times são os próprios `home`/`away` do fixture. Mata-mata (ENG-28): os fixtures guardam
+    **slots** (`1A`, `W73`), então resolvemos o bracket pelos resultados reais (`resolve_live_bracket`)
+    e incluímos os confrontos de KO **já determinados** e ainda não disputados, com os times resolvidos.
+    """
+    out: dict[frozenset[str], tuple[int, str, str]] = {}
+    for f in edition.fixtures:
+        if f.is_group and not f.played:
+            out[frozenset((f.home, f.away))] = (f.match_id, f.home, f.away)
+    by_id = {f.match_id: f for f in edition.fixtures}
+    for mid, (home, away) in resolve_live_bracket(edition).items():
+        f = by_id.get(mid)
+        if f is not None and not f.played:
+            out[frozenset((home, away))] = (mid, home, away)
+    return out
+
+
 def map_to_fixtures(events: list[dict], edition: Edition, book: str) -> tuple[dict[int, Triple], int, list[str]]:
-    """Casa eventos→jogos de grupo não disputados; alinha odds à ordem home/away do fixture.
+    """Casa eventos→jogos não disputados (grupo + mata-mata resolvido); alinha odds aos times do confronto.
 
     Devolve (odds por match_id, nº via fallback de mediana, lista de pulados com motivo).
     """
-    unplayed = {frozenset((f.home, f.away)): f for f in edition.fixtures if f.is_group and not f.played}
+    unplayed = _matchable_fixtures(edition)
     odds: dict[int, Triple] = {}
     fallback = 0
     skipped: list[str] = []
@@ -128,9 +149,10 @@ def map_to_fixtures(events: list[dict], edition: Edition, book: str) -> tuple[di
         except Exception:
             skipped.append(f"{ev['home_team']} x {ev['away_team']} (nome não-canônico)")
             continue
-        f = unplayed.get(key)
-        if f is None:
-            continue  # já disputado, não-grupo, ou fora desta edição
+        hit = unplayed.get(key)
+        if hit is None:
+            continue  # já disputado, confronto de KO ainda indefinido, ou fora desta edição
+        match_id, home, away = hit
         price = _book_price_map(ev, book)
         if price is None:  # fallback: mediana das casas
             med = _median_price_map(ev)
@@ -138,12 +160,12 @@ def map_to_fixtures(events: list[dict], edition: Edition, book: str) -> tuple[di
             if price is not None:
                 fallback += 1
         if price is None:
-            skipped.append(f"J{f.match_id} (sem odds h2h)")
+            skipped.append(f"J{match_id} (sem odds h2h)")
             continue
         try:
-            odds[f.match_id] = (price[f.home], price["Draw"], price[f.away])
+            odds[match_id] = (price[home], price["Draw"], price[away])
         except KeyError as err:
-            skipped.append(f"J{f.match_id} (resultado ausente: {err})")
+            skipped.append(f"J{match_id} (resultado ausente: {err})")
     return odds, fallback, skipped
 
 

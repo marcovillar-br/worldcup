@@ -45,7 +45,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-29](#eng-29) | P3 | knockout | ✅ | Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts] (ignora P(ET empatada)) |
 | [ENG-30](#eng-30) | P3 | pipeline/render | ✅ | Jogos de KO FINAL não mostram prorrogação/pênaltis/quem avançou (dados existem) |
 | [ENG-31](#eng-31) | P3 | cli | ✅ | `worldcup status`: briefing read-only de start-of-day (rehidrata contexto em 1 saída) |
-| [ENG-32](#eng-32) | P3 | scoring/knockout | 🔴 | Palpite de 90' no KO tende a 0×0 (empate→pênaltis) e zera quando o favorito vence nos 90' — é E[pts]-ótimo ou artefato? |
+| [ENG-32](#eng-32) | P3 | scoring/knockout | ✅ | Palpite de 90' no KO tende a 0×0 (empate→pênaltis) e zera quando o favorito vence nos 90' — é E[pts]-ótimo ou artefato? |
 
 ---
 
@@ -943,7 +943,7 @@ sincronizados (README/CHANGELOG/AGENTS/skill). 131 testes verdes.
 **Commit:** 5ffd667
 
 ## ENG-32
-**Palpite de 90' no mata-mata tende a 0×0 e zera quando o favorito vence no tempo normal** · P3 · `scoring`/`knockout` · 🔴 todo
+**Palpite de 90' no mata-mata tende a 0×0 e zera quando o favorito vence no tempo normal** · P3 · `scoring`/`knockout` · ✅ feito
 
 O placar de 90' de um jogo de KO sai de `scorer.best_prediction(matrix)` (camada 1 do
 `knockout.predict_knockout`), a **mesma** maximização de E[pts] da fase de grupos. Quando o modelo dá
@@ -973,4 +973,15 @@ ENG-29, ENG-18 (calibração de empates), decisão de `risk` no BOLAO (2026-06-1
    ⇒ propor a mudança (flag de política de palpite de KO, agnóstica à edição).
 **Aceite:** um relatório (número, não opinião) do comportamento do palpite de 90' de KO nos backtests +
 veredito manter/mudar; se mudar, teste de regressão que falharia sem o fix. `pytest` verde.
-**Commit:** —
+**Resolução (veredito: MUDAR).** Investigação nos **64 jogos de KO** das 4 Copas passadas (últimos 16
+por data = mata-mata): o `best_prediction` escolhia **empate em 16/64 (25%)**, e **12 desses foram
+decididos nos 90'** (palpite de empate = 0 pts). Números: Σ E[pts] atual **179,49** vs. melhor
+não-empate **177,16** (Δ **+2,32** ≈ +0,04/jogo — o empate é ótimo só por um fio); Σ **realizados**
+(peso ×2/×4) atual **384** vs. não-empate **454** (Δ **−70**, todo no subconjunto de empates: 56 vs
+126). A "vantagem" repousa em **super-estimação de empate no KO** (P̄ modelo 0,278 vs real 0,234; nos
+jogos onde apostou empate, 0,330 vs 0,250). Não é o `risk` (aqui **reduz** variância a custo de E[pts]
+~nulo, não troca E[pts] por variância). **Fix:** `Scorer.best_prediction(forbid_draw=…)`, usado na
+camada 1 de `knockout.predict_knockout` (grupos e camadas ET/pênaltis/avanço inalterados). Regressão em
+`test_scoring` (forbid_draw nunca empata / no-op quando já há vencedor) e `test_knockout` (camada 1
+nunca empata no KO). 134 testes verdes. Relatório reproduzível: `scratchpad/eng32_ko_pick.py`.
+**Commit:** 6e5f4e2

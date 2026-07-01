@@ -45,6 +45,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-29](#eng-29) | P3 | knockout | ✅ | Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts] (ignora P(ET empatada)) |
 | [ENG-30](#eng-30) | P3 | pipeline/render | ✅ | Jogos de KO FINAL não mostram prorrogação/pênaltis/quem avançou (dados existem) |
 | [ENG-31](#eng-31) | P3 | cli | ✅ | `worldcup status`: briefing read-only de start-of-day (rehidrata contexto em 1 saída) |
+| [ENG-32](#eng-32) | P3 | scoring/knockout | 🔴 | Palpite de 90' no KO tende a 0×0 (empate→pênaltis) e zera quando o favorito vence nos 90' — é E[pts]-ótimo ou artefato? |
 
 ---
 
@@ -940,3 +941,36 @@ cobrem a montagem (disputado vs pendente, atraso, out/ obsoleto, hoje vazio). `p
 atraso, out/ obsoleto, sem picks, hoje vazio, palpite de grupo sem seta, pede pontos). Docs
 sincronizados (README/CHANGELOG/AGENTS/skill). 131 testes verdes.
 **Commit:** 5ffd667
+
+## ENG-32
+**Palpite de 90' no mata-mata tende a 0×0 e zera quando o favorito vence no tempo normal** · P3 · `scoring`/`knockout` · 🔴 todo
+
+O placar de 90' de um jogo de KO sai de `scorer.best_prediction(matrix)` (camada 1 do
+`knockout.predict_knockout`), a **mesma** maximização de E[pts] da fase de grupos. Quando o modelo dá
+alta P(empate) num confronto que ele espera resolver nos pênaltis, o palpite de 90' sai **0×0** (empate
+é o resultado mais raro ⇒ base 1–13 maior no Sistema I; entre os empates, 0×0 costuma ser o modal). O
+problema prático: **um palpite 0×0 pontua 0 sempre que o jogo é decidido no tempo normal**, que é o caso
+da maioria dos jogos de KO. Já mordeu em campo: **J73** (palpite 0×0, real Canadá 0×1 nos 90' → 0 pts) e
+**J79** (palpite 0×0, real México 2×0 → 0 pts). Como no KO o peso de fase é **×2/×4**, um zero desses
+custa caro.
+
+**A pergunta é se isto é bug ou variância:** se 0×0 **de fato** maximiza E[pts] (empate raro = base alta),
+então o zero é variância realizada e a escolha é risk-neutra correta — mexer **baixaria** o E[pts] (mesma
+lição do `risk`, ver `data/editions/2026/BOLAO.md` 2026-06-17). Mas pode haver **artefato**: (a) o modelo
+super-estima P(empate) em confrontos desequilibrados de KO; (b) a base do empate está inflada vs. o app;
+(c) sob peso ×2/×4 e num objetivo de **ranking** (não E[pts] médio), um palpite de "placar mínimo do
+favorito" (ex.: 1×0) domina 0×0 por ter P(não-zerar) muito maior. Distinto do ENG-29 (que corrigiu a
+camada de **prorrogação/pênaltis**, não o placar de 90').
+
+**Refs:** `knockout.predict_knockout` (camada 1 = `scorer.best_prediction`), `scoring.best_prediction`,
+`pipeline.run` (ramo de KO), `backtest.run_backtest` (medir nos KO das 4 Copas passadas). Relacionado:
+ENG-29, ENG-18 (calibração de empates), decisão de `risk` no BOLAO (2026-06-17).
+**Correção proposta (investigação, depois decisão):**
+1. **Medir**: nos jogos de KO das 4 Copas passadas (`backtest`), quantas vezes o `best_prediction` de 90'
+   sai empate/0×0, e o E[pts] realizado do 0×0 vs. o do "placar mínimo do favorito" (1×0/0×1).
+2. Se 0×0 for E[pts]-ótimo e também melhor em P(top-k) simulado ⇒ **⚪ descartar** (é variância; registrar
+   o número). Se um objetivo alternativo no KO pontua mais **sem** baixar o E[pts] médio de forma material
+   ⇒ propor a mudança (flag de política de palpite de KO, agnóstica à edição).
+**Aceite:** um relatório (número, não opinião) do comportamento do palpite de 90' de KO nos backtests +
+veredito manter/mudar; se mudar, teste de regressão que falharia sem o fix. `pytest` verde.
+**Commit:** —

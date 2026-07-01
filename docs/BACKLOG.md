@@ -44,7 +44,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-28](#eng-28) | P2 | blend/odds | ✅ | `fetch_odds` só casa jogos de grupo ⇒ blend DESLIGADO em todo o mata-mata (peso 2×/4×) |
 | [ENG-29](#eng-29) | P3 | knockout | ✅ | Palpite de prorrogação/pênaltis por heurística de limiar, não E[pts] (ignora P(ET empatada)) |
 | [ENG-30](#eng-30) | P3 | pipeline/render | ✅ | Jogos de KO FINAL não mostram prorrogação/pênaltis/quem avançou (dados existem) |
-| [ENG-31](#eng-31) | P3 | cli | 🟡 | `worldcup status`: briefing read-only de start-of-day (rehidrata contexto em 1 saída) |
+| [ENG-31](#eng-31) | P3 | cli | ✅ | `worldcup status`: briefing read-only de start-of-day (rehidrata contexto em 1 saída) |
 
 ---
 
@@ -917,7 +917,7 @@ agora). 124 testes verdes.
 **Commit:** 01e0ba9
 
 ## ENG-31
-**`worldcup status`: briefing read-only de start-of-day** · P3 · `cli`/`status` · 🟡 fazendo (implementado, pendente de commit)
+**`worldcup status`: briefing read-only de start-of-day** · P3 · `cli`/`status` · ✅ feito
 
 Reidratar o contexto da campanha no início de uma sessão custava N comandos (`sync-results`,
 `predict`, `blend-track`, `efficiency`) + leitura do `BOLAO.md` inteiro + saídas verbosas — enchia o
@@ -935,3 +935,8 @@ o último `out/` + a linha de standing do `BOLAO.md`; detecta atraso (`fixture` 
 `date < hoje`) e descompasso `out/` vs `fixtures` (pede `predict`). `--date` sobrescreve "hoje" (teste).
 **Aceite:** `worldcup status` imprime o bloco compacto com hoje/próximos/standing/pendências; testes
 cobrem a montagem (disputado vs pendente, atraso, out/ obsoleto, hoje vazio). `pytest` verde.
+**Resolução:** `status.py` (`build_status`/`format_status`, funções puras) + `cli.cmd_status`/
+`main_status` (alias `ws` em `pyproject.toml`); 7 testes em `test_status.py` (hoje disputado/pendente,
+atraso, out/ obsoleto, sem picks, hoje vazio, palpite de grupo sem seta, pede pontos). Docs
+sincronizados (README/CHANGELOG/AGENTS/skill). 131 testes verdes.
+**Commit:** 5ffd667

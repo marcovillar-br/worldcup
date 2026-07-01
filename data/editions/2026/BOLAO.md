@@ -13,30 +13,33 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Estado atual (atualizado em 2026-07-01)
 
-- **79 de 104 jogos disputados (J1–J79).** Fase de grupos completa + J73–J79 do mata-mata. Em 30/06
-  fecharam **J77 França 3×0 Suécia**, **J78 Costa do Marfim 1×2 Noruega** e **J79 México 2×0 Equador**
-  (Quiñones 22', Jiménez 31' — 1ª vitória do México em mata-mata em 40 anos; buscados na internet e
-  confirmados em ≥2 fontes: FIFA/ESPN/Yahoo/CBS). O tool acertou os três lados (J77 3×0 cravado; J78
-  avança Noruega pós-ENG-28; J79 acertou o lado, palpite 0×0). **Hoje 01/07: J80 Inglaterra × RD Congo,
-  J81 EUA × Bósnia, J82 Bélgica × Senegal** (ainda não jogados); o resto do R32 vai até 03/07.
+- **81 de 104 jogos disputados (J1–J82, menos J81).** Fase de grupos completa + J73–J80/J82 do
+  mata-mata. Em 01/07 fecharam **J80 Inglaterra 2×1 RD Congo** (Kane 2× no 2º tempo, virada) e
+  **J82 Bélgica 3×2 Senegal na prorrogação** (2×2 nos 90'; pênalti de Tielemans aos 125' — placar
+  registrado com prorrogação, convenção martj42/SPEC; buscados na internet e confirmados em ≥2
+  fontes: englandfootball/Olympics/Outlook e ESPN/Outlook/Yahoo). O tool acertou os dois lados
+  (J80 palpite 1×0; J82 palpite 2×1 — nos 90' foi empate, mas quem avança bateu). **Hoje à noite:
+  J81 EUA × Bósnia** (palpite 3×1 EUA); o resto do R32 vai até 03/07. Em 30/06 fecharam J77 França
+  3×0 Suécia (cravado), J78 Costa do Marfim 1×2 Noruega e J79 México 2×0 Equador.
 - **Ontem (29/06): duas zebras no R32.** J74 Alemanha **1×1** Paraguai → **Paraguai avança** nos
   pênaltis (eliminou a Alemanha); J75 Holanda **1×1** Marrocos → **Marrocos avança** (eliminou a
   Holanda); J76 Brasil **2×1** Japão → **Brasil avança**. O tool pegou o lado do Brasil; as duas
   zebras de potência eram improváveis no modelo (favorece quem vem bem).
-- **Standing: 271 pts** (líder **327**) · **eficiência 103,4%** (teto as-of do tool 262). **J79 zerou
-  para o usuário E para o tool** (palpite 0×0 → pênaltis, mas o México ganhou nos 90' 2×0 → 90' erra o
-  resultado): zero inevitável seguindo o tool, não erro de execução. O teto não subiu ⇒ eficiência
-  intacta. **Líder 327 está +65 ACIMA do teto** ⇒ inalcançável por estratégia, é variância de exatos no
-  KO (regride). Posição não reconfirmada em 01/07. Detalhe nas entradas 01/07 e 30/06 do Histórico.
-- **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
-  melhor. Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
+- **Standing (01/07, pós-J80/J82): 285 pts, 21º** (líder **337**) · **eficiência 88,0%** (teto as-of
+  do tool 324). A queda de 103%→88% mora quase toda no **KO reconstruído**: os 9 tetos de R32
+  (J73–J82) não têm snapshot real da manhã e a reconstrução diverge do que o tool mostrou (drift
+  medido: Δ+7 nos 60 verificáveis). **Líder 337 segue ACIMA do teto (324)** ⇒ nem seguir o tool à
+  risca alcançaria; é variância de exatos no KO (peso ×2), regride. Caiu 11º→21º pelo mesmo motivo
+  (exatos alheios no R32). Detalhe na entrada 01/07 do Histórico.
+- **`blend-track` (01/07, n=49):** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend
+  segue melhor. Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
 - **Blend AGORA cobre o mata-mata (ENG-28, 30/06):** o `fetch_odds` só casava jogos de grupo — o
   blend estava **desligado em todos os 31 jogos de KO (peso 2×/4×)**. Corrigido: resolve o bracket
   pelos resultados reais e casa os confrontos de KO definidos. `odds.csv` foi de 49→**62 jogos** (+13
   KO). Efeito imediato: **J78 mudou de "avança Costa do Marfim" para "avança Noruega"** (mercado tem
   Noruega favorita, 2.17). Os palpites de KO agora saem blendados; a sim de campeão segue DC-only.
-- Favorito ao título (01/07): **Argentina (28,2%)**; Espanha **19,9%**, França **14,9%**, **Brasil 13,1%**
-  (bracket aberto — Alemanha/Holanda fora), Portugal 6,2%.
+- Favorito ao título (01/07, pós-J80/J82): **Argentina (28,6%)**; Espanha **19,2%**, França **14,4%**,
+  **Brasil 13,1%** (bracket aberto — Alemanha/Holanda fora), Portugal 7,1%.
 - **Bracket R32 corrigido (ENG-25, 28/06):** a alocação dos terceiros divergia da tabela oficial da
   FIFA — J74/J77/J81 saíam com Bósnia/Paraguai/Suécia rodados. Cravada a alocação oficial (row 67,
   grupos B/D/E/F/I/J/K/L) em `tournament.toml`. Agora: J74 Alemanha×**Paraguai**, J77 França×**Suécia**,
@@ -66,6 +69,24 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   (0×0); os snapshots arquivados preservam aquilo, então a eficiência passada continua justa.
 
 ## Histórico
+
+- 2026-07-01 (fim do dia) — **J80/J82 fechados (buscados na internet); 285 pts, 21º, eficiência 88,0%.**
+  A fonte do `sync-results` ainda não tinha os jogos de hoje; buscados na web e confirmados em ≥2
+  fontes: **J80 Inglaterra 2×1 RD Congo** (Kane 2× no 2º tempo; englandfootball/Olympics/Outlook) e
+  **J82 Bélgica 3×2 Senegal na prorrogação** (2×2 nos 90', pênalti de Tielemans aos 125';
+  ESPN/Outlook/Yahoo). J82 registrado **3×2 com `ko_outcome` Belgium** — placar inclui prorrogação,
+  convenção martj42/SPEC (registrar 2×2 leria como "foi aos pênaltis", errado). Tool acertou os dois
+  lados (J80 palpite 1×0 → 8 pts as-of; J82 palpite 2×1 → 12). `blend-track` n=49: blend 0,418 vs
+  modelo 0,442 (Δ+0,024, segue melhor); empates 20/72, z=+0,74, sem ação.
+  **Eficiência (81 jogos): 88,0%** — 285 pts vs teto as-of **324**
+  (`efficiency.py --my-points 285 --leader 337 --compare-archive`). Leitura: a queda vs 103,4% NÃO é
+  piora de execução comprovada — o teto saltou +62 com os 9 jogos de R32 **todos sem snapshot real**
+  (teto 100% reconstruído, e a reconstrução diverge: Δ+7 medido nos 60 verificáveis; peso ×2 do KO
+  amplifica cada divergência). **Líder 337 > teto 324** ⇒ inalcançável mesmo seguindo o tool à risca;
+  variância de exatos no KO, regride. Caiu 11º→21º: exatos alheios no R32 (mesma variância). Oráculo
+  797; tool captura 40,7%, usuário 35,8%. Ação: manter risk 0,5 + blend (subir risco não compra
+  ranking — decisão viva), **ajustar palpites na manhã do jogo** (captura flips tipo J78) e manter o
+  `--archive` diário para a eficiência ficar verificável em vez de reconstruída.
 
 - 2026-07-01 — **J79 México 2×0 Equador fechado (79/104).** Quiñones 22', Jiménez 31' — decidido nos
   90', México avança (1ª vitória do México em KO em 40 anos). Buscado na internet e confirmado em ≥2

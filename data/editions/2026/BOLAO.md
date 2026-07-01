@@ -57,6 +57,13 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   **2026-06-17** do Histórico.
 - Execução **sob demanda**: o usuário prefere rodar os comandos manualmente; não propor
   cron/agendamento.
+- **Palpite de 90' do mata-mata nunca sai empate (ENG-32, 01/07):** o E[pts] puro apostava 0×0/1×1 em
+  ~25% dos KO e zerava quando o jogo era decidido no tempo normal (te custou J73 e J79). Medido nos
+  backtests: a vantagem de E[pts] do empate era ~0,04/jogo (e apoiada em super-estimar empate no KO),
+  contra **+70 pts realizados** trocando pelo melhor placar com vencedor. Agora as picks de KO já saem
+  com vencedor — **não contradiz a decisão de `risk`** (aqui reduz variância a custo de E[pts] ~nulo, não
+  troca E[pts] por variância). Jogos de KO já disputados (J73–J79) não mudam: você seguiu o tool antigo
+  (0×0); os snapshots arquivados preservam aquilo, então a eficiência passada continua justa.
 
 ## Histórico
 

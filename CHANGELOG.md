@@ -108,6 +108,13 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   blend-track n=49 (modelo 0,442 / blend 0,418).
 
 ### Mudado
+- **Palpite de 90' do mata-mata não sai mais empate** (`scoring.best_prediction(forbid_draw=…)` +
+  `knockout.predict_knockout` camada 1): o E[pts]-ótimo puro escolhia empate (0×0/1×1) em ~25% dos
+  jogos de KO, que **zera sempre que o jogo é decidido no tempo normal** (12 de 16 nos backtests). A
+  vantagem de E[pts] era marginal (~0,04/jogo) e apoiada numa leve super-estimação de empate no KO
+  (P̄ modelo 0,278 vs real 0,234). Passando a escolher o melhor placar **com vencedor**, o realizado
+  sobe **+70 pts** (peso ×2/×4) nos KO de 4 Copas a custo de E[pts] ~nulo. Grupos inalterados; camadas
+  de prorrogação/pênaltis/avanço inalteradas (independentes do placar de 90'). (ENG-32)
 - **Doc de estratégia/backtest realinhada à régua hierárquica** (auditoria pós-ENG-23): a tabela do
   backtest 2022 (SPEC §9.1, MODEL_CARD) foi atualizada (agora 187/159/181 por risco 0.0/0.5/1.0) e a
   tese "agressivo faz ~28% mais pontos" foi **removida** — era artefato do bug de pontuação somada;

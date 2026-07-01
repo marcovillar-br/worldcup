@@ -61,6 +61,40 @@ def test_underdog_correct_scores_more_than_favorite():
     assert dog > fav
 
 
+def _balanced_matrix(lam: float = 1.0, n: int = 8) -> np.ndarray:
+    import math
+
+    p = np.array([math.exp(-lam) * lam**k / math.factorial(k) for k in range(n)])
+    m = np.outer(p, p)
+    return m / m.sum()
+
+
+def test_best_prediction_forbid_draw_never_returns_a_draw():
+    # Numa matriz balanceada e baixa, o palpite livre é um empate (0×0/1×1); forbid_draw força
+    # um placar com vencedor — política de 90' do mata-mata (ENG-32).
+    s = _scorer()
+    m = _balanced_matrix(1.0)
+    free = s.best_prediction(m)
+    forced = s.best_prediction(m, forbid_draw=True)
+    assert free.home_goals == free.away_goals  # confirma que o caso livre é empate
+    assert forced.home_goals != forced.away_goals  # forbid_draw evita o empate
+
+
+def test_forbid_draw_is_noop_when_free_pick_already_has_a_winner():
+    # Se o E[pts]-ótimo já tem vencedor, forbid_draw não muda nada (não piora o palpite).
+    import math
+
+    ph = np.array([math.exp(-1.6) * 1.6**k / math.factorial(k) for k in range(8)])
+    pa = np.array([math.exp(-0.7) * 0.7**k / math.factorial(k) for k in range(8)])
+    m = np.outer(ph, pa)
+    m /= m.sum()
+    s = _scorer()
+    free = s.best_prediction(m)
+    assert free.home_goals != free.away_goals
+    forced = s.best_prediction(m, forbid_draw=True)
+    assert (forced.home_goals, forced.away_goals) == (free.home_goals, free.away_goals)
+
+
 def test_best_prediction_picks_favored_outcome():
     s = _scorer()
     # matriz claramente favorável ao mandante

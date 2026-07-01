@@ -67,3 +67,14 @@ def test_penalty_winner_and_advancer_follow_the_stronger_side():
     kp = predict_knockout("H", "A", m, _scorer())
     assert kp.penalty_winner == "home"  # camada 3: argmax (lado mais provável) — inalterado
     assert kp.advancer == "H"  # avanço segue a lógica condicional existente (inalterado)
+
+
+def test_layer1_never_predicts_a_draw_in_knockout():
+    # ENG-32: num confronto equilibrado e baixo o E[pts]-ótimo livre é um empate (ex.: 0×0), que
+    # zeraria se o jogo fosse decidido nos 90'. A camada 1 do KO usa forbid_draw ⇒ placar com
+    # vencedor. As camadas de prorrogação/pênaltis/avanço (2–3) seguem inalteradas.
+    m = _poisson_matrix(1.0, 1.0)
+    assert _scorer().best_prediction(m).home_goals == _scorer().best_prediction(m).away_goals  # livre = empate
+    kp = predict_knockout("H", "A", m, _scorer())
+    assert kp.home_goals != kp.away_goals  # camada 1 nunca empata no KO
+    assert kp.extra_time == "penalties"  # equilíbrio ⇒ pênaltis (camada 2 inalterada)

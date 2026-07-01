@@ -80,8 +80,10 @@ def predict_knockout(home: str, away: str, matrix: np.ndarray, scorer: Scorer) -
     """Gera o palpite de mata-mata em 3 camadas a partir da matriz de placares."""
     p_home, p_draw, p_away = outcome_probs_from_matrix(matrix)
 
-    # camada 1: melhor placar dos 90 min (mesma lógica de pontos esperados)
-    pred90 = scorer.best_prediction(matrix)
+    # camada 1: melhor placar dos 90 min. No KO proíbe empate (ENG-32): um palpite de empate zera
+    # sempre que o jogo é decidido no tempo normal, e seu ganho de E[pts] é marginal e apoiado numa
+    # leve super-estimação de empate no KO. O desfecho real (ET/pênaltis/avanço) segue nas camadas 2–3.
+    pred90 = scorer.best_prediction(matrix, forbid_draw=True)
 
     # probabilidade condicional de cada lado vencer um confronto decidido (ET/pênaltis)
     decisive = p_home + p_away

@@ -185,12 +185,19 @@ class Scorer:
                 total += p * self.points(pred, (ah, aa), probs)
         return total
 
-    def best_prediction(self, matrix: np.ndarray) -> Prediction:
+    def best_prediction(self, matrix: np.ndarray, *, forbid_draw: bool = False) -> Prediction:
         """Escolhe o placar maximizando os pontos esperados, com tilt de risco.
 
         Objetivo = `E[pontos] · (1/P(resultado))^(2·risk − 1)`. Em `risk=0.5` o expoente é 0
         (fator 1) → **maximiza E[pontos] puro** (fiel). `>0.5` favorece resultados raros (zebra);
         `<0.5` puxa para o favorito. O `expected_points` reportado é sempre o E[pontos] **real**.
+
+        `forbid_draw=True` restringe a placares com vencedor (h≠a). Usado no palpite de **90' do
+        mata-mata** (ENG-32): lá apostar empate zera sempre que o jogo é decidido no tempo normal
+        (o caso da maioria dos KO), e o ganho de E[pts] é marginal (~0,04/jogo nos backtests) e
+        apoiado numa leve super-estimação de empate no KO — trocar pelo melhor placar não-empate
+        reduz a variância a custo de E[pts] ~nulo (rendeu +70 pts realizados em 4 Copas de KO).
+        As camadas de prorrogação/pênaltis/avanço não mudam (independentes do placar de 90').
         """
         probs = outcome_probs_from_matrix(matrix)
         favorite = int(np.argmax(probs))  # 0=mandante,1=empate,2=visitante
@@ -201,12 +208,16 @@ class Scorer:
         best, best_obj, best_ep = (0, 0), -1.0, 0.0
         for h in range(mg + 1):
             for a in range(mg + 1):
+                if forbid_draw and h == a:
+                    continue
                 ep = self.expected_points((h, a), matrix)
                 outcome = 0 if h > a else 1 if h == a else 2
                 p_o = max(probs[outcome], 1e-6)
                 obj = ep * (1.0 / p_o) ** tilt
                 if obj > best_obj:
                     best_obj, best, best_ep = obj, (h, a), ep
+        if best_obj < 0:  # forbid_draw eliminou tudo (matriz degenerada 1×1) — reabre empates
+            return self.best_prediction(matrix)
         pred_outcome = 0 if best[0] > best[1] else 1 if best[0] == best[1] else 2
         return Prediction(
             home_goals=best[0],

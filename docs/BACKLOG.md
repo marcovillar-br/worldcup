@@ -46,6 +46,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-30](#eng-30) | P3 | pipeline/render | ✅ | Jogos de KO FINAL não mostram prorrogação/pênaltis/quem avançou (dados existem) |
 | [ENG-31](#eng-31) | P3 | cli | ✅ | `worldcup status`: briefing read-only de start-of-day (rehidrata contexto em 1 saída) |
 | [ENG-32](#eng-32) | P3 | scoring/knockout | ✅ | Palpite de 90' no KO tende a 0×0 (empate→pênaltis) e zera quando o favorito vence nos 90' — é E[pts]-ótimo ou artefato? |
+| [ENG-33](#eng-33) | P1 | cli/history | 🔴 | Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã |
+| [ENG-34](#eng-34) | P2 | efficiency | 🔴 | Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada |
 
 ---
 
@@ -985,3 +987,55 @@ camada 1 de `knockout.predict_knockout` (grupos e camadas ET/pênaltis/avanço i
 `test_scoring` (forbid_draw nunca empata / no-op quando já há vencedor) e `test_knockout` (camada 1
 nunca empata no KO). 134 testes verdes. Relatório reproduzível: `scratchpad/eng32_ko_pick.py`.
 **Commit:** 6e5f4e2
+
+## ENG-33
+**Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã** · P1 · `cli`/`history` · 🔴 todo
+
+`cli.archive_outputs` grava `history/<data>.csv` **sobrescrevendo sem olhar o que já existe**. A rotina
+diária tem dois momentos de archive no mesmo dia: o da manhã (palpites da rodada) e o pós-resultado
+(`sync-results --archive` ou `predict --archive` depois de um `record`). O segundo grava os jogos do dia
+como `FINAL` **em cima** do palpite da manhã — exatamente o dado **não-reprodutível** que o snapshot
+existe para preservar (é a justificativa de versionar `history/`, ver docstring de `archive_outputs`).
+Mordeu em 2026-07-01: o snapshot da manhã tinha os palpites de J80–J82; após registrar J80/J82 e
+re-arquivar, viraram `FINAL` — e J80/J82 caíram no bucket "sem snapshot real" do `efficiency.py
+--compare-archive` (teto reconstruído, não verificável; ver ENG-34, mesmo episódio).
+
+**Refs:** `cli.archive_outputs` (sobrescrita incondicional), `cli.cmd_sync_results`/`cmd_predict`
+(chamadores com `--archive`), `scripts/efficiency.py::archive_scores` (consumidor que exige o palpite
+da manhã). Relacionado: ENG-34.
+**Correção proposta:** merge por jogo ao re-arquivar no mesmo dia: se o snapshot existente tem
+**palpite** para um `match_id` e o run novo o traria como `FINAL`, **preserva a linha antiga** (o
+palpite da manhã); linhas novas/ainda-pendentes atualizam normalmente. Alternativa mais simples:
+recusar sobrescrita quando ela rebaixaria palpite→FINAL, exigindo `--force`. Em ambas, logar o que
+foi preservado.
+**Aceite:** teste de regressão — arquiva com palpite em J_x, registra o resultado de J_x, arquiva de
+novo (mesma data): o snapshot mantém o palpite da manhã de J_x (não `FINAL`) e os demais jogos
+atualizam. `pytest` verde.
+**Commit:** —
+
+## ENG-34
+**Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada** · P2 · `scripts/efficiency.py` · 🔴 todo
+
+O teto por jogo sai de `efficiency.asof_scores`: re-roda o modelo `as_of(data)` **com os arquivos de
+hoje** (base histórica re-baixada pelo `sync-results`, `odds.csv` atual, código atual). Nada congela a
+medição: a cada rodagem o "palpite que o tool teria mostrado" de um jogo **já medido** pode mudar.
+Mordeu em 2026-07-01, duas rodagens no mesmo dia: de manhã J79 reconstruiu **0×0 → 0 pts** (teto 262,
+eficiência 103,4%); à noite, após o sync atualizar a base, o mesmo J79 as-of reconstruiu **1×0 →
+10 pts** — teto dos mesmos 79 jogos foi a 304 (+42 de drift) e a "eficiência" caiu a 88,0% **sem o
+usuário ter feito nada**. Conclusão de execução errada quase saiu duas vezes (cf. regra de
+interpretação da skill `palpites-copa` e `BOLAO.md` 2026-06-24/07-01). O `--compare-archive` já
+separa verificável de reconstruído, mas o **headline** (teto/eficiência) usa o reconstruído volátil.
+
+**Refs:** `scripts/efficiency.py::asof_scores` (reconstrução volátil), `::archive_scores` (fonte
+estável quando há snapshot), `::main` (headline usa o as-of), `cli.archive_outputs`/`Edition.as_of`.
+Relacionado: ENG-33 (garante o snapshot da manhã — a fonte estável), ENG-24/ENG-27 (aproximações já
+conhecidas do teto).
+**Correção proposta:** hierarquia de fontes por jogo no teto headline: (1) snapshot real de
+`history/` quando existe; (2) senão, teto reconstruído **persistido na primeira medição** (cache por
+`match_id` em arquivo rastreado, estilo tally do `blend-track`), para o número não mudar
+retroativamente; (3) reconstrução viva só para jogo ainda sem medição — e o script **reporta o drift**
+quando uma reconstrução nova diverge da persistida (em vez de substituí-la em silêncio).
+**Aceite:** duas rodagens consecutivas (com `sync-results`/`fetch_odds` entre elas) mantêm o teto dos
+jogos já medidos idêntico e destacam qualquer drift por jogo; teste de regressão do cache (jogo medido
+não re-pontua diferente). `pytest` verde.
+**Commit:** —

@@ -15,6 +15,7 @@ dependencies = [
 
 [project.scripts]
 worldcup = "worldcup.cli:main"
+ws = "worldcup.cli:main_status"  # alias de `worldcup status` (ENG-31)
 
 [dependency-groups]
 dev = [

@@ -17,6 +17,17 @@ Bolão de Futebol 2026, onde **acertar a zebra vale mais**.
 - "atualiza os palpites" depois de uma rodada
 - "qual minha eficiência?" / "estou indo bem?" / "quanto eu deixei na mesa?" → passo 6
 
+## Start-of-Day (reidratar contexto — rode primeiro)
+
+Para retomar a campanha no início de uma sessão sem rodar a pipeline, comece pelo briefing
+**read-only** (ENG-31) — uma saída só com estado, jogos de hoje, próximos palpites, standing e o
+que depende do usuário:
+```bash
+uv run worldcup status --edition 2026   # alias: uv run ws
+```
+Não muta nada. Use-o para decidir o que fazer a seguir (se há jogos atrasados → passo 2; se vai
+mostrar a rodada → passos 3–4). A **mutação** (sync/predict) continua nos passos abaixo.
+
 ## Passos
 
 ### 1. Garantir a base histórica

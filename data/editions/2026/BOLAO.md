@@ -11,21 +11,23 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-06-30)
+## Estado atual (atualizado em 2026-07-01)
 
-- **76 de 104 jogos disputados (J1–J76).** Fase de grupos completa + J73–J76 do mata-mata
-  sincronizados pela fonte pública do `sync-results`. **16-avos (R32)** em andamento: hoje
-  30/06 são **J77 França × Suécia**, **J78 Costa do Marfim × Noruega** e **J79 México × Equador**; o
-  resto do R32 vai até 03/07.
+- **79 de 104 jogos disputados (J1–J79).** Fase de grupos completa + J73–J79 do mata-mata. Em 30/06
+  fecharam **J77 França 3×0 Suécia**, **J78 Costa do Marfim 1×2 Noruega** e **J79 México 2×0 Equador**
+  (Quiñones 22', Jiménez 31' — 1ª vitória do México em mata-mata em 40 anos; buscados na internet e
+  confirmados em ≥2 fontes: FIFA/ESPN/Yahoo/CBS). O tool acertou os três lados (J77 3×0 cravado; J78
+  avança Noruega pós-ENG-28; J79 acertou o lado, palpite 0×0). **Hoje 01/07: J80 Inglaterra × RD Congo,
+  J81 EUA × Bósnia, J82 Bélgica × Senegal** (ainda não jogados); o resto do R32 vai até 03/07.
 - **Ontem (29/06): duas zebras no R32.** J74 Alemanha **1×1** Paraguai → **Paraguai avança** nos
   pênaltis (eliminou a Alemanha); J75 Holanda **1×1** Marrocos → **Marrocos avança** (eliminou a
   Holanda); J76 Brasil **2×1** Japão → **Brasil avança**. O tool pegou o lado do Brasil; as duas
   zebras de potência eram improváveis no modelo (favorece quem vem bem).
-- **Standing: 17º de 60 · 241 pts** (líder **299**) · **eficiência 105,7%** (teto as-of 228). Caiu de
-  4º→17º com o R32: J73–J76 zeraram para o usuário **e para o tool** (empates/zebras, 1×2 errado), e o
-  campo cravou exatos de KO (peso ×2 → +16 a +30 num jogo). **Líder está +71 ACIMA do teto do tool** ⇒
-  inalcançável por estratégia, é variância de exatos (regride). Execução intacta (>100%: pegou os +6 de
-  pênaltis que o teto nem credita por latência). Detalhe na entrada 2026-06-30 do Histórico.
+- **Standing: 271 pts** (líder **327**) · **eficiência 103,4%** (teto as-of do tool 262). **J79 zerou
+  para o usuário E para o tool** (palpite 0×0 → pênaltis, mas o México ganhou nos 90' 2×0 → 90' erra o
+  resultado): zero inevitável seguindo o tool, não erro de execução. O teto não subiu ⇒ eficiência
+  intacta. **Líder 327 está +65 ACIMA do teto** ⇒ inalcançável por estratégia, é variância de exatos no
+  KO (regride). Posição não reconfirmada em 01/07. Detalhe nas entradas 01/07 e 30/06 do Histórico.
 - **`blend-track` n=49:** Brier modelo **0,442** vs blend **0,418** — Δ=**+0,024**; blend segue
   melhor. Regime de empates: 20/72 (28%) z=+0,74 — variância, sem ação.
 - **Blend AGORA cobre o mata-mata (ENG-28, 30/06):** o `fetch_odds` só casava jogos de grupo — o
@@ -33,8 +35,8 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   pelos resultados reais e casa os confrontos de KO definidos. `odds.csv` foi de 49→**62 jogos** (+13
   KO). Efeito imediato: **J78 mudou de "avança Costa do Marfim" para "avança Noruega"** (mercado tem
   Noruega favorita, 2.17). Os palpites de KO agora saem blendados; a sim de campeão segue DC-only.
-- Favorito ao título (30/06): **Argentina (29,8%)**; Espanha **19,9%**, França 13,0%, **Brasil 12,3%**
-  (sobe forte — bracket abriu com Alemanha/Holanda fora), Portugal 7,6%.
+- Favorito ao título (01/07): **Argentina (28,2%)**; Espanha **19,9%**, França **14,9%**, **Brasil 13,1%**
+  (bracket aberto — Alemanha/Holanda fora), Portugal 6,2%.
 - **Bracket R32 corrigido (ENG-25, 28/06):** a alocação dos terceiros divergia da tabela oficial da
   FIFA — J74/J77/J81 saíam com Bósnia/Paraguai/Suécia rodados. Cravada a alocação oficial (row 67,
   grupos B/D/E/F/I/J/K/L) em `tournament.toml`. Agora: J74 Alemanha×**Paraguai**, J77 França×**Suécia**,
@@ -57,6 +59,39 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   cron/agendamento.
 
 ## Histórico
+
+- 2026-07-01 — **J79 México 2×0 Equador fechado (79/104).** Quiñones 22', Jiménez 31' — decidido nos
+  90', México avança (1ª vitória do México em KO em 40 anos). Buscado na internet e confirmado em ≥2
+  fontes (FIFA/ESPN/Yahoo/CBS); registrado na ordem do fixture (mandante México). O tool acertou o
+  **lado** (avança México) mas o palpite de 90' era 0×0 → pegou a faixa de resultado, não o exato.
+  Título praticamente estável: Argentina 28,2%, Espanha 19,9%, França 14,9%, Brasil 13,1%, Portugal
+  6,2%. Hoje 01/07: J80–J82.
+  **Eficiência (79 jogos): 103,4%** — seus **271 pts** (líder **327**) vs teto as-of do tool **262**
+  (`efficiency.py --my-points 271 --leader 327 --compare-archive`). **J79 zerou para você E para o
+  tool:** o palpite de 90' era **0×0** (empate, avançar nos pênaltis), mas o México ganhou **2×0** nos
+  90' → o 0×0 erra o resultado e faz 0. Como o **teto também não credita J79** (o tool zerou igual), a
+  eficiência fica intacta e o zero **não é execução** — é o palpite de KO 0×0 sendo frágil a decisões no
+  tempo normal (mesmo padrão de J73 Canadá 0×1; o E[pts] escolhe 0×0 quando espera pênaltis, mas paga 0
+  quando o favorito resolve nos 90'). **Líder 327 está +65 ACIMA do teto** ⇒ variância de exatos no KO
+  (peso ×2 amplifica), não estratégia — regride. Oráculo 765; tool captura 34,2%, usuário 35,4%.
+
+- 2026-06-30 (fim do dia) — **J77/J78 fechados (buscados na internet); subiu 17º→11º, eficiência 103,4%.**
+  Dois jogos de hoje terminaram e foram buscados na web (a fonte do `sync-results` já tinha 76; estes
+  dois ainda não): **J77 França 3×0 Suécia** (Mbappé 45'/74', Barcola 53' — confirmado FIFA + ESPN) e
+  **J78 Costa do Marfim 1×2 Noruega** (Nusa, empate de Amad Diallo 74', Haaland 86' — Yahoo + ESPN).
+  Ambos decididos nos 90', registrados via `record` (ordem do fixture = oficial: mandante França /
+  Costa do Marfim). **O tool acertou os dois lados** (J77 palpite 3×0 cravado; J78 mudou para "avança
+  Noruega" após ENG-28 destravar o blend no KO — acertou). **Standing: 271 pts, 11º/60** (era 17º),
+  líder **313**. `efficiency.py --my-points 271 --leader 313 --compare-archive`: **teto do tool as-of =
+  262**; seus 271 = **103,4%** (acima do teto; inclui ruído de reconstrução Δ+7 nos 60 verificáveis +
+  18 jogos sem snapshot). **Líder 313 está +51 ACIMA do teto** ⇒ variância de exatos no KO (peso ×2),
+  não estratégia — regride. Oráculo 747; tool captura 35,1%, usuário 36,3%. Execução segue problema
+  zero. **Tela "Pontos por Jogo" confirmou:** J77 pagou **14** e J78 **16** (o usuário jogou os exatos
+  do tool, 3×0 e 1×2 — opção (a)); minha estimativa de teto dera 16/18, ~2 alto por jogo no KO = a
+  folga de base inobservável (ENG-24/26, ×2 no peso de fase), **não** vazamento. Ou seja: no KO o teto
+  as-of real é um pouco menor que o estimado e a eficiência é ainda mais colada ao teto. **Processo:** o
+  `fetch_odds` gravou odds inválidas em J77 (home=1.0) → removida a linha do `odds.csv` (gitignored; J77
+  cai para model-only). Falta J79 México×Equador (ainda não jogado).
 
 - 2026-06-30 (eficiência) — **Caiu para 17º/60 (241 pts, líder 299), MAS execução no teto (105,7%).**
   Medido por `efficiency.py --my-points 241 --leader 299 --compare-archive` (já com ENG-27: peso de fase

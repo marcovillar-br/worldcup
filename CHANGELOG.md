@@ -63,6 +63,12 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   Simulador. Mantido `base_log_coeff = 7,55` + round; resíduo ±1/jogo é limitação aceita (ver SPEC §4.1).
 
 ### Adicionado
+- **Subcomando `worldcup status` (alias `ws`)** — briefing read-only de start-of-day
+  (`status.build_status`/`format_status`, `cli.cmd_status`): numa saída só reidrata o contexto da
+  campanha — jogos disputados/total, fase atual, jogos de hoje (disputado ✓ / pendente ⏳), próximos
+  palpites, standing (lido do `BOLAO.md`) e o que depende do usuário (pontos p/ a eficiência; jogos
+  atrasados que a fonte ainda não tem; aviso de `out/` obsoleto). Idempotente — não muta nada; a
+  mutação segue em `sync-results`/`predict`. `--date AAAA-MM-DD` sobrescreve "hoje". (ENG-31)
 - **Desfecho real dos jogos de mata-mata já disputados** (`pipeline._final_ko_layers`): jogos de KO
   FINAL agora mostram **quem avançou** (`ko_outcome`) e prorrogação/pênaltis reais — placar dos 90'
   decidido ⇒ "—"; empate ⇒ "vai aos pênaltis" + vencedor quando o shootout é conhecido. Captura manual

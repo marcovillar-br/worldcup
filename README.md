@@ -27,6 +27,7 @@ uv run worldcup predict --edition 2026    # gera out/palpites-2026.csv e .md
 Outros comandos:
 
 ```bash
+uv run worldcup status --edition 2026         # briefing read-only do estado (start-of-day); alias: `uv run ws`
 uv run worldcup sync-results --edition 2026   # baixa os resultados reais da internet e repalpita
 uv run worldcup predict --edition 2026 --archive   # +snapshot versionado do dia (history/)
 uv run worldcup record --edition 2026 --match <id> --home 2 --away 1   # registra um placar manualmente
@@ -39,6 +40,12 @@ uv run ruff check .  # lint
 Flag global `-v`/`--verbose` (antes do subcomando) desce o nível de log para `INFO` e mostra os
 avisos informativos da biblioteca em `stderr` — ex.: quais seleções o `min_matches` descartou no
 ajuste. Por padrão só avisos de nível `WARNING` aparecem (ex.: ajuste do modelo não-convergido).
+
+`status` (alias `ws`) é um **briefing read-only** para reidratar o contexto no início da sessão:
+numa saída só mostra jogos disputados/total, fase atual, os jogos de hoje (disputado ✓ / pendente ⏳),
+os próximos palpites, o standing (do `BOLAO.md`) e o que depende de você (seus pontos para a
+eficiência, jogos atrasados que a fonte ainda não tem). Não muta nada — a atualização de fato
+(`sync-results`/`predict`) continua nos comandos próprios. `--date AAAA-MM-DD` sobrescreve "hoje".
 
 `sync-results` é a forma automática de realimentar: baixa os placares já disputados (do mesmo
 dataset público, atualizado poucas horas após cada jogo), preenche a fase de grupos e o mata-mata

@@ -75,9 +75,14 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `render.py` — camada de **apresentação** (funções puras): `render_markdown`/`render_html` +
   `CSV_COLUMNS`. Geram texto a partir do `PredictionRun` (não do CSV); HTML autocontido e
   print-friendly. Sem I/O.
-- `cli.py` — argparse; entrypoint `worldcup`. **Só orquestra**: parsing, escrita em disco
-  (`save_outputs`/`archive_outputs`, que chamam o `render`) e a saída de console. `-v/--verbose`
-  configura o nível de log da biblioteca.
+- `status.py` — briefing read-only de start-of-day (ENG-31): funções puras `build_status`/
+  `format_status` montam uma foto compacta do estado (disputados/total, fase, jogos de hoje,
+  próximos palpites, standing, pendências) a partir da edição + último `out/` + linha de standing
+  do `BOLAO.md`. **Não muta nada** ("ver" separado de "fazer").
+- `cli.py` — argparse; entrypoint `worldcup` (+ alias `ws` = `worldcup status`, via `main_status`).
+  **Só orquestra**: parsing, escrita em disco (`save_outputs`/`archive_outputs`, que chamam o
+  `render`), o subcomando `status` (read-only) e a saída de console. `-v/--verbose` configura o
+  nível de log da biblioteca.
 
 ## Modelo de dados de uma edição (`data/editions/2026/`)
 

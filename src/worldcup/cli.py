@@ -5,6 +5,7 @@ Subcomandos:
   predict        gera os palpites de uma edição (tabela + CSV + Markdown)
   sync-results   baixa os resultados reais da internet, preenche os jogos e repalpita
   record         registra/corrige manualmente o placar de um jogo (realimentação)
+  status         briefing read-only de start-of-day (foto compacta do estado; alias `ws`)
   backtest       valida o modelo numa Copa passada
 
 A apresentação (Markdown/HTML/esquema do CSV) mora em `render.py`; aqui só orquestramos
@@ -184,6 +185,52 @@ def cmd_sync_results(args: argparse.Namespace) -> int:
     return cmd_predict(args)
 
 
+def _load_picks(year: int) -> dict[int, dict[str, str]]:
+    """Último `out/palpites-<year>.csv` indexado por match_id (vazio se não houver run)."""
+    path = OUT_DIR / f"palpites-{year}.csv"
+    if not path.exists():
+        return {}
+    with path.open(newline="") as fh:
+        return {int(r["jogo"]): r for r in csv.DictReader(fh)}
+
+
+def _read_standing(year: int) -> str | None:
+    """Extrai a linha de standing do bloco `## Estado atual` do `BOLAO.md` (sem markdown)."""
+    path = EDITIONS_DIR / str(year) / "BOLAO.md"
+    if not path.exists():
+        return None
+    in_estado = False
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## Estado atual"):
+            in_estado = True
+            continue
+        if in_estado and line.startswith("## "):
+            break
+        if in_estado and "Standing" in line:
+            txt = line.lstrip("-* ").replace("**", "")
+            txt = txt[txt.find("Standing") :].strip()
+            # remove o rótulo redundante (o format do status já imprime "STANDING:")
+            if txt.lower().startswith("standing"):
+                txt = txt[len("standing") :].lstrip(": ").strip()
+            return txt.rstrip(".") or None
+    return None
+
+
+def cmd_status(args: argparse.Namespace) -> int:
+    from .status import build_status, format_status
+
+    edition = load_edition(args.edition)
+    today = args.date or date.today().isoformat()
+    try:
+        today = date.fromisoformat(today).isoformat()
+    except ValueError:
+        print(f"❌ --date inválido: {today!r}. Use AAAA-MM-DD.", file=sys.stderr)
+        return 1
+    report = build_status(edition, _load_picks(args.edition), today, _read_standing(args.edition))
+    print(format_status(report))
+    return 0
+
+
 def cmd_backtest(args: argparse.Namespace) -> int:
     from .backtest import run_backtest
 
@@ -313,6 +360,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sr.set_defaults(func=cmd_sync_results)
 
+    st = sub.add_parser("status", help="briefing read-only de start-of-day (alias `ws`)")
+    st.add_argument("--edition", type=int, default=2026)
+    st.add_argument(
+        "--date",
+        default=None,
+        metavar="AAAA-MM-DD",
+        help="sobrescreve 'hoje' (default: data do sistema)",
+    )
+    st.set_defaults(func=cmd_status)
+
     bt = sub.add_parser("backtest", help="valida o modelo numa Copa passada")
     bt.add_argument("--edition", type=int, default=2022)
     bt.add_argument("--sims", type=int, default=2000)
@@ -356,6 +413,12 @@ def main(argv: list[str] | None = None) -> int:
     except DataSourceError as err:
         print(f"⚠️  {err}", file=sys.stderr)
         return 1
+
+
+def main_status(argv: list[str] | None = None) -> int:
+    """Entrypoint do alias `ws`: equivale a `worldcup status` (injeta o subcomando)."""
+    argv = sys.argv[1:] if argv is None else argv
+    return main(["status", *argv])
 
 
 if __name__ == "__main__":

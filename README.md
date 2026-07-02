@@ -42,50 +42,52 @@ avisos informativos da biblioteca em `stderr` — ex.: quais seleções o `min_m
 ajuste. Por padrão só avisos de nível `WARNING` aparecem (ex.: ajuste do modelo não-convergido).
 
 `status` (alias `ws`) é um **briefing read-only** para reidratar o contexto no início da sessão:
-numa saída só mostra jogos disputados/total, fase atual, os jogos de hoje (disputado ✓ /
-pendente ⏳),
-os próximos palpites, o standing (do `BOLAO.md`) e o que depende de você (seus pontos para a
-eficiência, jogos atrasados que a fonte ainda não tem). Não muta nada — a atualização de fato
-(`sync-results`/`predict`) continua nos comandos próprios. `--date AAAA-MM-DD` sobrescreve "hoje".
+numa saída só mostra jogos disputados/total, fase atual, os jogos de hoje
+(disputado ✓ / pendente ⏳), os próximos palpites, o standing (do `BOLAO.md`) e o que depende de você
+(seus pontos para a eficiência, jogos atrasados que a fonte ainda não tem).
+Não muta nada — a atualização de fato (`sync-results`/`predict`) continua nos comandos
+próprios. `--date AAAA-MM-DD` sobrescreve "hoje".
 
-`sync-results` é a forma automática de realimentar: baixa os placares já disputados (do mesmo
-dataset público, atualizado poucas horas após cada jogo), preenche a fase de grupos e o mata-mata
-(resolvendo o chaveamento pelos resultados reais, com vencedor nos pênaltis via `shootouts`) e já
-roda o `predict`. Use `record` para um ajuste pontual ou se quiser corrigir algo à mão.
+`sync-results` é a forma automática de realimentar: baixa os placares já disputados
+(do mesmo dataset público, atualizado poucas horas após cada jogo), preenche a fase de grupos
+e o mata-mata (resolvendo o chaveamento pelos resultados reais, com vencedor nos pênaltis via
+`shootouts`) e já roda o `predict`. Use `record` para um ajuste pontual ou se quiser corrigir
+algo à mão.
 
-Os palpites ficam em `out/palpites-<edição>.md` (tabela pronta para copiar), `.csv` e
-`.html` — este último é autocontido (abre no navegador, com barras de probabilidade e destaque
-de zebra) e **otimizado para impressão** (Ctrl+P → salvar em PDF, com quebra de página por fase).
+Os palpites ficam em `out/palpites-<edição>.md` (tabela pronta para copiar), `.csv` e `.html` — este
+último é autocontido (abre no navegador, com barras de probabilidade e destaque de zebra) e
+**otimizado para impressão** (Ctrl+P → salvar em PDF, com quebra de página por fase).
 
-`out/` é regenerável (gitignored) e sobrescrito a cada run. Para guardar o **histórico** de como
-os palpites evoluem rodada a rodada, use `predict --archive` ou `sync-results --archive` (ambos
-aceitam `--archive AAAA-MM-DD`): grava snapshot imutável e **versionado** em
-`data/editions/<edição>/history/<data>.{csv,md}`. Faz sentido
-porque, depois que novos resultados entram e o modelo reajusta, o palpite de um dia não é mais
-reproduzível. Re-arquivar na mesma data (ex.: pós-`record`) faz **merge por jogo**: o palpite da
-manhã de um jogo que já virou `FINAL` é preservado, nunca sobrescrito.
+`out/` é regenerável (gitignored) e sobrescrito a cada run. Para guardar o **histórico**
+de como os palpites evoluem rodada a rodada, use `predict --archive` ou `sync-results --archive`
+(ambos aceitam `--archive AAAA-MM-DD`): grava snapshot imutável e **versionado** em
+`data/editions/<edição>/history/<data>.{csv,md}`. Faz sentido porque, depois que novos resultados
+entram e o modelo reajusta, o palpite de um dia não é mais reproduzível. Re-arquivar na mesma data
+(ex.: pós-`record`) faz **merge por jogo**: o palpite da manhã de um jogo que já virou `FINAL` é
+preservado, nunca sobrescrito.
 
-**Blend com odds de mercado (opcional):** `data/editions/<edição>/odds.csv` com
-`match_id,home,draw,away` em odds decimais e, opcionalmente, `total_line,over,under` (o mercado de
-**over/under** — ENG-35). A forma prática de preencher é
+**Blend com odds de mercado (opcional):** `data/editions/<edição>/odds.csv`
+com `match_id,home,draw,away` em odds decimais e, opcionalmente, `total_line,over,under`
+(o mercado de **over/under** — ENG-35). A forma prática de preencher é
 `uv run python scripts/fetch_odds.py` (busca 1×2 e totals da The Odds API com chave em `.env`,
 **mescla** no `odds.csv`, preservando jogos já disputados — `blend-track` acumula tally).
-Para editar à mão, **acrescente** jogos de cada rodada (não sobrescreva). Ferramenta
-tira margem da casa, combina odds com probabilidades do modelo (média geométrica ponderada,
-peso `blend_weight`) e ajusta palpite; com totals, também ancora **taxa de gols** do placar
+Para editar à mão, **acrescente** jogos de cada rodada (não sobrescreva). Ferramenta tira
+margem da casa, combina odds com probabilidades do modelo (média geométrica ponderada, peso
+`blend_weight`) e ajusta palpite; com totals, também ancora **taxa de gols** do placar
 no mercado (sem totals num jogo, só 1×2 corrigido). Edição 2026 já vem com `blend_weight = 0.6`
-no `scoring.toml` (odds de fechamento bem calibradas); `--blend-weight 0` ou ausência de
-`odds.csv` ⇒ só modelo, sem mudança. Por que ajuda: o modelo é estatístico e cego a
-escalações/lesões/motivação, que as odds capturam. Para medir se o blend está de fato ajudando,
-rode `worldcup blend-track` conforme registra odds + resultados — compara o Brier do blend vs. o do
-modelo-puro nos jogos já disputados com odds (e, havendo totals, o Brier binário do over/under).
+no `scoring.toml` (odds de fechamento bem calibradas); `--blend-weight 0` ou ausência
+de `odds.csv` ⇒ só modelo, sem mudança. Por que ajuda: o modelo é estatístico e cego a
+escalações/lesões/motivação, que as odds capturam. Para medir se o blend está de fato
+ajudando, rode `worldcup blend-track` conforme registra odds + resultados — compara o
+Brier do blend vs. o do modelo-puro nos jogos já disputados com odds (e, havendo totals,
+o Brier binário do over/under).
 
 Para **reconstruir** a visão de um dia passado, use `predict --as-of AAAA-MM-DD`: reajusta o modelo
 usando só os resultados conhecidos até a véspera daquela data e grava
-`history/<data>.reconstruido.{csv,md}` (marcado como reconstruído, com aviso), **sem tocar em
-`out/`** — os palpites vivos da campanha ficam intactos. `--as-of` com a data de hoje reproduz
-exatamente o run real do dia. Os reconstruídos são **regeneráveis sob demanda**, então ficam fora
-do git (`.gitignore`); só os runs reais (`--archive`) são versionados em `history/`.
+`history/<data>.reconstruido.{csv,md}` (marcado como reconstruído, com aviso),
+**sem tocar em `out/`** — os palpites vivos da campanha ficam intactos. `--as-of` com a data de hoje
+reproduz exatamente o run real do dia. Os reconstruídos são **regeneráveis sob demanda**, então
+ficam fora do git (`.gitignore`); só os runs reais (`--archive`) são versionados em `history/`.
 
 ## Estrutura
 
@@ -93,8 +95,9 @@ do git (`.gitignore`); só os runs reais (`--archive`) são versionados em `hist
 - `data/editions/<ano>/` — spec do formato + jogos + pontuação de cada edição (orientado a dados),
   mais `BOLAO.md`, o diário de campanha do bolão (decisões não rederiváveis dos dados).
 - `data/historical_results.csv` — base histórica compartilhada, baixada pelo `fetch-data`.
-- `docs/SPEC.md` — **especificação técnica e metodologia** (matemática do modelo, fórmula de
-  pontuação, simulação, validação) com derivações e exemplos numéricos.
+- `docs/SPEC.md` — **especificação técnica e metodologia**
+  (matemática do modelo, fórmula de pontuação, simulação, validação) com derivações e exemplos
+  numéricos.
 - `docs/C4.md` — **arquitetura no modelo C4** (Contexto → Container → Componentes → Dinâmica),
   em diagramas Mermaid derivados do grafo de imports real.
 - `docs/PRD.md` — **requisitos de produto** (o quê e por quê), com glossário em `docs/GLOSSARIO.md`.
@@ -105,19 +108,18 @@ do git (`.gitignore`); só os runs reais (`--archive`) são versionados em `hist
 
 ## Ajustar a pontuação do seu grupo
 
-A pontuação real é configurada pelo admin do grupo. Edite `data/editions/2026/scoring.toml`
-para casar com o sistema (I / Simplificado / Só-vencedor) e o peso por fase do seu grupo.
-O default já vem calibrado como **Sistema I** (base 1–13 + bônus reais do app) **+ Equilíbrio
-gradual**.
+A pontuação real é configurada pelo admin do grupo. Edite `data/editions/2026/scoring.toml` para
+casar com o sistema (I / Simplificado / Só-vencedor) e o peso por fase do seu grupo. O default já
+vem calibrado como **Sistema I** (base 1–13 + bônus reais do app) **+ Equilíbrio gradual**.
 
 ## Validação e estratégia
 
-Rode `uv run worldcup backtest --edition 2022` para ver quantos pontos o modelo teria feito na
-Copa de 2022 (só com jogos anteriores). Com régua de pontos **corrigida** (bônus hierárquicos,
-não somados), subir risco **não** melhora pontos confiavelmente: no backtest 2022 o conservador
-(`risk=0.0`) faz mais que agressivo (`1.0`), fiel (`0.5`) fica no meio — resultado ruidoso de
-uma Copa. Alavanca de ranking é **acurácia** (blend de odds), não ousadia; default `0.5`
-(maximiza pontos esperados) é recomendado.
+Rode `uv run worldcup backtest --edition 2022` para ver quantos pontos o modelo teria feito na Copa
+de 2022 (só com jogos anteriores). Com régua de pontos **corrigida**
+(bônus hierárquicos, não somados), subir risco **não** melhora pontos confiavelmente: no backtest
+2022 o conservador (`risk=0.0`) faz mais que agressivo (`1.0`), fiel (`0.5`) fica no meio —
+resultado ruidoso de uma Copa. Alavanca de ranking é **acurácia** (blend de odds), não ousadia;
+default `0.5` (maximiza pontos esperados) é recomendado.
 
 **Eficiência da sua campanha** — quanto dos pontos que o tool renderia você capturou:
 
@@ -127,14 +129,12 @@ uv run python scripts/efficiency.py --edition 2026 --my-points 143 --leader 173 
 
 Para cada jogo já disputado, reconstrói o palpite **as-of** (o que o tool mostrava na manhã do jogo)
 e o pontua contra o resultado real — a soma é o **teto** que seguir o tool à risca renderia;
-`eficiência = seus_pontos / teto`. `--compare-archive` confronta com os snapshots reais de
-`history/` e lista onde a reconstrução diverge (quanto do gap é ruído de reconstrução vs. dias sem
-snapshot arquivado). Cobre a fase de grupos com pontuação exata; no mata-mata pontua os 90' **com o
-peso de fase** (R32–SF ×2, final ×4) e soma os bônus de prorrogação/pênaltis (±3 ×peso) quando a
-fonte
-(`shootouts.csv`) confirma o desfecho; jogos empatados nos 90' ainda sem shootout na fonte são
-pulados
-(ENG-27).
+`eficiência = seus_pontos / teto`. `--compare-archive` confronta com os snapshots reais
+de `history/` e lista onde a reconstrução diverge (quanto do gap é ruído de reconstrução vs.
+dias sem snapshot arquivado). Cobre a fase de grupos com pontuação exata; no mata-mata pontua
+os 90' **com o peso de fase** (R32–SF ×2, final ×4) e soma os bônus de prorrogação/pênaltis
+(±3 ×peso) quando a fonte (`shootouts.csv`) confirma o desfecho; jogos empatados nos 90' ainda
+sem shootout na fonte são pulados (ENG-27).
 
 **Endgame de bolão (ENG-36)** — bolão é jogo **diferencial**: seguir o E[pts]-máximo pontua junto
 com o pelotão (que aglomera no favorito) e **preserva** sua posição; ranking só muda quando o
@@ -146,10 +146,10 @@ uv run python scripts/eng36_pool_sim.py --edition 2026 --my-points 285 --leader 
 
 Compara políticas (fiel / placar alternativo / zebra na final / SF / QF) em P(#1), P(top-3) e
 E[pts]. Resultado (01/07, 3000 torneios): **atrás**, zebra só na final multiplica P(#1) por ~6
-(0,7%→4,0%) custando ~7 pts esperados; divergir antes (SF/QF) não adiciona nada; **na frente**,
-fiel domina (47% vs 35%). Para aplicar na prática: `worldcup predict --pool-behind` palpita a
-**zebra** (90' + prorrogação + pênaltis) **só nos jogos de peso máximo** (a final) — use apenas
-na manhã da final e apenas se estiver **atrás** no ranking.
+(0,7%→4,0%) custando ~7 pts esperados; divergir antes (SF/QF) não adiciona nada; **na frente**, fiel
+domina (47% vs 35%). Para aplicar na prática: `worldcup predict --pool-behind` palpita a **zebra**
+(90' + prorrogação + pênaltis) **só nos jogos de peso máximo** (a final) — use apenas na manhã da
+final e apenas se estiver **atrás** no ranking.
 
 **Apresentação do projeto** — um deck HTML autocontido (tema "Placar Noturno", 16:9, navegável) que
 explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):
@@ -158,10 +158,10 @@ explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):
 uv run python scripts/build_presentation.py --docs   # gera out/ e docs/apresentacao.html
 ```
 
-Abra o HTML no navegador (← → navegam; `Ctrl+P` salva um PDF/handout). É self-contained (sem CDN;
-imagens CC embutidas em base64). A versão pronta vive versionada em
-[`docs/apresentacao.html`](docs/apresentacao.html); ao editar o script, **regenere com `--docs`** e
-inclua o HTML no mesmo commit.
+Abra o HTML no navegador (← → navegam; `Ctrl+P` salva um PDF/handout). É self-contained
+(sem CDN; imagens CC embutidas em base64). A versão pronta vive versionada em
+[`docs/apresentacao.html`](docs/apresentacao.html); ao editar o script, **regenere com `--docs`**
+e inclua o HTML no mesmo commit.
 
 ## Limitações conhecidas
 
@@ -171,14 +171,13 @@ inclua o HTML no mesmo commit.
 - **Modelo baseado em resultados**: pondera muito os jogos recentes, então favorece quem vem
   bem (seleções da América do Sul aparecem fortes) e pode subestimar potências em má fase
   recente. É o comportamento esperado de um modelo puramente estatístico.
-- **Desempates de grupo** são simplificados (pontos → saldo → gols → sorteio); o confronto
-  direto oficial não é aplicado.
-- **Melhores terceiros**: a alocação aos slots usa casamento por restrição de grupos (Annex C da
-  FIFA aproximado) e **pode divergir** da tabela oficial — há mais de um emparelhamento válido. Dá
-  para cravar a alocação oficial da combinação realizada via `[group_stage.third_allocation]` no
-  `tournament.toml` (feito em 2026). Depois da fase de grupos, **confira os 8 confrontos dos
-  16-avos**
-  com o bracket oficial.
+- **Desempates de grupo** são simplificados (pontos → saldo → gols → sorteio); o confronto direto
+  oficial não é aplicado.
+- **Melhores terceiros**: a alocação aos slots usa casamento por restrição de grupos
+  (Annex C da FIFA aproximado) e **pode divergir** da tabela oficial — há mais de um emparelhamento
+  válido. Dá para cravar a alocação oficial da combinação realizada via
+  `[group_stage.third_allocation]` no `tournament.toml` (feito em 2026). Depois da fase de grupos,
+  **confira os 8 confrontos dos 16-avos** com o bracket oficial.
 
 ## Licença
 

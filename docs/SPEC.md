@@ -2,8 +2,8 @@
 
 Documento de **metodologia e decisões** do gerador de palpites (`worldcup`). Cobre a matemática do
 modelo, a fórmula de pontuação, a estratégia de escolha do palpite, a simulação e os contratos de
-dados — com derivações e exemplos numéricos. Para *como rodar*, veja `README.md`; para *onde está
-cada coisa*, veja `AGENTS.md`.
+dados — com derivações e exemplos numéricos. Para *como rodar*, veja `README.md`; para
+*onde está cada coisa*, veja `AGENTS.md`.
 
 > Notação: `λ` = gols esperados do mandante, `μ` = gols esperados do visitante, `p` = probabilidade.
 > Todos os exemplos numéricos são conferíveis à mão e refletem a implementação em `src/worldcup/`.
@@ -102,8 +102,7 @@ O mando vale `1` para o lado que joga em casa e `0` para o outro; em campo neutr
 Normalmente quem joga em casa é o mandante (`mando_h = 1`). **Exceção** — a escala oficial da FIFA
 às vezes lista o anfitrião como *visitante* num jogo disputado no estádio dele (ex.: Copa 2026,
 *Suíça × Canadá* em Vancouver). Nesse caso a vantagem vai para o visitante (`mando_a = 1`): a regra
-é
-"o mando é de quem está em `tournament.toml::hosts`", não da coluna `home`. No código isso é o
+é "o mando é de quem está em `tournament.toml::hosts`", não da coluna `home`. No código isso é o
 parâmetro `host_away` de `score_matrix`, derivado em um único lugar (`MatrixCache._host_away`). No
 **ajuste histórico** `host_away` é sempre `False` (o `neutral` da fonte já codifica o mando); o
 **backtest** roteia pela mesma `MatrixCache`, com os anfitriões da Copa-alvo (`_WORLD_CUP_HOSTS`),
@@ -144,10 +143,9 @@ minimizar   − Σ_k  w_k · ℓ_k   +   ridge · ( Σ ataque² + Σ defesa² )
 
 com peso `w_k = decaimento_k · torneio_k · multiplicador_k`:
 
-- **Decaimento temporal**: `decaimento = 0.5^(idade_anos / meia_vida)`, meia-vida padrão **2,0
-  anos**
-  (tunada via backtest leave-one-World-Cup-out — ver `docs/BACKLOG.md` ENG-17).
-  Um jogo de 2 anos atrás pesa metade; de 4 anos, um quarto.
+- **Decaimento temporal**: `decaimento = 0.5^(idade_anos / meia_vida)`, meia-vida padrão
+  **2,0 anos** (tunada via backtest leave-one-World-Cup-out — ver `docs/BACKLOG.md` ENG-17). Um jogo
+  de 2 anos atrás pesa metade; de 4 anos, um quarto.
 - **Importância do torneio**: Copa = 1,0; continentais 0,8–0,85; eliminatórias 0,8; UEFA Nations
   League 0,75; Gold Cup e torneios não listados 0,70; amistoso = 0,5 (tabela canônica em
   `model._TOURNAMENT_WEIGHTS`/`_DEFAULT_TOURNAMENT_WEIGHT`)
@@ -165,9 +163,8 @@ estreantes.
 O ridge ancora `c` (penaliza valores grandes); pós-otimização **centramos** `ataque` e `defesa` em
 média zero e **absorvemos o deslocamento no `base`** (somando a média do ataque e subtraindo a da
 defesa), preservando `base + ataque[h] − defesa[a]`. Também filtramos seleções não-FIFA (CONIFA,
-ilhas) que
-jogam circuitos isolados e distorceriam o ajuste: mantém-se só quem disputa competições oficiais
-(`peso_torneio ≥ 0.75` ou eliminatórias) com no mínimo `min_matches` jogos.
+ilhas) que jogam circuitos isolados e distorceriam o ajuste: mantém-se só quem disputa competições
+oficiais (`peso_torneio ≥ 0.75` ou eliminatórias) com no mínimo `min_matches` jogos.
 
 ### 3.4 Exemplo numérico — matriz de placares
 
@@ -209,10 +206,11 @@ em três passos puros antes de virar palpite:
    por média geométrica ponderada, `p_k ∝ m_k^{1−w} · q_k^{w}`, renormalizada. `w=0` ⇒ só modelo;
    `w=1` ⇒ só mercado. Forma canônica de fundir opiniões probabilísticas (afia a massa quando as
    fontes concordam).
-3. **Reescala da matriz** (`rescale_matrix`): multiplica cada célula pelo fator `p_classe-alvo /
-   massa-atual-da-classe` (mandante = abaixo da diagonal, empate = diagonal, visitante = acima).
-   Bate o 1×2-alvo **preservando** a distribuição condicional dos placares dentro de cada classe e a
-   massa total — assim `best_prediction` (§5) e os bônus de placar exato seguem coerentes.
+3. **Reescala da matriz** (`rescale_matrix`): multiplica cada célula pelo fator
+   `p_classe-alvo / massa-atual-da-classe` (mandante = abaixo da diagonal, empate = diagonal,
+   visitante = acima). Bate o 1×2-alvo **preservando** a distribuição condicional dos placares
+   dentro de cada classe e a massa total — assim `best_prediction` (§5) e os bônus de placar exato
+   seguem coerentes.
 
 **Totals — ancorar também a taxa de gols (ENG-35).** O rescale de 1×2 preserva a forma condicional,
 ou seja: os **gols esperados** — onde vivem o exato (+5) e o "gols do vencedor" (+3) do Sistema I —
@@ -232,21 +230,17 @@ mesmo `odds.csv`), o blend também corrige a taxa total:
    rescale: o 1×2 fica exato e o total converge dentro de tolerância. Sem totals para o jogo ⇒
    caminho antigo (passos 1–3) intacto.
 
-Aplicado em `pipeline.run` só na geração do palpite dos jogos com odds — **fase de grupos e
-mata-mata
-já definido pelo bracket real** (`scripts/fetch_odds.py` resolve os confrontos de KO via
-`sync.resolve_live_bracket` para casar as odds com os times resolvidos, ENG-28); a simulação de
-campeão/avanço (§7) segue só com o modelo (odds em geral só existem para a rodada iminente). Sem
-odds ou `w=0` ⇒
-matriz intacta (degradação graciosa). **Calibração de `w`:** o LOO-CV histórico multi-Copa é
-inviável
-(não há odds de seleção 2010–2018 grátis/legais), então adota-se um **prior de princípio** `w≈0,6`
-(odds de fechamento são quase-otimamente calibradas) e valida-se **prospectivamente** na própria
-Copa
-2026 — `backtest.prospective_blend_report` compara o Brier multiclasse do blend vs. o do modelo-puro
-(as-of) nos jogos já disputados com odds (CLI `blend-track`); com totals registrados, o mesmo
-comando também acompanha o **Brier binário do over/under** (modelo vs. blend). Ver ENG-19/ENG-35 no
-backlog.
+Aplicado em `pipeline.run` só na geração do palpite dos jogos com odds —
+**fase de grupos e mata-mata já definido pelo bracket real** (`scripts/fetch_odds.py` resolve os
+confrontos de KO via `sync.resolve_live_bracket` para casar as odds com os times resolvidos,
+ENG-28); a simulação de campeão/avanço (§7) segue só com o modelo (odds em geral só existem para a
+rodada iminente). Sem odds ou `w=0` ⇒ matriz intacta (degradação graciosa). **Calibração de `w`:** o
+LOO-CV histórico multi-Copa é inviável (não há odds de seleção 2010–2018 grátis/legais), então
+adota-se um **prior de princípio** `w≈0,6` (odds de fechamento são quase-otimamente calibradas) e
+valida-se **prospectivamente** na própria Copa 2026 — `backtest.prospective_blend_report` compara o
+Brier multiclasse do blend vs. o do modelo-puro (as-of) nos jogos já disputados com odds (CLI
+`blend-track`); com totals registrados, o mesmo comando também acompanha o
+**Brier binário do over/under** (modelo vs. blend). Ver ENG-19/ENG-35 no backlog.
 
 ---
 
@@ -269,9 +263,8 @@ Só contam se o **resultado (1×2) estiver certo** (errou o lado → 0). Os quat
 placar — **exato (+5) > gols do vencedor (+3) > saldo (+2) > gols do perdedor (+1)** — são
 **hierárquicos, não cumulativos**: o app concede **apenas o maior nível atingido**, não a soma. Os
 três níveis "decididos" são mutuamente exclusivos com o exato (acertar dois ⇒ é o exato). A
-**goleada
-(+1)** é um extra que empilha. (Confirmado nas telas "Pontos por Jogo" do app: Curaçao 0×2 cravado =
-base(2)+5 = **7**, não base+11 — ver §4.3.)
+**goleada (+1)** é um extra que empilha. (Confirmado nas telas "Pontos por Jogo" do app: Curaçao 0×2
+cravado = base(2)+5 = **7**, não base+11 — ver §4.3.)
 
 ### 4.1 Pontos base (régua fiel do app)
 
@@ -297,36 +290,28 @@ Essa é a régua **fiel do app** e **não depende de `risk`** — o risco mora n
 | ≤ ~0.026 | 13 (teto) | 13 |
 
 > Nota: a forma `(1/p)^γ` antiga **não** reproduzia o app (em `p=0.5` dava 2, o app dá 3); a
-calibração
-> log-linear acima ajusta os pontos observados dentro de ±0.5. Coeficiente em
-`scoring.toml::base_log_coeff`;
-> refinar com mais pontos do Simulador se necessário. (Backlog ENG-14.) Pontos do Simulador colhidos
-em
-> 26/06/2026 mostram que **nenhuma** curva log+arredondamento passa por `0.45→3` **e** `0.10→9` ao
-mesmo
-> tempo (o app usa régua/tabela própria); o resíduo é ±1 no meio da curva.
+> calibração log-linear acima ajusta os pontos observados dentro de ±0.5. Coeficiente em
+> `scoring.toml::base_log_coeff`; refinar com mais pontos do Simulador se necessário. (Backlog
+> ENG-14.) Pontos do Simulador colhidos em 26/06/2026 mostram que **nenhuma** curva
+> log+arredondamento passa por `0.45→3` **e** `0.10→9` ao mesmo tempo (o app usa régua/tabela
+> própria); o resíduo é ±1 no meio da curva.
 >
 > **Atualização (30/06/2026, ENG-26):** 9 pontos de **telas reais de jogo** do R32 (não do
-Simulador)
-> isolam o resíduo mas **não** o resolvem. Eles ajustam bem `a≈8,40` *com arredondamento round*, mas
-> `a=7,55` *com arredondamento **ceil*** ajusta igualmente bem (7/8) — as duas hipóteses
-(coeficiente
-> maior vs. arredondar pra cima) são **confundidas**, e **ambas quebram** os pontos do Simulador
-> (`0.50→3`, `0.15→7`). Soma-se a isso a probabilidade de entrada inobservável (ENG-24). Conclusão:
-> a curva de base do app é **subdeterminada** pelos dados disponíveis; mantém-se `a=7,55` + round e
-o
-> resíduo ±1 como **limitação aceita** (ENG-24/ENG-26). Não recalibrar sem desempatar o
-arredondamento
-> com um ponto de fronteira pré-jogo.
+> Simulador) isolam o resíduo mas **não** o resolvem. Eles ajustam bem `a≈8,40`
+> *com arredondamento round*, mas `a=7,55` *com arredondamento **ceil*** ajusta igualmente bem (7/8)
+> — as duas hipóteses (coeficiente maior vs. arredondar pra cima) são **confundidas**, e
+> **ambas quebram** os pontos do
+> Simulador (`0.50→3`, `0.15→7`). Soma-se a isso a probabilidade de entrada inobservável (ENG-24).
+> Conclusão: a curva de base do app é **subdeterminada** pelos dados disponíveis; mantém-se
+> `a=7,55` + round e o resíduo ±1 como **limitação aceita** (ENG-24/ENG-26). Não recalibrar sem
+> desempatar o arredondamento com um ponto de fronteira pré-jogo.
 
 > **Limite de observabilidade (ENG-24).** A base é função da **probabilidade do app**, calculada
 > internamente e **diferente da nossa** (modelo + blend) — e **não exposta**. Mesmo com a fórmula
 > perfeita, alimentamos a *nossa* `p`, então a base sai com **±~1 ponto por jogo** de erro sempre
-que
-> nosso bucket de probabilidade cruza a fronteira de arredondamento do app. **Consequência:** o
-bônus
-> de placar (§4.2) é reconstrutível com exatidão, mas a base **não**; logo qualquer estimativa de
-> pontos/teto/eficiência (`scripts/efficiency.py`) é **aproximada** (±~1/jogo), nunca cravada.
+> que nosso bucket de probabilidade cruza a fronteira de arredondamento do app. **Consequência:** o
+> bônus de placar (§4.2) é reconstrutível com exatidão, mas a base **não**; logo qualquer estimativa
+> de pontos/teto/eficiência (`scripts/efficiency.py`) é **aproximada** (±~1/jogo), nunca cravada.
 
 ### 4.2 Função de pontos
 
@@ -376,17 +361,15 @@ resolvido na escolha, §5).
 
 O app pontua a **partida inteira** (base + bônus de placar + bônus de prorrogação/pênaltis) vezes o
 **peso da fase** — "Equilíbrio gradual": grupos **×1**, R32–SF (R16, quartas, semis, 3º lugar)
-**×2**,
-final **×4** (confirmado nas telas do app: *"PESO: ×2 · valores já incluem o peso"*). Os pesos moram
-em `scoring.toml::[phase_weights]` e são aplicados por `Scorer.weighted_points(pred, actual, probs,
-weight)` = `points(...) · ScoringConfig.weight(stage)`.
+**×2**, final **×4** (confirmado nas telas do app: *"PESO: ×2 · valores já incluem o peso"*). Os
+pesos moram em `scoring.toml::[phase_weights]` e são aplicados por
+`Scorer.weighted_points(pred, actual, probs, weight)` = `points(...) · ScoringConfig.weight(stage)`.
 
 O peso **não muda o placar ótimo** de um jogo isolado (multiplicador constante não altera o `argmax`
 da §5), mas é decisivo na **contabilidade**: o teto de pontos de um jogo de mata-mata é 2–4× o de um
 jogo de grupo, e é assim que `scripts/efficiency.py` calcula o teto/eficiência reais (R32+
-ponderados;
-grupos intactos). Antes do ENG-27 o peso era definido mas **nunca aplicado** — o teto do mata-mata
-saía subcontado, inflando a eficiência.
+ponderados; grupos intactos). Antes do ENG-27 o peso era definido mas **nunca aplicado** — o teto do
+mata-mata saía subcontado, inflando a eficiência.
 
 ---
 
@@ -435,12 +418,11 @@ decidido):
 - **Camada 1 — placar dos 90'**: mesmo `best_prediction` da §5 (pode ser empate).
 - **Camada 2 — prorrogação** (ENG-29): modela a prorrogação (30 min) como **Poisson independente**
   com taxa = taxa de 90' × 30/90 por lado (as taxas saem dos gols esperados da matriz) e escolhe o
-  desfecho **mais provável** entre `mandante vence` / `empate → vai aos pênaltis` / `visitante
-  vence`.
-  Como o bônus é fixo, o desfecho mais provável **maximiza E[pts]**. Por a prorrogação ser curta, o
-  empate (→ pênaltis) costuma ser o modal mesmo com favorito moderado; só um favorito **forte**
-  crava
-  um lado. (Substitui o limiar fixo `cond_home ≥ 0.58`, que ignorava P(prorrogação empatada).)
+  desfecho **mais provável** entre `mandante vence` / `empate → vai aos pênaltis` /
+  `visitante vence`. Como o bônus é fixo, o desfecho mais provável **maximiza E[pts]**. Por a
+  prorrogação ser curta, o empate (→ pênaltis) costuma ser o modal mesmo com favorito moderado; só
+  um favorito **forte** crava um lado. (Substitui o limiar fixo `cond_home ≥ 0.58`, que ignorava
+  P(prorrogação empatada).)
 - **Camada 3 — pênaltis**: o lado com `cond_home ≥ 0.5` (quase moeda, leve vantagem ao mais forte).
 
 **Quem avança** (para montar o chaveamento, inalterado — usa `cond_home`):
@@ -449,11 +431,11 @@ decidido):
 P(mandante avança) = P(mandante) + P(empate) · cond_home
 ```
 
-**Exemplo.** `probs = (0.55, 0.25, 0.20)` → `cond_home = 0.55/0.75 = 0.733` → `P(avança) = 0.55 +
-0.25·0.733 = 0.733`, avança o **mandante**, pênaltis **mandante**. A camada 2 depende dos **gols
-esperados**: com gols esperados moderados (ex.: ~1,3 × ~1,0) a prorrogação sai **vai aos pênaltis**
-(empate ~53% > favorito ~27%); só um placar esperado bem desigual (ex.: ~2,8 × ~0,6) crava
-**mandante**.
+**Exemplo.** `probs = (0.55, 0.25, 0.20)` → `cond_home = 0.55/0.75 = 0.733` →
+`P(avança) = 0.55 + 0.25·0.733 = 0.733`, avança o **mandante**, pênaltis **mandante**. A camada 2
+depende dos **gols esperados**: com gols esperados moderados (ex.: ~1,3 × ~1,0) a prorrogação sai
+**vai aos pênaltis** (empate ~53% > favorito ~27%); só um placar esperado bem desigual (ex.: ~2,8 ×
+~0,6) crava **mandante**.
 
 ---
 
@@ -462,8 +444,8 @@ esperados**: com gols esperados moderados (ex.: ~1,3 × ~1,0) a prorrogação sa
 ### 7.1 Monte Carlo
 
 Cada simulação (padrão 5000, semente fixa):
-1. amostra um placar de cada jogo de grupo a partir da matriz (via CDF + `searchsorted`);
-   jogos já disputados usam o placar real;
+1. amostra um placar de cada jogo de grupo a partir da matriz (via CDF + `searchsorted`); jogos já
+   disputados usam o placar real;
 2. calcula a classificação de cada grupo: **pontos → saldo → gols pró → sorteio determinístico**
    (`tiebreakers` da spec; confronto direto e fair-play oficiais são simplificados para sorteio);
 3. pega os 2 primeiros de cada grupo + os **8 melhores terceiros** (ordenados por pontos, saldo,
@@ -500,19 +482,17 @@ Cada um dos 8 slots de terceiro (jogos 74, 77, 79, 80, 81, 82, 85, 87 em 2026) a
 **5 grupos específicos** (FIFA, Annex C). Dado o conjunto dos 8 grupos cujos terceiros se
 classificaram, fazemos um **casamento perfeito** slot→grupo respeitando as restrições, via
 backtracking (`_assign_thirds`). É um emparelhamento bipartido com 8 itens — barato e
-determinístico.
-Aproxima a tabela oficial de 495 combinações pela via das restrições por slot (ver §9).
+determinístico. Aproxima a tabela oficial de 495 combinações pela via das restrições por slot
+(ver §9).
 
 ⚠️ **O casamento por restrição não é único**: para uma combinação de grupos podem existir vários
 emparelhamentos válidos, e a tabela oficial da FIFA escolhe **um** específico. O backtracking
-devolve
-o primeiro que acha — que pode **divergir** do oficial (aconteceu em 2026: J74/J77/J81 saíam com
-Bósnia/Paraguai/Suécia rodados). Por isso a edição pode **cravar a alocação oficial** via
+devolve o primeiro que acha — que pode **divergir** do oficial (aconteceu em 2026: J74/J77/J81 saíam
+com Bósnia/Paraguai/Suécia rodados). Por isso a edição pode **cravar a alocação oficial** via
 `tournament.toml::[group_stage.third_allocation]` (`match_id → grupo`): quando o conjunto de grupos
 dessa tabela bate com os terceiros que de fato se classificaram, `_assign_thirds` a usa direto;
-senão
-cai no backtracking. É dado da edição (não há lógica de ano no código), aplicado tanto no bracket
-real (`sync`) quanto no determinístico/Monte Carlo (`format_engine`).
+senão cai no backtracking. É dado da edição (não há lógica de ano no código), aplicado tanto no
+bracket real (`sync`) quanto no determinístico/Monte Carlo (`format_engine`).
 
 ### 7.4 Chaveamento determinístico (o palpite concreto)
 
@@ -527,26 +507,21 @@ contagens do Monte Carlo), os 8 terceiros mais frequentes, e resolve-se cada jog
 Dois caminhos preenchem `home_goals/away_goals` (e `ko_outcome`) em `fixtures.csv`:
 
 - **`sync-results`** (`sync.py`): baixa os placares reais da fonte; preenche a fase de grupos por
-  par
-  de seleções; resolve o mata-mata **só com resultados reais** (standings reais → slots →
-  vencedores,
-  com pênaltis via `shootouts.csv`) e preenche cada confronto resolvido.
+  par de seleções; resolve o mata-mata **só com resultados reais** (standings reais → slots →
+  vencedores, com pênaltis via `shootouts.csv`) e preenche cada confronto resolvido.
 - **`record`**: ajuste manual de um jogo (com `--ko-winner` para empate em mata-mata).
 
 No `predict` seguinte: os jogos disputados (a) entram no treino com peso alto (§3.2), (b) **fixam**
-a
-classificação/chaveamento reais em vez de simular, e (c) saem como `FINAL`; só os jogos restantes
+a classificação/chaveamento reais em vez de simular, e (c) saem como `FINAL`; só os jogos restantes
 recebem palpite.
 
 **Desfecho real do mata-mata disputado (ENG-30).** Um jogo de KO `FINAL` exibe o resultado real das
-3
-camadas: `pipeline._final_ko_layers` preenche **quem avançou** (`Fixture.ko_outcome`) e prorrogação/
-pênaltis — placar dos 90' decidido ⇒ "—"; empate ⇒ "vai aos pênaltis" + vencedor quando o shootout é
-conhecido; empate sem shootout conhecido ⇒ vazio (não afirma o desfecho sob latência da fonte). O
-vencedor dos pênaltis vem de `Edition.shootouts` (`match_id → seleção`), carregado do arquivo
-opcional
-`data/editions/<ano>/shootouts.csv` — **captura manual** para a edição viva enquanto a fonte oficial
-tem latência, preenchida só com placares **verificados em ≥2 fontes**.
+3 camadas: `pipeline._final_ko_layers` preenche **quem avançou** (`Fixture.ko_outcome`) e
+prorrogação/ pênaltis — placar dos 90' decidido ⇒ "—"; empate ⇒ "vai aos pênaltis" + vencedor quando
+o shootout é conhecido; empate sem shootout conhecido ⇒ vazio (não afirma o desfecho sob latência da
+fonte). O vencedor dos pênaltis vem de `Edition.shootouts` (`match_id → seleção`), carregado do
+arquivo opcional `data/editions/<ano>/shootouts.csv` — **captura manual** para a edição viva
+enquanto a fonte oficial tem latência, preenchida só com placares **verificados em ≥2 fontes**.
 
 ---
 
@@ -558,10 +533,9 @@ tem latência, preenchida só com placares **verificados em ≥2 fontes**.
 daquela Copa, somando os pontos do Sistema I. A **seleção** do placar usa o `risk` testado, mas os
 pontos são **concedidos pela régua fiel do app** (§4.1, independente do risco), como o app faria —
 assim a comparação entre estratégias é justa. As matrizes passam pela mesma `MatrixCache` da
-produção, com
-os anfitriões da Copa-alvo (`_WORLD_CUP_HOSTS`), para tratar o mando do país-sede de forma idêntica
-(§3.1). Em 2022 isso não altera a tabela: o Qatar abriu como mandante, então o caso *host-away*
-nunca dispara.
+produção, com os anfitriões da Copa-alvo (`_WORLD_CUP_HOSTS`), para tratar o mando do país-sede de
+forma idêntica (§3.1). Em 2022 isso não altera a tabela: o Qatar abriu como mandante, então o caso
+*host-away* nunca dispara.
 
 Resultado na Copa **2022** (64 jogos), com a **régua hierárquica corrigida** (ENG-23):
 
@@ -572,30 +546,25 @@ Resultado na Copa **2022** (64 jogos), com a **régua hierárquica corrigida** (
 | 1.0 | 181.0 | 2.83 | 26.6% | 10.9% |
 
 O resultado é **não-monótono e ruidoso** (uma Copa só): aqui o conservador (`0.0`) fez mais pontos,
-o
-agressivo (`1.0`) ficou logo atrás e o fiel (`0.5`) abaixo dos dois. A grande vantagem do agressivo
-que
-aparecia antes (`risk=1.0` ~28% acima do fiel) **era artefato do bug de pontuação cumulativa**
-(ENG-23),
-que superrecompensava cravar placar e premiava a caça a zebras exatas; corrigida a régua para
-**hierárquica**, essa vantagem some. **Não há sinal robusto de que subir o risco melhore os pontos**
-— a
-alavanca de ranking é **acurácia** (blend de odds, ENG-19), não ousadia (ver também a modelagem de
-campo
-no `BOLAO.md`). (Números reproduzíveis por `uv run worldcup backtest --edition 2022`; uma Copa só,
-não
-generalizar cegamente. Régua de pontos calibrada ao app — §4.1.)
+o agressivo (`1.0`) ficou logo atrás e o fiel (`0.5`) abaixo dos dois. A grande vantagem do
+agressivo que aparecia antes (`risk=1.0` ~28% acima do fiel)
+**era artefato do bug de pontuação cumulativa** (ENG-23), que superrecompensava cravar placar e
+premiava a caça a zebras exatas; corrigida a régua para **hierárquica**, essa vantagem some.
+**Não há sinal robusto de que subir o risco melhore os pontos** — a alavanca de ranking é
+**acurácia** (blend de odds, ENG-19), não ousadia (ver também a modelagem de campo no `BOLAO.md`).
+(Números reproduzíveis por `uv run worldcup backtest --edition 2022`; uma Copa só, não generalizar
+cegamente. Régua de pontos calibrada ao app — §4.1.)
 
 **Calibração probabilística (ENG-18).** Além dos pontos e do acerto de 1×2 (métricas de
 *classificação*, via argmax), o backtest reporta a **calibração** do modelo — se as probabilidades
-batem com as frequências reais, métrica *de probabilidade*, independente do `risk`: **Brier
-multiclasse** (`multiclass_brier`; 0 = perfeito, 0,667 = uniforme) e a **curva de confiabilidade**
-da classe empate (`reliability_curve`). Veredito agregado nas 4 Copas (2010/14/18/22, 256 jogos,
-`pooled_draw_calibration`): Brier **0,578** (< 0,667, tem resolução) e P(empate) prevista média
-**27,9%** vs. frequência real **22,3%** — o modelo **não** subestima empates; se algo, os
-**superestima** levemente (a correção Dixon-Coles `rho` já puxa para cima). Conclusão: o baixo
-acerto de empates num punhado de jogos (ex.: início da Copa 2026) é **variância**, não
-miscalibração — não há ajuste de modelo a fazer.
+batem com as frequências reais, métrica *de probabilidade*, independente do `risk`:
+**Brier multiclasse** (`multiclass_brier`; 0 = perfeito, 0,667 = uniforme) e a
+**curva de confiabilidade** da classe empate (`reliability_curve`). Veredito agregado nas 4 Copas
+(2010/14/18/22, 256 jogos, `pooled_draw_calibration`): Brier **0,578** (< 0,667, tem resolução) e
+P(empate) prevista média **27,9%** vs. frequência real **22,3%** — o modelo **não** subestima
+empates; se algo, os **superestima** levemente (a correção Dixon-Coles `rho` já puxa para cima).
+Conclusão: o baixo acerto de empates num punhado de jogos (ex.: início da Copa 2026) é
+**variância**, não miscalibração — não há ajuste de modelo a fazer.
 
 ### 9.2 Limitações conhecidas
 
@@ -608,20 +577,16 @@ para cá._
 - **Terceiros**: casamento por restrição aproxima o Annex C — e **não é único**, podendo divergir da
   tabela oficial da FIFA (§7.3). Mitigação: cravar a alocação oficial da combinação realizada em
   `tournament.toml::[group_stage.third_allocation]` (feito em 2026 após a fase de grupos: row 67,
-  grupos B/D/E/F/I/J/K/L). A tabela completa de 495 combinações segue pendente (§9.3). **Sempre
-  confira
-  os 8 confrontos dos 16-avos com o bracket oficial** após a fase de grupos.
+  grupos B/D/E/F/I/J/K/L). A tabela completa de 495 combinações segue pendente (§9.3).
+  **Sempre confira os 8 confrontos dos 16-avos com o bracket oficial** após a fase de grupos.
 - **Mata-mata em camadas**: o placar real importado pode incluir prorrogação (não só 90'); para a
   realimentação isso é irrelevante (interessa o vencedor e o efeito no treino).
 - **Bônus de KO no backtest (ENG-12)**: o backtest concede os bônus de prorrogação/pênaltis **só**
-  nos
-  jogos decididos **nos pênaltis** — os únicos determináveis da fonte (`shootouts.csv`, mesclado
-  como
-  `penalty_winner` em `fetch_data`). O martj42 **não traz a fase** nem separa 90' de prorrogação,
-  então
-  jogos decididos **dentro** da prorrogação não são identificáveis e **não** recebem o bônus de ET
-  (subestimativa pequena e conhecida; a edição **viva** não tem esse problema — `sync` resolve o
-  bracket real com os shootouts).
+  nos jogos decididos **nos pênaltis** — os únicos determináveis da fonte (`shootouts.csv`, mesclado
+  como `penalty_winner` em `fetch_data`). O martj42 **não traz a fase** nem separa 90' de
+  prorrogação, então jogos decididos **dentro** da prorrogação não são identificáveis e **não**
+  recebem o bônus de ET (subestimativa pequena e conhecida; a edição **viva** não tem esse problema
+  — `sync` resolve o bracket real com os shootouts).
 
 ### 9.3 Ideias futuras
 
@@ -634,6 +599,7 @@ para cá._
 
 ## Referências
 
-- M. J. Dixon, S. G. Coles (1997). *Modelling Association Football Scores and Inefficiencies in the
-  Football Betting Market*. Applied Statistics 46(2).
+- M. J. Dixon, S. G. Coles (1997).
+  *Modelling Association Football Scores and Inefficiencies in the Football Betting Market*. Applied
+  Statistics 46(2).
 - Dataset: `github.com/martj42/international_results`.

@@ -22,31 +22,30 @@ limites — para uma validação de modelo. Números reproduzidos das fontes can
   estratégia (escolha do palpite) são **desacoplados**.
 - **Parâmetros de ajuste** (`FitConfig`): decaimento temporal **meia-vida 2,0 anos**; pesos de
   torneio (Copa 1,0 … amistoso 0,5); **mando** do anfitrião; regularização **ridge 0,10**; recorte
-  de
-  treino **≥ 2006-01-01**; mínimo **10 jogos** por seleção; filtra seleções não-FIFA.
+  de treino **≥ 2006-01-01**; mínimo **10 jogos** por seleção; filtra seleções não-FIFA.
 - **Blend opcional (ENG-19):** quando há `odds.csv`, funde a matriz com o mercado (des-vig → pool
   logarítmico → reescala), peso `blend_weight` (2026 = **0,6**). Sem odds ⇒ só o modelo.
-- **Referência:** Dixon & Coles (1997), *Modelling Association Football Scores…*, Applied Statistics
-  46(2).
+- **Referência:** Dixon & Coles (1997), *Modelling Association Football Scores…*,
+  Applied Statistics 46(2).
 
 ## 2. Uso pretendido
 
 - **Uso primário:** gerar o palpite de cada jogo de uma Copa do Mundo de seleções para **um bolão de
   pontuação probabilística** (Sistema I), maximizando os pontos esperados do participante.
-- **Usuários:** o apostador (consome os palpites) e o mantenedor (valida/opera). Ver personas no
-  [`PRD.md`](PRD.md).
+- **Usuários:** o apostador (consome os palpites) e o mantenedor (valida/opera). Ver personas
+  no [`PRD.md`](PRD.md).
 - **Fora do escopo:** apostas com dinheiro / *value betting*; previsão de ligas de clubes; decisões
-  que dependam de causalidade (escalação, lesão, tática) — o modelo é **estatístico e
-  correlacional**.
-- **Não é** fonte de verdade sobre futebol; é uma ferramenta de **otimização de pontos** sob
-  incerteza.
+  que dependam de causalidade (escalação, lesão, tática) — o modelo é
+  **estatístico e correlacional**.
+- **Não é** fonte de verdade sobre futebol;
+  é uma ferramenta de **otimização de pontos** sob incerteza.
 
 ## 3. Fatores
 
 - **Subpopulações:** confederações/seleções com históricos de tamanhos diferentes; estreantes e
   seleções de baixo volume são **regredidos à média** pelo ridge (estimativa conservadora).
-- **Condições:** **mando** do país-sede (aplicado mesmo quando a escala oficial inverte mandante/
-  visitante); **fase** do torneio (peso 1×/2×/4×, afeta estratégia, não a probabilidade).
+- **Condições:** **mando** do país-sede (aplicado mesmo quando a escala oficial inverte
+  mandante/visitante); **fase** do torneio (peso 1×/2×/4×, afeta estratégia, não a probabilidade).
 - **Sensibilidade conhecida:** o decaimento de 2 anos faz o modelo **favorecer quem vem bem** e
   possivelmente **subestimar potência em má fase recente** (SPEC §9.2).
 
@@ -79,10 +78,8 @@ Resultados de jogos internacionais de seleções (dataset martj42), normalizados
 **Calibração (256 jogos, 4 Copas) — SPEC §9.1:**
 - **Brier multiclasse = 0,578** (< 0,667 ⇒ tem resolução, melhor que o palpite uniforme).
 - **P(empate) prevista média 27,9% vs. real 22,3%** ⇒ o modelo **não subestima** empates; se algo,
-  os
-  **superestima** levemente (o `rho` do Dixon–Coles já puxa para cima). O baixo acerto de empates
-  num
-  punhado de jogos é **variância**, não miscalibração — sem ajuste de modelo a fazer.
+  os **superestima** levemente (o `rho` do Dixon–Coles já puxa para cima). O baixo acerto de empates
+  num punhado de jogos é **variância**, não miscalibração — sem ajuste de modelo a fazer.
 
 **Pontos — backtest Copa 2022 (64 jogos), régua hierárquica corrigida (ENG-23) — SPEC §9.1:**
 
@@ -96,8 +93,7 @@ Resultado **não-monótono e ruidoso** (uma Copa só): o conservador fez mais po
 atrás, o fiel abaixo. A vantagem do agressivo (~28%) que aparecia antes **era artefato do bug de
 pontuação cumulativa** (ENG-23, que superrecompensava cravar placar); com a régua hierárquica ela
 **some**. **Caveat forte:** é **uma Copa só**; não generaliza. Subir o risco **não** melhora os
-pontos
-de forma confiável.
+pontos de forma confiável.
 
 **Risco como alavanca de *ranking* (não de pontos médios):** a modelagem de campo (60 participantes,
 40k simulações — `BOLAO.md`, 2026-06-17) mostra que **subir o `risk` reduz** P(vencer) e P(top-10),
@@ -113,18 +109,16 @@ propósito.
 - **Incerteza honesta.** As saídas são probabilísticas; um palpite "ótimo" ainda erra com frequência
   (ver % de acerto). O produto **não promete** acerto, e sim **valor esperado** sob a régua.
 - **Dados públicos.** Sem dado pessoal (só resultados públicos de jogos). Segredos (chave de odds)
-  no
-  `.env`, fora do versionamento.
+  no `.env`, fora do versionamento.
 
 ## 9. Ressalvas e recomendações
 
 - **Vieses estruturais** (SPEC §9.2): favorece forma recente; desempates de grupo simplificados (sem
   confronto direto/fair-play); 8 melhores 3ºs por **aproximação** do Annex C — confira os 16-avos
-  com
-  os resultados reais.
+  com os resultados reais.
 - **Empates** são a fraqueza prática: o otimizador raramente crava empate, então numa Copa
-  empate-pesada zera mais jogos — **monitorar** via `blend-track`, **não forçar** empate (baixa o
-  E[pts]).
+  empate-pesada zera mais jogos — **monitorar** via `blend-track`, **não forçar** empate
+  (baixa o E[pts]).
 - **Dependências externas:** qualidade do dataset martj42 e disponibilidade/ToS da The Odds API
   ([`DATA.md`](DATA.md)). Sem rede, o produto degrada para o último estado conhecido.
 - **Revalidação:** re-rodar `backtest` e revisar este cartão a cada bump de versão que toque

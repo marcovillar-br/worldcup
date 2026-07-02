@@ -224,10 +224,19 @@ def resolve_live_bracket(edition: Edition) -> dict[int, tuple[str, str]]:
         if not home or not away:
             continue
         resolved[f.match_id] = (home, away)
-        if f.home_goals is not None and f.away_goals is not None and f.ko_outcome:
+        if f.home_goals is None or f.away_goals is None:
+            continue
+        # Vencedor: `ko_outcome` quando presente; senão o placar decide (jogo resolvido no tempo
+        # normal/prorrogação — o `record` só exige --ko-winner em empate). Empate sem `ko_outcome`
+        # fica indeterminado (pênaltis ainda não confirmados) e não propaga.
+        if f.ko_outcome:
             w = canonical(f.ko_outcome)
-            ko_winner[f.match_id] = w
-            losers[f.match_id] = away if w == home else home
+        elif f.home_goals != f.away_goals:
+            w = home if f.home_goals > f.away_goals else away
+        else:
+            continue
+        ko_winner[f.match_id] = w
+        losers[f.match_id] = away if w == home else home
     return resolved
 
 

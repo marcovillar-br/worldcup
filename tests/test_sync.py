@@ -189,3 +189,17 @@ def test_resolve_live_bracket_resolves_r32_from_real_results():
         assert home != away
     # confronto conhecido (bracket oficial corrigido no ENG-25), robusto à orientação
     assert frozenset(r32[77]) == frozenset({"France", "Sweden"})
+
+
+def test_resolve_live_bracket_propagates_winner_without_ko_outcome():
+    # Regressão: jogo de KO decidido nos 90' e registrado à mão fica SEM `ko_outcome` (o `record`
+    # só exige --ko-winner em empate) — o vencedor tem que sair do placar. Antes do fix, J77/J78/J79
+    # (3×0, 1×2, 2×0, sem ko_outcome no fixtures.csv) não propagavam e J90–J92 ficavam
+    # indeterminados — com o blend de odds silenciosamente desligado neles (ENG-28).
+    ed = load_edition(2026).as_of("2026-07-02")
+    br = sync.resolve_live_bracket(ed)
+    assert frozenset(br[90]) == frozenset({"Paraguay", "France"})  # W74 (pênaltis) × W77 (90')
+    assert frozenset(br[91]) == frozenset({"Brazil", "Norway"})  # W76 (90') × W78 (90')
+    assert frozenset(br[92]) == frozenset({"Mexico", "England"})  # W79 (90') × W80 (90')
+    # empate nos 90' SEM ko_outcome não pode propagar: J93 depende de J83/J84 (não disputados)
+    assert 93 not in br

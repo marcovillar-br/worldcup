@@ -12,6 +12,14 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **`resolve_live_bracket` não propagava vencedor de KO decidido nos 90' sem `ko_outcome`**
+  (`sync.py`): jogos registrados **à mão** com placar decisivo ficam sem `ko_outcome` (o `record`
+  só o exige em empate), e a função exigia o campo para propagar — J77/J78/J79 não resolviam e
+  J90/J91/J92 (confrontos já definidos) ficavam **fora do casamento de odds, com o blend
+  silenciosamente desligado** (efeito real: o palpite de J91 saía Brasil 3×0 a 85% model-only; o
+  mercado precifica ~50%). Agora o placar decide quando `ko_outcome` falta; empate sem `ko_outcome`
+  segue indeterminado (pênaltis não confirmados). O `fetch_odds` também **loga** eventos sem
+  fixture casável em vez de descartar mudo (foi o que escondeu o bug).
 - **`sync-results` quebrava com
   `AttributeError: 'Namespace' object has no attribute 'pool_behind'`**
   (`cli.py`): o parser de `sync-results` nunca ganhou `--pool-behind` (adicionado ao `predict` no

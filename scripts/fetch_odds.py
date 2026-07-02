@@ -209,7 +209,10 @@ def map_to_fixtures(
             continue
         hit = unplayed.get(key)
         if hit is None:
-            continue  # já disputado, confronto de KO ainda indefinido, ou fora desta edição
+            # Já disputado, confronto de KO ainda indefinido, ou fora desta edição — mas LOGADO:
+            # descarte mudo já escondeu um bug de bracket (J90–J92 sem blend, ver CHANGELOG).
+            skipped.append(f"{ev['home_team']} x {ev['away_team']} (sem fixture casável)")
+            continue
         match_id, home, away = hit
         price = _book_price_map(ev, book)
         if price is None:  # fallback: mediana das casas

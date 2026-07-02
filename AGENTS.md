@@ -127,7 +127,10 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   são rederiváveis de dados/código (`risk` escolhido, situação no ranking, regras do bolão).
   **Leia no início da sessão e atualize quando uma decisão de campanha acontecer.**
 - `history/<data>.{csv,md}` — **snapshots diários** dos palpites (`predict --archive`, default =
-  hoje). Só CSV (canônico/diffável) + MD; nunca HTML. Gravados por `cli.archive_outputs`.
+  hoje). Só CSV (canônico/diffável) + MD; nunca HTML. Gravados por `cli.archive_outputs`;
+  re-arquivar na **mesma data** (ex.: pós-`record`) faz **merge por jogo** (ENG-33): o palpite da
+  manhã de jogo que já virou `FINAL` é preservado — só reconstruídos sobrescrevem (regeneráveis
+  por definição).
   **Versionamento por reprodutibilidade**: o run **real** do dia é **rastreado** (depois que
   resultados entram e o modelo reajusta, não é mais reproduzível — daí versionar); o snapshot
   **reconstruído** (sufixo `.reconstruido` + banner no MD) é **gitignored**, porque é regenerável

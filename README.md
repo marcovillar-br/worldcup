@@ -61,7 +61,8 @@ os palpites evoluem rodada a rodada, use `predict --archive` ou `sync-results --
 aceitam `--archive AAAA-MM-DD`): grava um
 snapshot imutável e **versionado** em `data/editions/<edição>/history/<data>.{csv,md}`. Faz sentido
 porque, depois que novos resultados entram e o modelo reajusta, o palpite de um dia não é mais
-reproduzível.
+reproduzível. Re-arquivar na mesma data (ex.: pós-`record`) faz **merge por jogo**: o palpite da
+manhã de um jogo que já virou `FINAL` é preservado, nunca sobrescrito.
 
 **Blend com odds de mercado (opcional):** `data/editions/<edição>/odds.csv` com
 `match_id,home,draw,away` em odds decimais e, opcionalmente, `total_line,over,under` (o mercado de

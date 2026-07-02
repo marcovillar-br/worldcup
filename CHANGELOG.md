@@ -13,6 +13,13 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **Re-arquivar no mesmo dia não sobrescreve mais o palpite da manhã** (`cli.archive_outputs`):
+  o segundo `--archive` do dia (pós-`record`/`sync-results`) gravava os jogos disputados como
+  `FINAL` em cima do snapshot da manhã — perdendo o dado não-reprodutível que o `history/` existe
+  para preservar (mordeu em 2026-07-01: J80–J82 caíram no teto reconstruído do `efficiency.py`).
+  Agora o re-archive faz **merge por jogo**: linha com palpite (`PREVISTO`) que viraria `FINAL` é
+  preservada (e logada); jogos pendentes/novos atualizam. Snapshots reconstruídos (`--as-of`)
+  seguem sobrescrevendo — são regeneráveis por definição. (ENG-33)
 - **Peso de fase aplicado na contabilidade de pontos/teto** (`Scorer.weighted_points` +
   `scripts/efficiency.py`): o app pontua o mata-mata vezes o peso da fase (R32–SF ×2, final ×4) e
   isso **nunca era aplicado** (`ScoringConfig.weight` existia, mas ninguém o chamava) — o teto/eficiência

@@ -18,6 +18,7 @@ import argparse
 import csv
 import logging
 import sys
+from dataclasses import replace
 from datetime import date
 from pathlib import Path
 
@@ -44,6 +45,29 @@ def save_outputs(run: PredictionRun, year: int) -> tuple[Path, Path, Path]:
     return csv_path, md_path, html_path
 
 
+def _merge_preserved_rows(existing_csv: Path, new_rows: list[dict]) -> tuple[list[dict], list[int]]:
+    """Merge por jogo com o snapshot já existente do mesmo dia (ENG-33).
+
+    A rotina diária arquiva duas vezes: de manhã (palpites da rodada) e pós-resultado. Sem o
+    merge, o segundo archive rebaixava o palpite da manhã a `FINAL` — exatamente o dado
+    não-reprodutível que o snapshot existe para preservar. Regra: se o snapshot tem **palpite**
+    (`PREVISTO`) para um jogo que o run novo traria como `FINAL`, a linha antiga fica; jogos
+    ainda pendentes e demais linhas atualizam normalmente.
+    """
+    with existing_csv.open(newline="") as fh:
+        old = {r["jogo"]: r for r in csv.DictReader(fh)}
+    merged: list[dict] = []
+    preserved: list[int] = []
+    for row in new_rows:
+        prev = old.get(str(row["jogo"]))
+        if prev is not None and prev["status"] == "PREVISTO" and row["status"] == "FINAL":
+            merged.append(prev)
+            preserved.append(int(row["jogo"]))
+        else:
+            merged.append(row)
+    return merged, preserved
+
+
 def archive_outputs(run: PredictionRun, year: int, date_str: str, *, reconstructed: bool = False) -> tuple[Path, Path]:
     """Grava um snapshot imutável dos palpites do dia em `data/editions/<year>/history/`.
 
@@ -52,17 +76,29 @@ def archive_outputs(run: PredictionRun, year: int, date_str: str, *, reconstruct
     é justamente essa não-reprodutibilidade que justifica guardar. Só CSV (canônico, diffável)
     + MD (legível); HTML fica de fora. `reconstructed=True` marca dias gerados a posteriori
     (sufixo no nome do arquivo + aviso no topo do MD), para não confundir com um run real.
+
+    Re-arquivar na mesma data faz **merge por jogo** com o snapshot existente (ENG-33): o
+    palpite da manhã de um jogo que já virou `FINAL` é preservado, nunca sobrescrito. Snapshots
+    reconstruídos ficam de fora do merge — são regeneráveis por definição, sobrescrever é o
+    comportamento certo (ex.: re-rodar `--as-of` após corrigir um placar).
     """
     hist = EDITIONS_DIR / str(year) / "history"
     hist.mkdir(parents=True, exist_ok=True)
     suffix = ".reconstruido" if reconstructed else ""
     csv_path = hist / f"{date_str}{suffix}.csv"
     md_path = hist / f"{date_str}{suffix}.md"
+    rows = run.rows
+    preserved: list[int] = []
+    if not reconstructed and csv_path.exists():
+        rows, preserved = _merge_preserved_rows(csv_path, run.rows)
     with csv_path.open("w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=CSV_COLUMNS)
         w.writeheader()
-        w.writerows(run.rows)
-    md = render_markdown(run)
+        w.writerows(rows)
+    if preserved:
+        jogos = ", ".join(f"J{m}" for m in preserved)
+        print(f"🛡️  Snapshot de {date_str} já existia: preservado o palpite da manhã de {jogos} (não vira FINAL).")
+    md = render_markdown(replace(run, rows=rows) if preserved else run)
     if reconstructed:
         md = (
             f"> ⚠️ Snapshot **reconstruído** para {date_str}: gerado a posteriori reajustando o modelo "

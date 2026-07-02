@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import csv
+
 from worldcup import cli, fetch_data
 from worldcup.cli import main
 from worldcup.edition import load_edition
@@ -62,6 +64,51 @@ def test_archive_outputs_writes_versioned_csv_md(tmp_path, monkeypatch):
     assert md_p.exists()
     assert csv_p.read_text().splitlines()[0].startswith("jogo,data,fase")  # CSV canônico
     assert "reconstruído" not in md_p.read_text()  # run real: sem banner
+
+
+def test_archive_outputs_preserves_morning_pick_on_rearchive(tmp_path, monkeypatch, capsys):
+    # ENG-33: re-arquivar no mesmo dia (pós-record/sync) não pode rebaixar palpite→FINAL —
+    # o palpite da manhã é o dado não-reprodutível que o snapshot existe para preservar.
+    monkeypatch.setattr(cli, "EDITIONS_DIR", tmp_path)
+    cli.archive_outputs(_tiny_run(), 2026, "2026-06-11")  # manhã: J1 PREVISTO 2x0
+
+    evening = _tiny_run()
+    evening.rows[0].update(status="FINAL", palpite="1x1", placar_real="1x1")  # J1 já disputado
+    row2 = dict.fromkeys(CSV_COLUMNS, "")
+    row2.update(
+        {
+            "jogo": "2",
+            "data": "2026-06-11",
+            "fase": "group",
+            "grupo": "B",
+            "mandante": "Canadá",
+            "palpite": "1x0",
+            "visitante": "Catar",
+            "status": "PREVISTO",
+        }
+    )
+    evening.rows.append(row2)
+    csv_p, md_p = cli.archive_outputs(evening, 2026, "2026-06-11")
+
+    with csv_p.open(newline="") as fh:
+        rows = {r["jogo"]: r for r in csv.DictReader(fh)}
+    assert rows["1"]["status"] == "PREVISTO"  # palpite da manhã preservado
+    assert rows["1"]["palpite"] == "2x0"
+    assert rows["2"]["palpite"] == "1x0"  # linha nova entra normalmente
+    assert "preservado o palpite da manhã de J1" in capsys.readouterr().out
+    assert "2x0" in md_p.read_text()  # MD rerenderizado das linhas mescladas, não do run cru
+
+
+def test_archive_outputs_updates_still_pending_pick_on_rearchive(tmp_path, monkeypatch):
+    # ENG-33: jogo ainda PREVISTO nos dois runs atualiza normalmente (repalpite intradiário vale)
+    monkeypatch.setattr(cli, "EDITIONS_DIR", tmp_path)
+    cli.archive_outputs(_tiny_run(), 2026, "2026-06-11")
+    later = _tiny_run()
+    later.rows[0]["palpite"] = "3x0"
+    csv_p, _ = cli.archive_outputs(later, 2026, "2026-06-11")
+    with csv_p.open(newline="") as fh:
+        rows = list(csv.DictReader(fh))
+    assert rows[0]["palpite"] == "3x0"
 
 
 def test_archive_outputs_marks_reconstructed(tmp_path, monkeypatch):

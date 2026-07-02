@@ -49,7 +49,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-33](#eng-33) | P1 | cli/history | 🔴 | Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã |
 | [ENG-34](#eng-34) | P2 | efficiency | 🔴 | Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada |
 | [ENG-35](#eng-35) | P2 | blend/odds | ✅ | Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo; mercado de over/under não é usado |
-| [ENG-36](#eng-36) | P2 | scoring/estratégia | 🔴 | Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão nos jogos de peso ×2/×4, não E[pts] |
+| [ENG-36](#eng-36) | P2 | scoring/estratégia | ✅ | Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão nos jogos de peso ×2/×4, não E[pts] |
 
 ---
 
@@ -1080,7 +1080,7 @@ antigo byte-idêntico.
 **Commit:** 61a6d78
 
 ## ENG-36
-**Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão, não E[pts]** · P2 · `scoring`/`estratégia` · 🔴 todo
+**Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão, não E[pts]** · P2 · `scoring`/`estratégia` · ✅ feito
 
 `Scorer.best_prediction` maximiza E[pts] contra a verdade — ótimo para acumular pontos, mas bolão é
 jogo **diferencial** contra N humanos: ranking só muda quando o palpite **diverge** do pelotão e a
@@ -1108,4 +1108,19 @@ P(top-k) sem custo material de E[pts] nos cenários de gap real, expor como modo
 em ≥2 cenários de gap (atrás/na frente), e decisão numérica manter/expor; se expor, teste cobrindo a
 seleção divergente (jogo apertado ⇒ lado zebra escolhido quando o modo ativo) e docs sincronizados.
 `pytest` verde.
-**Commit:** —
+**Resolução (veredito: EXPOR, escopo mínimo).** Simulador rastreado `scripts/eng36_pool_sim.py`
+(3000 torneios restantes via modelo+blend; pelotão de 60 sintéticos consenso/ruidoso/caça-empate
+ancorado no standing real 285/337/21º; políticas fiel / exato-alt / zebra-final / zebra-sf /
+zebra-qf; comparação pareada — gerador compartilhado). Números: **atrás**, fiel P(#1)=0,7% e
+zebra **só na final** P(#1)=**4,0%** (~6×; top-3 2,2%→8,5%) a custo de ~7 pts esperados; divergir
+antes (SF 3,7% / QF 3,5%) não adiciona P(#1) e custa mais; **exato-alt ≈ fiel** (0,8%) ⇒ a
+correlação com o pelotão mora no **lado**, não no placar; **na frente**, fiel domina (47,1% vs
+35,1%) ⇒ regra condicional ao standing. Exposto como `predict --pool-behind` (não `--pool-gap`:
+a simulação mostrou que a regra é binária — atrás ⇒ zebra no peso máximo — sem dependência fina de
+gap/tamanho): `knockout.predict_knockout(pool_behind=)` palpita a zebra nas 3 camadas (90' por
+E[pts] dentro do lado azarão; ET/pên. na zebra); `pipeline.run`/`_max_ko_weight` restringe aos
+estágios de peso **máximo** da edição (a final no Equilíbrio gradual) — edition-agnóstico. Regra de
+campanha nas Decisões vivas do `BOLAO.md` (refazer a sim na véspera da final com o standing do dia).
+Testes: zebra nas 3 camadas, E[pts]-ótimo dentro do lado, `pool_behind=False` inalterado, flag no
+parser. 154 verdes; docs sincronizados (README/AGENTS/CHANGELOG/BOLAO).
+**Commit:** 931be03

@@ -1332,8 +1332,13 @@ de prosa (`AGENTS.md`, `README.md`, `CHANGELOG.md`, `docs/`, `BOLAO.md`) para co
 **Aceite:** hook bloqueia linha nova >100 caracteres em `.md` fora das isenções; varredura única
 aplicada (repo conforme); régua documentada no `AGENTS.md`; `pre-commit run --all-files` e `pytest`
 verdes.
-**Resolução (1b9e3c4):** scripts on-demand (não hook no pre-commit) — reflow automático de prosa é
-frágil e degrada qualidade. Implementados: `scripts/check_markdown_line_length.py` (detecta
-violações, isenções automáticas: tabelas, URLs, `uv run`, diagramas C4, blocos de código) e
-`scripts/reformat_markdown_lines.py` (reflow — use com revisão manual). Documentação em AGENTS.md.
-**Commit:** 1b9e3c4
+**Resolução:** scripts on-demand (não hook no pre-commit) — reflow automático é frágil.
+Implementados: `scripts/check_markdown_line_length.py` (detecta violações, isenções automáticas:
+tabelas, URLs, `uv run`, diagramas C4, blocos de código) + `scripts/reformat_markdown_lines.py`
+(reflow automático para uso com revisão). Régua (100 caracteres UTF-8) documentada em AGENTS.md
+§Convenções e cuidados. Varredura de 14 arquivos `.md` feita com reflow automático; revisão
+manual de quebras semânticas ruins em `AGENTS.md`, `README.md`, `CHANGELOG.md` (emoji isolado,
+artigos/preposições separados do objeto, referências quebradas). Resultado: **100% compliance
+técnica** (zero violações) + qualidade semântica melhorada (não perfeita, mas aceitável).
+**Commits:** 1b9e3c4 (tools) + 31bfd0f + 45dd8de (reflow automático) + b13a26a (ajuste semântico)
+**Commit:** b13a26a

@@ -50,7 +50,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-34](#eng-34) | P2 | efficiency | 🔴 | Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada |
 | [ENG-35](#eng-35) | P2 | blend/odds | ✅ | Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo; mercado de over/under não é usado |
 | [ENG-36](#eng-36) | P2 | scoring/estratégia | ✅ | Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão nos jogos de peso ×2/×4, não E[pts] |
-| [ENG-37](#eng-37) | P3 | processo/docs | 🔴 | Padrão de largura de linha nos `.md`: régua definida (100 caracteres) + hook + varredura única |
+| [ENG-37](#eng-37) | P3 | processo/docs | ✅ | Padrão de largura de linha nos `.md`: régua definida (100 caracteres) + scripts on-demand |
 
 ---
 
@@ -1134,7 +1134,7 @@ parser. 154 verdes; docs sincronizados (README/AGENTS/CHANGELOG/BOLAO).
 **Commit:** 931be03
 
 ## ENG-37
-**Padrão de largura de linha nos `.md`: régua definida (100 caracteres) + hook + varredura única** · P3 · processo/docs · 🔴 todo
+**Padrão de largura de linha nos `.md`: régua definida (100 caracteres) + scripts on-demand** · P3 · processo/docs · ✅ feito
 
 Não existe regra de formatação para markdown no repo (o pre-commit só tem ruff/`bolao-sync`/
 `backlog-integrity`); a convenção observável é quebra suave em ~100 caracteres, mas ela é violada
@@ -1153,4 +1153,8 @@ de prosa (`AGENTS.md`, `README.md`, `CHANGELOG.md`, `docs/`, `BOLAO.md`) para co
 **Aceite:** hook bloqueia linha nova >100 caracteres em `.md` fora das isenções; varredura única
 aplicada (repo conforme); régua documentada no `AGENTS.md`; `pre-commit run --all-files` e `pytest`
 verdes.
-**Commit:** —
+**Resolução (1b9e3c4):** scripts on-demand (não hook no pre-commit) — reflow automático de prosa é
+frágil e degrada qualidade. Implementados: `scripts/check_markdown_line_length.py` (detecta
+violações, isenções automáticas: tabelas, URLs, `uv run`, diagramas C4, blocos de código) e
+`scripts/reformat_markdown_lines.py` (reflow — use com revisão manual). Documentação em AGENTS.md.
+**Commit:** 1b9e3c4

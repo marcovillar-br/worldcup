@@ -53,6 +53,9 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-35](#eng-35) | P2 | blend/odds | ✅ | Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo; mercado de over/under não é usado |
 | [ENG-36](#eng-36) | P2 | scoring/estratégia | ✅ | Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão nos jogos de peso ×2/×4, não E[pts] |
 | [ENG-37](#eng-37) | P3 | processo/docs | ✅ | Padrão de largura de linha nos `.md`: régua definida (100 caracteres) + scripts on-demand |
+| [ENG-38](#eng-38) | P2 | blend/backtest | ✅ | `blend_weight` fixado por prior (0,6), nunca otimizado com dado — sweep de Brier por peso |
+| [ENG-39](#eng-39) | P2 | scoring/estratégia | ✅ | Simulador de endgame é juiz e parte: gerador = modelo, cego à subestimação de empate em final |
+| [ENG-40](#eng-40) | P2 | knockout/cli | 🔴 | Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra superada |
 
 ---
 
@@ -1286,3 +1289,81 @@ Resultado: **100% compliance técnica** (zero violações) + qualidade semântic
 por arquivo, sem fragmentos órfãos remanescentes (exceto sintaxe de diagrama Mermaid, que não é
 prosa).
 **Commit:** 53518c9
+
+## ENG-38
+**`blend_weight` fixado por prior (0,6), nunca otimizado com dado** · P2 · `blend`/`backtest` ·
+✅ feito
+
+O peso do mercado no blend (ENG-19) foi fixado em 0,6 por prior de princípio ("odds de fechamento
+são quase-otimamente calibradas") e nunca revisitado, apesar de o `blend-track` acumular jogos
+disputados com odds — em 02/07 já eram 49, amostra suficiente para uma escolha direcional. Como o
+peso multiplica **todos** os jogos com odds (inclusive o KO de peso ×2/×4), qualquer subotimalidade
+é paga em cada palpite.
+
+**Refs:** `backtest.prospective_blend_report` (avalia 1 peso por chamada, re-fitando tudo),
+`scoring.toml::blend_weight` (o prior), `cli.cmd_blend_track`. Relacionado: ENG-19 (o blend),
+ENG-35 (totals).
+**Correção:** `blend_weight_sweep` — refatora o report em coleta (`_collect_blend_games`, 1 fit/dia,
+o custo caro) + tally por peso (`_tracking_for_weight`, barato), e varre a grade numa passada só.
+Exposto como `blend-track --sweep` (grade 0,0..1,0, passo 0,1, marca mínimo e peso em uso).
+**Aceite:** sweep roda numa passada as-of (Brier do modelo idêntico em todos os pesos da grade —
+testado); w=0 reproduz o modelo-puro; sem odds ⇒ n=0 sem quebrar. Docs (README/CHANGELOG/AGENTS)
+sincronizadas. **Resolução:** Brier **monotônico decrescente** em w nos 49 jogos — 0,4420
+(modelo-puro) → 0,4179 (0,6) → 0,4100 (w=1,0): o mercado foi estritamente melhor que o modelo
+nesta Copa. `blend_weight` da edição 2026 elevado a **0,8** (captura o grosso do ganho sem abraçar
+o extremo w*=1,0 em amostra pequena; teste de trava atualizado com a justificativa). Limitação
+honesta: só jogos de **grupo** — no KO a convenção martj42 (placar inclui prorrogação) torna o
+desfecho de 90' ambíguo e corromperia o Brier em silêncio.
+**Commit:** c9fd4a7
+
+## ENG-39
+**Simulador de endgame é juiz e parte: gerador = modelo, cego à subestimação de empate em final**
+· P2 · `scoring`/`estratégia` · ✅ feito
+
+O `eng36_pool_sim` amostra os placares "reais" das MESMAS matrizes usadas para palpitar (premissa
+declarada). Consequência estrutural: ele **não pode punir o modelo por estar errado** — e o modelo
+está errado justamente onde a regra de endgame decide: P(empate 90') de uma final entre parelhos
+sai ~28% no DC (treinado em eliminatórias/amistosos de ritmo normal), contra **~60% empírico**
+(5 das 8 finais desde 1994 empatadas nos 90': 1994, 2006, 2010, 2014, 2022). A conclusão do ENG-36
+("zebra na final") foi tirada dentro dessa circularidade, e a política do líder (caça-empate) era
+subavaliada pela mesma razão.
+
+**Refs:** `scripts/eng36_pool_sim.py` (gerador compartilhado; políticas), `blend.rescale_matrix`
+(reusado para o tilt do gerador), `knockout.predict_knockout` (forbid_draw do ENG-32 — validado
+agregado em R32/R16, não por fase). Relacionado: ENG-36 (regra superada), ENG-32 (proíbe o palpite
+modal do próprio modelo na final), ENG-40 (expor no predict).
+**Correção:** (a) políticas `empate-final`/`empate-close` — empate nos 90' com o melhor placar da
+diagonal por E[pts] + camadas ET/pênaltis (a arma do líder, cirúrgica no peso ×4); (b)
+`--draw-inflate-final P` — infla P(empate 90') **só do gerador** da final via `rescale_matrix`
+(palpites seguem cegos), separando crença de realidade para o teste de sensibilidade.
+**Aceite:** relatório reproduzível com as novas políticas em ≥2 geradores (modelo puro e inflado)
+e decisão registrada no `BOLAO.md`. **Resolução:** `empate-final` **domina** `zebra-final` em
+TODOS os geradores — baseline (juiz = o próprio modelo cético): P(top3) 8,4% vs 5,5% a **custo
+zero** de E[pts] (a zebra custa ~8); gerador 45%: 10,4% vs 5,2%; gerador histórico 60%: P(#1)
+4,9% / P(top3) 14,3% vs 1,2%/3,8%, **ganhando** E[pts] (+13). Na frente, fiel segue dominante no
+baseline (48% vs 41%) ⇒ regra continua condicional ao standing. Decisão viva atualizada no
+`BOLAO.md` (final atrás ⇒ empate nos 90' + camadas; refazer a sim na véspera com o standing do
+dia, com e sem inflação).
+**Commit:** c9fd4a7
+
+## ENG-40
+**Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra
+superada** · P2 · `knockout`/`cli` · 🔴 todo
+
+A regra de endgame v2 (ENG-39) é "na final, atrás ⇒ empate nos 90' + camadas", mas o único modo
+endgame da CLI (`predict --pool-behind`, ENG-36) palpita a **zebra** nas 3 camadas — política
+dominada em todos os geradores testados. Até a final (19/07), o palpite de empate precisa ser
+aplicado à mão no app, com risco de erro operacional exatamente no jogo de peso ×4.
+
+**Refs:** `knockout.predict_knockout(pool_behind=…)` (onde a zebra mora),
+`knockout._zebra_prediction` (análogo a substituir/parametrizar), `pipeline.run`/`_max_ko_weight`
+(restrição aos estágios de peso máximo), `scripts/eng36_pool_sim.empate_pick` (a política de
+referência já implementada na sim).
+**Correção proposta:** trocar o comportamento do `--pool-behind` de zebra para empate-final
+(mesma restrição de peso máximo e mesma condicionalidade ao standing), OU parametrizar
+(`--pool-behind {zebra,empate}` com default empate). Antes de trocar, re-rodar a sim na véspera
+da final com o standing real para confirmar que a dominância se mantém.
+**Aceite:** com o modo ativo, o palpite da final sai empate nos 90' (melhor placar da diagonal
+por E[pts]) + camadas ET/pênaltis; jogos de peso não-máximo inalterados; teste cobrindo a seleção;
+docs (README/AGENTS/CHANGELOG/BOLAO/skill) sincronizadas; `pytest` verde.
+**Commit:** —

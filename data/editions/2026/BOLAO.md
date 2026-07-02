@@ -103,9 +103,10 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   14,3% vs 1,2%/3,8% da zebra — e **ganha** E[pts] (+13). `empate-close` (QF/SF apertadas também)
   ≈ empate-final; simplicidade favorece só a final. **Na frente: fiel segue dominante no baseline
   (48% vs 41%)** — refazer a sim na véspera da final com o standing do dia, com e sem
-  `--draw-inflate-final 0.45/0.60`, para confirmar o lado. ⚠️ `predict --pool-behind` ainda gera a
-  ZEBRA (ENG-36); até o ENG-40 expor o empate-final, o palpite de empate é aplicado **à mão** no
-  app. A zebra continua válida como referência histórica (entrada 01/07), mas está **superada**.
+  `--draw-inflate-final 0.45/0.60`, para confirmar o lado. **Execução: `predict --pool-behind`**
+  (ENG-40, 02/07 à noite) já gera o empate na final (hoje 0×0 + "vai aos pênaltis" + Argentina);
+  `--pool-behind zebra` mantém a política antiga para comparação. A zebra segue como referência
+  histórica (entrada 01/07), mas está **superada**.
 - **Palpite de 90' do mata-mata nunca sai empate (ENG-32, 01/07):** o E[pts] puro apostava 0×0/1×1
   em ~25% dos KO e zerava quando o jogo era decidido no tempo normal (te custou J73 e J79). Medido
   nos backtests: a vantagem de E[pts] do empate era ~0,04/jogo
@@ -114,9 +115,19 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   — **não contradiz a decisão de `risk`**
   (aqui reduz variância a custo de E[pts] ~nulo, não troca E[pts] por variância). Jogos de KO já
   disputados (J73–J79) não mudam: você seguiu o tool antigo (0×0); os snapshots arquivados preservam
-  aquilo, então a eficiência passada continua justa.
+  aquilo, então a eficiência passada continua justa. **Exceção deliberada (02/07):** o modo endgame
+  `--pool-behind` (empate, ENG-39/40) força o empate — só na final e só atrás; a validação do
+  ENG-32 foi agregada em R32/R16, onde a regra segue valendo.
 
 ## Histórico
+
+- 2026-07-02 (noite)
+  — **ENG-40 fechado: `predict --pool-behind` agora executa a regra de endgame v2.** O flag ganhou
+  valor opcional (`empate`|`zebra`, sem valor ⇒ `empate`): o modo empate palpita os 90' da final
+  no melhor placar de empate por E[pts] (hoje **0×0**, camadas "vai aos pênaltis" + Argentina) e
+  mantém prorrogação/pênaltis/avanço fiéis; SF/3º lugar (peso ×2) não mudam. Zebra preservada como
+  opção para a comparação da véspera. Verificado ponta-a-ponta (J104 0×0 com o modo; `out/` vivo
+  restaurado fiel em seguida). Some o risco operacional de aplicar o empate à mão no jogo ×4.
 
 - 2026-07-02 (tarde)
   — **Revisão crítica do projeto rendeu 1 bug real + 2 alavancas; regra de endgame revista.**

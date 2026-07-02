@@ -116,13 +116,14 @@ def _max_ko_weight(edition: Edition) -> float:
     return max((edition.scoring.weight(s) for s in stages), default=1.0)
 
 
-def run(edition: Edition, n_sims: int = 5000, seed: int = 12345, pool_behind: bool = False) -> PredictionRun:
+def run(edition: Edition, n_sims: int = 5000, seed: int = 12345, pool_behind: str | None = None) -> PredictionRun:
     """Executa o pipeline completo e devolve as linhas de palpite dos 104 jogos.
 
-    `pool_behind=True` (ENG-36): modo endgame de bolão — nos jogos de KO de peso **máximo** da
-    edição (a final, no Equilíbrio gradual), o palpite sai no lado **zebra** (descorrelação do
-    pelotão). Nos demais jogos, nada muda. Use só quando estiver atrás no ranking (a simulação
-    mostra que na frente o modo custa P(#1): ver `scripts/eng36_pool_sim.py`).
+    `pool_behind` (ENG-36/40): modo endgame de bolão — nos jogos de KO de peso **máximo** da
+    edição (a final, no Equilíbrio gradual), o palpite diverge do pelotão: `"empate"` (default do
+    flag; política dominante, ENG-39) empata os 90' com o melhor placar por E[pts]; `"zebra"`
+    (ENG-36, superada) palpita o lado azarão nas 3 camadas. Nos demais jogos, nada muda. Use só
+    quando estiver atrás no ranking (na frente o modo custa P(#1): `scripts/eng36_pool_sim.py`).
     """
     historical = load_historical()
     train = build_training_frame(edition, historical)
@@ -200,9 +201,10 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345, pool_behind: bo
                     mais_provavel=p.modal_scoreline,
                 )
             else:
-                # ENG-36: zebra só no(s) estágio(s) de peso máximo (final) quando pool_behind
-                zebra = pool_behind and edition.scoring.weight(f.stage) >= _max_ko_weight(edition)
-                kp = predict_knockout(home, away, mat, scorer, pool_behind=zebra)
+                # ENG-36/40: divergência só no(s) estágio(s) de peso máximo (final) quando pool_behind
+                max_weight = edition.scoring.weight(f.stage) >= _max_ko_weight(edition)
+                mode = pool_behind if pool_behind and max_weight else None
+                kp = predict_knockout(home, away, mat, scorer, pool_behind=mode)
                 et, pen = _ko_layer_text(kp, display(home), display(away))
                 row.update(
                     palpite=kp.scoreline,

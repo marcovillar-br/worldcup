@@ -90,19 +90,37 @@ def _zebra_prediction(matrix: np.ndarray, scorer: Scorer) -> tuple[int, int]:
     return max(cells, key=lambda c: scorer.expected_points(c, matrix))
 
 
+def _empate_prediction(matrix: np.ndarray, scorer: Scorer) -> tuple[int, int]:
+    """Melhor placar de EMPATE por E[pts] (diagonal) — modo bolão-atrás `empate` (ENG-39/40).
+
+    A arma do líder, cirúrgica: em final apertada, P(empate 90') real supera a precificada pela
+    base do app (5 das 8 finais desde 1994 empataram nos 90' vs ~28% no modelo), e o palpite de
+    empate descorrelaciona do pelotão (que aglomera no favorito) exatamente no peso ×4.
+    """
+    n = matrix.shape[0]
+    d = max(range(n), key=lambda k: scorer.expected_points((k, k), matrix))
+    return d, d
+
+
 def predict_knockout(
-    home: str, away: str, matrix: np.ndarray, scorer: Scorer, *, pool_behind: bool = False
+    home: str, away: str, matrix: np.ndarray, scorer: Scorer, *, pool_behind: str | None = None
 ) -> KnockoutPrediction:
     """Gera o palpite de mata-mata em 3 camadas a partir da matriz de placares.
 
-    `pool_behind=True` (ENG-36, modo endgame de bolão): palpita o lado **zebra** — 90' pelo melhor
-    E[pts] dentro do lado azarão e camadas ET/pênaltis também nele. Use SÓ nos jogos de peso máximo
-    (final) e SÓ quando estiver atrás no ranking: a simulação (`scripts/eng36_pool_sim.py`) mostra
-    P(#1) 0,7%→4,0% atrás, mas 47%→35% quando na frente — a regra é condicional ao standing.
+    `pool_behind` (modo endgame de bolão; use SÓ nos jogos de peso máximo e SÓ atrás no ranking):
+      - `"empate"` (ENG-39/40, política dominante): 90' no melhor placar de **empate** por E[pts];
+        camadas ET/pênaltis e avanço seguem o cálculo fiel. Domina a zebra em todos os geradores
+        testados (P(top-3) 8,4% vs 5,5% no baseline; 14,3% vs 3,8% no gerador histórico de finais).
+      - `"zebra"` (ENG-36, superada — mantida para a reavaliação da véspera): lado azarão nas
+        3 camadas, 90' pelo melhor E[pts] dentro dele.
+      - `None`: palpite fiel.
     """
+    if pool_behind not in (None, "empate", "zebra"):
+        raise ValueError(f"pool_behind inválido: {pool_behind!r} (use None, 'empate' ou 'zebra')")
+
     p_home, p_draw, p_away = outcome_probs_from_matrix(matrix)
 
-    if pool_behind:
+    if pool_behind == "zebra":
         zh, za = _zebra_prediction(matrix, scorer)
         zebra_side = "home" if zh > za else "away"
         return KnockoutPrediction(
@@ -118,8 +136,14 @@ def predict_knockout(
 
     # camada 1: melhor placar dos 90 min. No KO proíbe empate (ENG-32): um palpite de empate zera
     # sempre que o jogo é decidido no tempo normal, e seu ganho de E[pts] é marginal e apoiado numa
-    # leve super-estimação de empate no KO. O desfecho real (ET/pênaltis/avanço) segue nas camadas 2–3.
-    pred90 = scorer.best_prediction(matrix, forbid_draw=True)
+    # leve super-estimação de empate no KO. Exceção deliberada: modo `empate` (ENG-39) força a
+    # diagonal — na final, a frequência real de empate supera a do modelo E a precificada pelo app.
+    # O desfecho real (ET/pênaltis/avanço) segue nas camadas 2–3.
+    if pool_behind == "empate":
+        eh, ea = _empate_prediction(matrix, scorer)
+        pred90 = None
+    else:
+        pred90 = scorer.best_prediction(matrix, forbid_draw=True)
 
     # probabilidade condicional de cada lado vencer um confronto decidido (ET/pênaltis)
     decisive = p_home + p_away
@@ -143,8 +167,8 @@ def predict_knockout(
     return KnockoutPrediction(
         home=home,
         away=away,
-        home_goals=pred90.home_goals,
-        away_goals=pred90.away_goals,
+        home_goals=eh if pred90 is None else pred90.home_goals,
+        away_goals=ea if pred90 is None else pred90.away_goals,
         extra_time=extra_time,
         penalty_winner=penalty_winner,
         advancer=advancer,

@@ -11,6 +11,15 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
+### Alterado
+- **`--pool-behind` agora gera EMPATE na final por default; zebra vira opção** (ENG-40):
+  `predict`/`sync-results --pool-behind [empate|zebra]` (sem valor ⇒ `empate`).
+  `knockout.predict_knockout(pool_behind=)` passa de bool para `None|"empate"|"zebra"`: o modo
+  `empate` palpita os 90' no melhor placar de **empate** por E[pts] (diagonal) e mantém camadas
+  de prorrogação/pênaltis e avanço fiéis; `zebra` preserva o comportamento do ENG-36 (superado
+  pela simulação do ENG-39 em todos os geradores — mantido para a reavaliação da véspera).
+  Restrição de peso máximo (só a final) e condicionalidade ao standing inalteradas.
+
 ### Adicionado
 - **`blend-track --sweep`** (ENG-38): varre `blend_weight` 0,0..1,0 (passo 0,1) sobre os jogos de
   grupo disputados com odds e mostra o Brier de cada peso, com **uma só passada as-of** (1 fit/dia;

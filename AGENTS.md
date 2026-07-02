@@ -65,9 +65,10 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `scoring.py` — `Scorer`: pontos do Sistema I + `best_prediction()` (maximiza pontos esperados);
   `risk` controla a ousadia (0.5 = fiel; >0.5 arrisca mais zebras).
 - `knockout.py` — `predict_knockout()`: 3 camadas (placar 90', prorrogação, pênaltis) + quem avança.
-  `pool_behind=True` (ENG-36, via `predict --pool-behind`): palpita o lado **zebra** nas 3 camadas —
-  só nos jogos de peso máximo (final) e só quando o usuário está atrás no bolão (bolão é jogo
-  diferencial; números em `scripts/eng36_pool_sim.py`).
+  `pool_behind` (via `predict --pool-behind [empate|zebra]`, default do flag `empate`): modo endgame
+  de bolão, só nos jogos de peso máximo (final) e só quando o usuário está atrás (bolão é jogo
+  diferencial). `"empate"` (ENG-39/40, dominante): 90' no melhor empate por E[pts], camadas fiéis;
+  `"zebra"` (ENG-36, superada): lado azarão nas 3 camadas. Números em `scripts/eng36_pool_sim.py`.
 - `blend.py` — blend com odds de mercado (ENG-19): `devig` (tira a margem) → `log_opinion_pool`
   (média geométrica ponderada modelo×mercado, peso `blend_weight`) → `rescale_matrix`
   (ajusta matriz ao 1×2-alvo preservando forma condicional). Com **totals** (ENG-35): `devig_pair` →

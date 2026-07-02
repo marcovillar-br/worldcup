@@ -167,8 +167,16 @@ def cmd_predict(args: argparse.Namespace) -> int:
         return 0
 
     print(f"⚙️  Gerando palpites de {edition.spec.name} ({args.sims} simulações)...")
-    if args.pool_behind:
-        print("🎲 Modo bolão-atrás (ENG-36): palpite ZEBRA nos jogos de peso máximo (final). Use só se estiver atrás.")
+    if args.pool_behind == "empate":
+        print(
+            "🎲 Modo bolão-atrás (ENG-40): EMPATE nos 90' + camadas nos jogos de peso máximo (final). "
+            "Use só se estiver atrás."
+        )
+    elif args.pool_behind == "zebra":
+        print(
+            "🎲 Modo bolão-atrás (ENG-36, zebra — política superada pelo empate, ENG-39): palpite ZEBRA "
+            "nos jogos de peso máximo (final). Use só se estiver atrás."
+        )
     pred = run(edition, n_sims=args.sims, seed=args.seed, pool_behind=args.pool_behind)
     csv_path, md_path, html_path = save_outputs(pred, args.edition)
     print_console_summary(pred)
@@ -377,9 +385,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     pr.add_argument(
         "--pool-behind",
-        action="store_true",
-        help="modo endgame de bolão (ENG-36): palpita a ZEBRA nos jogos de peso máximo (final). "
-        "Use só quando estiver atrás no ranking — na frente, custa P(#1); ver scripts/eng36_pool_sim.py",
+        nargs="?",
+        const="empate",
+        default=None,
+        choices=("empate", "zebra"),
+        help="modo endgame de bolão nos jogos de peso máximo (final): 'empate' (default; empata os 90' "
+        "por E[pts] + camadas — ENG-39/40) ou 'zebra' (lado azarão, ENG-36, superada). Use só quando "
+        "estiver atrás no ranking — na frente, custa P(#1); ver scripts/eng36_pool_sim.py",
     )
     pr.add_argument(
         "--as-of",
@@ -413,9 +425,13 @@ def build_parser() -> argparse.ArgumentParser:
     sr.add_argument("--no-predict", action="store_true", help="só sincroniza, não repalpita")
     sr.add_argument(
         "--pool-behind",
-        action="store_true",
-        help="modo endgame de bolão (ENG-36): palpita a ZEBRA nos jogos de peso máximo (final). "
-        "Use só quando estiver atrás no ranking — na frente, custa P(#1); ver scripts/eng36_pool_sim.py",
+        nargs="?",
+        const="empate",
+        default=None,
+        choices=("empate", "zebra"),
+        help="modo endgame de bolão nos jogos de peso máximo (final): 'empate' (default; empata os 90' "
+        "por E[pts] + camadas — ENG-39/40) ou 'zebra' (lado azarão, ENG-36, superada). Use só quando "
+        "estiver atrás no ranking — na frente, custa P(#1); ver scripts/eng36_pool_sim.py",
     )
     sr.add_argument(
         "--source-url",

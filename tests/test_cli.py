@@ -119,9 +119,12 @@ def test_archive_outputs_marks_reconstructed(tmp_path, monkeypatch):
 
 
 def test_predict_parser_accepts_pool_behind():
-    # ENG-36: flag opt-in do modo endgame; default False (fiel)
+    # ENG-36/40: flag opt-in do modo endgame; default None (fiel); sem valor ⇒ 'empate'
+    # (política dominante, ENG-39); 'zebra' mantida para a reavaliação da véspera.
     from worldcup.cli import build_parser
 
     p = build_parser()
-    assert p.parse_args(["predict"]).pool_behind is False
-    assert p.parse_args(["predict", "--pool-behind"]).pool_behind is True
+    for cmd in ("predict", "sync-results"):
+        assert p.parse_args([cmd]).pool_behind is None
+        assert p.parse_args([cmd, "--pool-behind"]).pool_behind == "empate"
+        assert p.parse_args([cmd, "--pool-behind", "zebra"]).pool_behind == "zebra"

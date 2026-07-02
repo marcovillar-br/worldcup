@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 
 import numpy as np
+import pytest
 
 from worldcup.edition import ScoringConfig
 from worldcup.knockout import _expected_goals, _extra_time_probs, predict_knockout
@@ -80,11 +81,11 @@ def test_layer1_never_predicts_a_draw_in_knockout():
     assert kp.extra_time == "penalties"  # equilíbrio ⇒ pênaltis (camada 2 inalterada)
 
 
-def test_pool_behind_picks_the_underdog_side_with_all_layers():
-    # ENG-36: modo bolão-atrás — 90' no lado ZEBRA (melhor E[pts] dentro dele), camadas ET/pên.
-    # e avanço também na zebra (descorrelação máxima do pelotão, que aglomera no favorito).
+def test_pool_behind_zebra_picks_the_underdog_side_with_all_layers():
+    # ENG-36: modo bolão-atrás 'zebra' — 90' no lado ZEBRA (melhor E[pts] dentro dele), camadas
+    # ET/pên. e avanço também na zebra (descorrelação máxima do pelotão, que aglomera no favorito).
     m = _poisson_matrix(2.8, 0.6)  # mandante claramente favorito -> zebra = visitante
-    kp = predict_knockout("H", "A", m, _scorer(), pool_behind=True)
+    kp = predict_knockout("H", "A", m, _scorer(), pool_behind="zebra")
     assert kp.away_goals > kp.home_goals  # lado zebra
     assert kp.extra_time == "away"
     assert kp.penalty_winner == "away"
@@ -93,7 +94,7 @@ def test_pool_behind_picks_the_underdog_side_with_all_layers():
 
 def test_pool_behind_zebra_score_is_expected_points_optimal_within_side():
     m = _poisson_matrix(2.8, 0.6)
-    kp = predict_knockout("H", "A", m, _scorer(), pool_behind=True)
+    kp = predict_knockout("H", "A", m, _scorer(), pool_behind="zebra")
     sc = _scorer()
     n = m.shape[0]
     away_cells = [(i, j) for i in range(n) for j in range(n) if j > i]
@@ -101,6 +102,36 @@ def test_pool_behind_zebra_score_is_expected_points_optimal_within_side():
     assert (kp.home_goals, kp.away_goals) == best
 
 
-def test_pool_behind_false_is_unchanged():
+def test_pool_behind_empate_forces_best_draw_by_expected_points():
+    # ENG-39/40: modo 'empate' — 90' no melhor placar de EMPATE por E[pts] (diagonal), mesmo com
+    # favorito claro; a política dominante do endgame (finais empatam ~60% nos 90' historicamente).
     m = _poisson_matrix(2.8, 0.6)
-    assert predict_knockout("H", "A", m, _scorer()) == predict_knockout("H", "A", m, _scorer(), pool_behind=False)
+    kp = predict_knockout("H", "A", m, _scorer(), pool_behind="empate")
+    assert kp.home_goals == kp.away_goals  # diagonal
+    sc = _scorer()
+    best_d = max(range(m.shape[0]), key=lambda k: sc.expected_points((k, k), m))
+    assert kp.home_goals == best_d
+
+
+def test_pool_behind_empate_keeps_fiel_layers_and_advancer():
+    # As camadas 2–3 e o avanço NÃO mudam no modo 'empate': só o placar dos 90' diverge do fiel
+    # (a descorrelação mora no resultado, não em trocar o classificado).
+    m = _poisson_matrix(2.8, 0.6)
+    fiel = predict_knockout("H", "A", m, _scorer())
+    emp = predict_knockout("H", "A", m, _scorer(), pool_behind="empate")
+    assert emp.extra_time == fiel.extra_time
+    assert emp.penalty_winner == fiel.penalty_winner
+    assert emp.advancer == fiel.advancer
+    assert emp.p_advance_home == fiel.p_advance_home
+    assert (emp.home_goals, emp.away_goals) != (fiel.home_goals, fiel.away_goals)  # fiel nunca empata
+
+
+def test_pool_behind_none_is_unchanged():
+    m = _poisson_matrix(2.8, 0.6)
+    assert predict_knockout("H", "A", m, _scorer()) == predict_knockout("H", "A", m, _scorer(), pool_behind=None)
+
+
+def test_pool_behind_invalid_value_raises():
+    m = _poisson_matrix(2.8, 0.6)
+    with pytest.raises(ValueError, match="pool_behind"):
+        predict_knockout("H", "A", m, _scorer(), pool_behind="zebra-final")

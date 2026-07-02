@@ -153,9 +153,10 @@ prorrogação/pênaltis) domina a zebra — P(top-3) 8,4% vs 5,5% **a custo zero
 vantagem cresce sob o gerador realista: `--draw-inflate-final P` infla P(empate 90') **só do
 gerador** da final (5 das 8 finais desde 1994 empataram nos 90', ~60%, vs ~28% no modelo) e a
 0,60 dá P(#1) 4,9% / P(top-3) 14,3% contra 1,2%/3,8% da zebra; **na frente**, fiel domina.
-`worldcup predict --pool-behind` ainda palpita a **zebra** nos jogos de peso máximo (ENG-36);
-a política dominante `empate-final` está no backlog para ser exposta (ENG-40) — até lá,
-aplique-a manualmente na manhã da final, e apenas se estiver **atrás** no ranking.
+Para aplicar na prática: `worldcup predict --pool-behind` gera o **empate** nos 90' (melhor
+placar da diagonal por E[pts] + camadas de prorrogação/pênaltis) **só nos jogos de peso máximo**
+(a final) — ENG-40; `--pool-behind zebra` mantém a política antiga do ENG-36 para comparação na
+véspera. Use apenas na manhã da final e apenas se estiver **atrás** no ranking.
 
 **Apresentação do projeto** — um deck HTML autocontido (tema "Placar Noturno", 16:9, navegável) que
 explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):

@@ -64,17 +64,19 @@ porque, depois que novos resultados entram e o modelo reajusta, o palpite de um 
 reproduzível.
 
 **Blend com odds de mercado (opcional):** `data/editions/<edição>/odds.csv` com
-`match_id,home,draw,away` em odds decimais. A forma prática de preencher é
-`uv run python scripts/fetch_odds.py` (busca a The Odds API com a chave em `.env` e **mescla** no
-`odds.csv`, preservando os jogos já disputados — o `blend-track` acumula o tally sobre todos eles).
-Para editar à mão, **acrescente** os jogos de cada rodada (não sobrescreva). A ferramenta
+`match_id,home,draw,away` em odds decimais e, opcionalmente, `total_line,over,under` (o mercado de
+**over/under** — ENG-35). A forma prática de preencher é
+`uv run python scripts/fetch_odds.py` (busca 1×2 **e totals** da The Odds API com a chave em `.env` e
+**mescla** no `odds.csv`, preservando os jogos já disputados — o `blend-track` acumula o tally sobre
+todos eles). Para editar à mão, **acrescente** os jogos de cada rodada (não sobrescreva). A ferramenta
 tira a margem da casa, combina as odds com as probabilidades do modelo (média geométrica ponderada,
-peso `blend_weight`) e ajusta o palpite. A edição 2026 já vem com `blend_weight = 0.6` no
+peso `blend_weight`) e ajusta o palpite; com totals, também ancora a **taxa de gols** do placar no
+mercado (sem totals num jogo, só o 1×2 é corrigido). A edição 2026 já vem com `blend_weight = 0.6` no
 `scoring.toml` (prior de princípio: odds de fechamento são bem calibradas); `--blend-weight 0` ou a
 ausência de `odds.csv` ⇒ só o modelo, sem mudança. Por que ajuda: o modelo é estatístico e cego a
 escalações/lesões/motivação, que as odds capturam. Para medir se o blend está de fato ajudando,
 rode `worldcup blend-track` conforme registra odds + resultados — compara o Brier do blend vs. o do
-modelo-puro nos jogos já disputados com odds.
+modelo-puro nos jogos já disputados com odds (e, havendo totals, o Brier binário do over/under).
 
 Para **reconstruir** a visão de um dia passado, use `predict --as-of AAAA-MM-DD`: reajusta o modelo
 usando só os resultados conhecidos até a véspera daquela data e grava

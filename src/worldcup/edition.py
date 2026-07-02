@@ -96,6 +96,10 @@ class Edition(BaseModel):
     # odds de mercado opcionais por jogo (match_id -> odds decimais mandante/empate/visitante).
     # Carregadas de odds.csv se existir; ausência ⇒ blend desligado para o jogo (ENG-19).
     odds: dict[int, tuple[float, float, float]] = Field(default_factory=dict)
+    # mercado de totals opcional por jogo (match_id -> (linha de gols, odd over, odd under)),
+    # das colunas total_line/over/under do MESMO odds.csv (opcionais — ENG-35). Sem totals para
+    # um jogo ⇒ o blend corrige só o 1×2 (comportamento pré-ENG-35).
+    totals: dict[int, tuple[float, float, float]] = Field(default_factory=dict)
     # vencedores de disputas de pênaltis por jogo de KO (match_id -> seleção canônica), capturados
     # à mão quando a fonte oficial ainda não tem (latência). De shootouts.csv se existir (ENG-30).
     shootouts: dict[int, str] = Field(default_factory=dict)
@@ -227,6 +231,25 @@ def _load_odds(path: Path) -> dict[int, tuple[float, float, float]]:
     return odds
 
 
+def _load_totals(path: Path) -> dict[int, tuple[float, float, float]]:
+    """Lê as colunas opcionais de totals do `odds.csv`: `total_line,over,under` (ENG-35).
+
+    Arquivos antigos (só 1×2) não têm as colunas ⇒ vazio; linhas com totals em branco são
+    ignoradas (jogo segue com blend só de 1×2).
+    """
+    if not path.exists():
+        return {}
+    totals: dict[int, tuple[float, float, float]] = {}
+    with path.open(newline="") as fh:
+        for row in csv.DictReader(fh):
+            cells = [(row.get(k) or "").strip() for k in ("total_line", "over", "under")]
+            if not all(cells):
+                continue
+            line, over, under = (float(c) for c in cells)
+            totals[int(row["match_id"])] = (line, over, under)
+    return totals
+
+
 def _load_shootouts(path: Path) -> dict[int, str]:
     """Lê `shootouts.csv` (opcional): `match_id,winner` (vencedor dos pênaltis). Ausente ⇒ vazio.
 
@@ -258,6 +281,7 @@ def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
     groups = _load_groups(directory / "groups.csv")
     fixtures = _load_fixtures(directory / "fixtures.csv")
     odds = _load_odds(directory / "odds.csv")
+    totals = _load_totals(directory / "odds.csv")
     shootouts = _load_shootouts(directory / "shootouts.csv")
     return Edition(
         spec=spec,
@@ -266,5 +290,6 @@ def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
         scoring=scoring,
         directory=directory,
         odds=odds,
+        totals=totals,
         shootouts=shootouts,
     )

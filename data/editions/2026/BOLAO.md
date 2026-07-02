@@ -44,11 +44,23 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   FIFA — J74/J77/J81 saíam com Bósnia/Paraguai/Suécia rodados. Cravada a alocação oficial (row 67,
   grupos B/D/E/F/I/J/K/L) em `tournament.toml`. Agora: J74 Alemanha×**Paraguai**, J77 França×**Suécia**,
   J81 EUA×**Bósnia**. Os 16 confrontos batem com o oficial (Yahoo/Sky/Wikipedia).
-- **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19). Scorer
+- **Config em uso:** `risk 0.5` + `blend_weight 0.6` (blend com odds **ATIVO** — ENG-19; desde
+  01/07 também **ancora a taxa de gols no mercado de totals** — ENG-35, efeito imediato: J86/J87
+  1×0→2×0, J89 0×1→1×2 nos jogos com o mercado). Scorer
   hierárquico (ENG-23). Admin do bolão usa Sistema I sem customização. **Rotina por rodada e formato
   do `odds.csv`: no README** (`fetch_odds.py` → `predict` → `blend-track`); a chave da The Odds API
   vive no `.env`. Odds em 30/06: **62 jogos** no `odds.csv` (49 grupo + 13 KO, após ENG-28 destravar o
   casamento do mata-mata).
+
+- **Perfil do líder (Thiago Diogo, 337 pts, #1 — screenshots de 01/07, "Pontos por Jogo"):** aposta
+  **empate/prorrogação no KO** sistematicamente. R32 dele: J73 16 (cravou 0×1), J74 0, **J75 22**
+  (cravou 1×1 +16 e prorrogação empatada +6; errou pênaltis), J76 12, J77 10, J78 16, J79 10, J80 10,
+  J82 6 (Pror.) = **102 pts em 9 jogos**. O grosso da vantagem é o J75 (+22 onde o campo zerou); nos
+  jogos decididos nos 90' (J76/J77/J78) o tool o bateu por +12. É o perfil que o ENG-32 aposentou —
+  pagou nesta amostra (3/10 KOs foram à prorrogação), sangra se os próximos se decidirem nos 90'
+  (~75% histórico). Vigiar: se o monitor de empates cruzar 2σ, reavaliar a política anti-empate do
+  ENG-32 para esta Copa. Ação imediata: preencher **sempre** as camadas Pror./Pên. do tool no app
+  (+6/acerto; o J82 rendeu +6 hoje por isso).
 
 ## Decisões vivas
 

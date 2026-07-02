@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Busca odds 1X2 da The Odds API e MESCLA em data/editions/<ed>/odds.csv (ENG-19).
+"""Busca odds 1X2 + totals da The Odds API e MESCLA em data/editions/<ed>/odds.csv (ENG-19/ENG-35).
 
 Rotina por rodada do blend com odds (ver BOLAO.md). Faz:
   1. lê a chave `ODDS_API_KEY` (do ambiente ou do `.env` na raiz);
-  2. baixa as odds h2h (decimal) da Copa (`soccer_fifa_world_cup`);
+  2. baixa as odds h2h + totals (decimal) da Copa (`soccer_fifa_world_cup`);
   3. casa cada evento com um jogo **ainda não disputado** — de grupo, ou de mata-mata já definido pelo
      bracket real (ENG-28) — do fixture (por nomes canônicos);
-  4. extrai a odd da **Pinnacle** (casa sharp; mediana das casas como fallback);
+  4. extrai a odd da **Pinnacle** (casa sharp; mediana das casas como fallback — no totals, mediana
+     na linha **modal** entre as casas, para não misturar preços de linhas diferentes);
   5. **MESCLA** no `odds.csv` existente — atualiza/adiciona os jogos atuais e **preserva** os que
-     saíram da lista (já disputados): senão o `blend-track` perderia o tally acumulado.
+     saíram da lista (já disputados): senão o `blend-track` perderia o tally acumulado. As colunas
+     `total_line,over,under` são opcionais (ENG-35): arquivos antigos seguem válidos.
 
 Uso: `uv run python scripts/fetch_odds.py [--edition 2026] [--region eu]`.
 Roda no venv (importa `worldcup`). Não commita a chave (vive no `.env`, gitignored).
@@ -34,6 +36,8 @@ SPORT = "soccer_fifa_world_cup"
 API_URL = "https://api.the-odds-api.com/v4/sports/{sport}/odds/"
 
 Triple = tuple[float, float, float]
+# Totals de um jogo: (linha de gols, odd decimal do over, odd decimal do under) — ENG-35.
+Totals = tuple[float, float, float]
 
 
 def load_api_key() -> str:
@@ -56,29 +60,38 @@ def merge_odds(existing: dict[int, Triple], fetched: dict[int, Triple]) -> dict[
     return {**existing, **fetched}
 
 
-def read_existing(path: Path) -> dict[int, Triple]:
+def read_existing(path: Path) -> tuple[dict[int, Triple], dict[int, Totals]]:
+    """Lê o odds.csv existente → (1×2 por jogo, totals por jogo). Colunas de totals são opcionais
+    (arquivos pré-ENG-35 não as têm ⇒ totals vazio)."""
     if not path.exists():
-        return {}
-    out: dict[int, Triple] = {}
+        return {}, {}
+    h2h: dict[int, Triple] = {}
+    totals: dict[int, Totals] = {}
     with path.open(newline="") as fh:
         for row in csv.DictReader(fh):
+            mid = int(row["match_id"])
             cells = [(row.get(k) or "").strip() for k in ("home", "draw", "away")]
             if all(cells):
-                out[int(row["match_id"])] = (float(cells[0]), float(cells[1]), float(cells[2]))
-    return out
+                h2h[mid] = (float(cells[0]), float(cells[1]), float(cells[2]))
+            tcells = [(row.get(k) or "").strip() for k in ("total_line", "over", "under")]
+            if all(tcells):
+                totals[mid] = (float(tcells[0]), float(tcells[1]), float(tcells[2]))
+    return h2h, totals
 
 
-def write_odds(path: Path, odds: dict[int, Triple]) -> None:
+def write_odds(path: Path, odds: dict[int, Triple], totals: dict[int, Totals] | None = None) -> None:
+    """Grava o odds.csv com as colunas de totals (vazias nos jogos sem o mercado)."""
+    totals = totals or {}
     with path.open("w", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["match_id", "home", "draw", "away"])
+        w.writerow(["match_id", "home", "draw", "away", "total_line", "over", "under"])
         for mid in sorted(odds):
-            w.writerow([mid, *odds[mid]])
+            w.writerow([mid, *odds[mid], *(totals.get(mid) or ("", "", ""))])
 
 
 def fetch_events(api_key: str, region: str) -> tuple[list[dict], str]:
     """Eventos com odds da Copa + créditos restantes (header da API)."""
-    params = f"?apiKey={api_key}&regions={region}&markets=h2h&oddsFormat=decimal"
+    params = f"?apiKey={api_key}&regions={region}&markets=h2h,totals&oddsFormat=decimal"
     url = API_URL.format(sport=SPORT) + params
     try:
         with urllib.request.urlopen(url, timeout=30) as resp:
@@ -115,6 +128,46 @@ def _median_price_map(event: dict) -> dict[str, list[float]]:
     return acc
 
 
+def _totals_from_outcomes(outcomes: list[dict]) -> Totals | None:
+    """Par over/under de um mercado de totals → (linha, over, under); None se incompleto."""
+    over = next((o for o in outcomes if o["name"] == "Over"), None)
+    under = next((o for o in outcomes if o["name"] == "Under"), None)
+    if over is None or under is None or over.get("point") is None:
+        return None
+    return (float(over["point"]), float(over["price"]), float(under["price"]))
+
+
+def _book_totals(event: dict, book: str) -> Totals | None:
+    """Totals da casa preferida; None se ela não cota o mercado no evento."""
+    bk = next((b for b in event["bookmakers"] if b["key"] == book), None)
+    if not bk:
+        return None
+    mkt = next((m for m in bk["markets"] if m["key"] == "totals"), None)
+    if not mkt:
+        return None
+    return _totals_from_outcomes(mkt["outcomes"])
+
+
+def _median_totals(event: dict) -> Totals | None:
+    """Fallback de totals: escolhe a linha **modal** entre as casas e tira a mediana dos preços
+    cotados naquela linha — misturar preços de linhas diferentes enviesaria o par over/under."""
+    by_line: dict[float, list[tuple[float, float]]] = {}
+    for b in event["bookmakers"]:
+        mkt = next((m for m in b["markets"] if m["key"] == "totals"), None)
+        if not mkt:
+            continue
+        t = _totals_from_outcomes(mkt["outcomes"])
+        if t is not None:
+            by_line.setdefault(t[0], []).append((t[1], t[2]))
+    if not by_line:
+        return None
+    # linha modal; empate de contagem → a linha mais baixa (determinístico)
+    line = max(sorted(by_line), key=lambda ln: len(by_line[ln]))
+    overs = [p[0] for p in by_line[line]]
+    unders = [p[1] for p in by_line[line]]
+    return (line, statistics.median(overs), statistics.median(unders))
+
+
 def _matchable_fixtures(edition: Edition) -> dict[frozenset[str], tuple[int, str, str]]:
     """Jogos **não disputados** casáveis com o feed de odds → `{par de times: (match_id, mandante, visitante)}`.
 
@@ -134,13 +187,18 @@ def _matchable_fixtures(edition: Edition) -> dict[frozenset[str], tuple[int, str
     return out
 
 
-def map_to_fixtures(events: list[dict], edition: Edition, book: str) -> tuple[dict[int, Triple], int, list[str]]:
+def map_to_fixtures(
+    events: list[dict], edition: Edition, book: str
+) -> tuple[dict[int, Triple], dict[int, Totals], int, list[str]]:
     """Casa eventos→jogos não disputados (grupo + mata-mata resolvido); alinha odds aos times do confronto.
 
-    Devolve (odds por match_id, nº via fallback de mediana, lista de pulados com motivo).
+    Devolve (odds 1×2 por match_id, totals por match_id, nº via fallback de mediana, pulados com
+    motivo). Totals são melhor-esforço: evento sem o mercado segue só com o 1×2 (blend degrada
+    graciosamente para o comportamento pré-ENG-35 naquele jogo).
     """
     unplayed = _matchable_fixtures(edition)
     odds: dict[int, Triple] = {}
+    totals: dict[int, Totals] = {}
     fallback = 0
     skipped: list[str] = []
     for ev in events:
@@ -166,7 +224,11 @@ def map_to_fixtures(events: list[dict], edition: Edition, book: str) -> tuple[di
             odds[match_id] = (price[home], price["Draw"], price[away])
         except KeyError as err:
             skipped.append(f"J{match_id} (resultado ausente: {err})")
-    return odds, fallback, skipped
+            continue
+        t = _book_totals(ev, book) or _median_totals(ev)
+        if t is not None:
+            totals[match_id] = t
+    return odds, totals, fallback, skipped
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -178,21 +240,23 @@ def main(argv: list[str] | None = None) -> int:
 
     edition = load_edition(args.edition)
     path = EDITIONS_DIR / str(args.edition) / "odds.csv"
-    existing = read_existing(path)
+    existing, existing_totals = read_existing(path)
 
     events, remaining = fetch_events(load_api_key(), args.region)
-    fetched, fallback, skipped = map_to_fixtures(events, edition, args.book)
+    fetched, fetched_totals, fallback, skipped = map_to_fixtures(events, edition, args.book)
 
     merged = merge_odds(existing, fetched)
+    merged_totals = merge_odds(existing_totals, fetched_totals)  # mesma semântica: preserva disputados
     added = sorted(set(fetched) - set(existing))
     updated = sorted(set(fetched) & set(existing))
     preserved = sorted(set(existing) - set(fetched))
-    write_odds(path, merged)
+    write_odds(path, merged, merged_totals)
 
     print(f"📥 The Odds API: {len(events)} eventos, {remaining} créditos restantes.")
     print(
         f"✅ odds.csv: {len(merged)} jogos no total "
-        f"(+{len(added)} novos, {len(updated)} atualizados, {len(preserved)} preservados/disputados)."
+        f"(+{len(added)} novos, {len(updated)} atualizados, {len(preserved)} preservados/disputados; "
+        f"totals em {len(merged_totals)})."
     )
     if fallback:
         print(f"   ⚠️  {fallback} jogo(s) sem '{args.book}' → mediana das casas.")

@@ -63,6 +63,16 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   Simulador. Mantido `base_log_coeff = 7,55` + round; resíduo ±1/jogo é limitação aceita (ver SPEC §4.1).
 
 ### Adicionado
+- **Blend de totals — a taxa de gols do placar agora segue o mercado** (`blend.py`): o rescale de
+  1×2 preserva a forma condicional, então os gols esperados (onde vivem o exato +5 e o
+  `winner_goals` +3) ficavam 100% modelo. Novos passos: `devig_pair` (des-vig do over/under) →
+  `implied_total_rate` (λ-total implícito da linha, por bissecção na Poisson) → pool geométrico de
+  taxas (pool logarítmico de Poissons **é** Poisson na média geométrica) → `tilt_matrix_to_total`
+  (tilting `c^(i+j)`, preserva a partição mandante/visitante), iterado com o rescale (1×2 exato).
+  `odds.csv` ganha as colunas **opcionais** `total_line,over,under` (arquivos antigos seguem válidos);
+  `scripts/fetch_odds.py` busca `h2h,totals` (fallback de totals: mediana na linha **modal** entre as
+  casas); `blend-track` ganha o Brier binário do over/under (modelo vs blend). Sem totals num jogo ⇒
+  blend só de 1×2 (degradação graciosa, caminho antigo byte-idêntico). (ENG-35)
 - **Subcomando `worldcup status` (alias `ws`)** — briefing read-only de start-of-day
   (`status.build_status`/`format_status`, `cli.cmd_status`): numa saída só reidrata o contexto da
   campanha — jogos disputados/total, fase atual, jogos de hoje (disputado ✓ / pendente ⏳), próximos

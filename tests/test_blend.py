@@ -10,8 +10,13 @@ import pytest
 from worldcup.blend import (
     blend_matrix_with_odds,
     devig,
+    devig_pair,
+    expected_total_goals,
+    implied_total_rate,
     log_opinion_pool,
+    prob_total_over,
     rescale_matrix,
+    tilt_matrix_to_total,
 )
 from worldcup.scoring import outcome_probs_from_matrix
 
@@ -120,3 +125,100 @@ def test_blend_partial_moves_toward_market():
     blended = outcome_probs_from_matrix(blend_matrix_with_odds(m, odds, 0.5))
     # P(visitante) do blend fica entre o modelo e o mercado, mais alta que a do modelo
     assert model_probs[2] < blended[2] < market_probs[2]
+
+
+# ----------------------------------------------------------- totals (ENG-35)
+def _poisson_matrix(lam_home: float, lam_away: float, n: int = 9) -> np.ndarray:
+    """Produto de Poissons truncado (sem correção DC) — matriz sintética com λ conhecidos."""
+    from scipy.stats import poisson
+
+    ph = poisson.pmf(np.arange(n), lam_home)
+    pa = poisson.pmf(np.arange(n), lam_away)
+    m = np.outer(ph, pa)
+    return m / m.sum()
+
+
+def test_devig_pair_fair_odds():
+    assert devig_pair(2.0, 2.0) == pytest.approx((0.5, 0.5))
+
+
+def test_devig_pair_removes_margin():
+    p_over, p_under = devig_pair(1.85, 1.95)
+    assert p_over + p_under == pytest.approx(1.0)
+    assert p_over < 1 / 1.85  # margem removida
+
+
+def test_devig_pair_rejects_nonsense_odds():
+    with pytest.raises(ValueError, match="odds decimais"):
+        devig_pair(1.0, 2.0)
+
+
+def test_implied_total_rate_inverts_poisson():
+    # p_over exato de uma Poisson(2.7) na linha 2.5 -> recupera λ=2.7
+    from scipy.stats import poisson
+
+    lam = 2.7
+    p_over = float(poisson.sf(2, lam))  # P(T > 2.5) = P(T >= 3)
+    assert implied_total_rate(2.5, p_over) == pytest.approx(lam, rel=1e-4)
+
+
+def test_implied_total_rate_rejects_degenerate_prob():
+    with pytest.raises(ValueError, match="p_over"):
+        implied_total_rate(2.5, 1.0)
+
+
+def test_expected_total_goals_of_poisson_product():
+    m = _poisson_matrix(1.5, 1.0)
+    # truncado em 8 gols por lado, o E[total] fica ~λh+λa
+    assert expected_total_goals(m) == pytest.approx(2.5, rel=1e-3)
+
+
+def test_tilt_hits_target_total_and_preserves_home_share():
+    # grade folgada (15): a invariância do share sob tilting é exata no produto de Poissons
+    # NÃO-truncado; com grade curta o rabo truncado desloca a fração em ~1e-4
+    m = _poisson_matrix(1.5, 1.0, n=15)
+    out = tilt_matrix_to_total(m, 3.5)
+    assert expected_total_goals(out) == pytest.approx(3.5, rel=1e-6)
+    assert out.sum() == pytest.approx(m.sum())  # massa preservada
+    # tilting c^(i+j) escala as duas taxas por c -> a fração do mandante no total não muda
+    n = m.shape[0]
+    goals = np.arange(n, dtype=float)
+    home_share_before = float((m.sum(axis=1) * goals).sum()) / expected_total_goals(m)
+    home_share_after = float((out.sum(axis=1) * goals).sum()) / expected_total_goals(out)
+    assert home_share_after == pytest.approx(home_share_before, rel=1e-6)
+
+
+def test_prob_total_over_counts_mass_above_line():
+    m = _poisson_matrix(1.5, 1.0)
+    n = m.shape[0]
+    totals = np.arange(n)[:, None] + np.arange(n)[None, :]
+    assert prob_total_over(m, 2.5) == pytest.approx(float(m[totals >= 3].sum()))
+
+
+def test_blend_with_totals_hits_pooled_targets():
+    m = _poisson_matrix(1.5, 1.0)  # λ_model = 2.5
+    odds = (2.1, 3.3, 3.8)
+    w = 0.6
+    # mercado com odds "justas" na linha 2.5 implicando λ conhecido (3.2)
+    from scipy.stats import poisson
+
+    lam_market = 3.2
+    p_over = float(poisson.sf(2, lam_market))
+    totals = (2.5, 1.0 / p_over, 1.0 / (1.0 - p_over))
+    out = blend_matrix_with_odds(m, odds, w, totals=totals)
+    # 1×2 bate o pool exatamente (rescale é o último passo)
+    target_1x2 = log_opinion_pool(outcome_probs_from_matrix(m), devig(odds), w)
+    assert outcome_probs_from_matrix(out) == pytest.approx(target_1x2, abs=1e-9)
+    # taxa total converge ao pool geométrico dos λ (tolerância da interação tilt↔rescale)
+    lam_target = 2.5 ** (1 - w) * lam_market**w
+    assert expected_total_goals(out) == pytest.approx(lam_target, rel=1e-2)
+
+
+def test_blend_without_totals_is_pre_eng35_path():
+    # sem totals, o resultado é EXATAMENTE o caminho antigo (pool de 1×2 + rescale)
+    m = _toy_matrix()
+    odds = (1.90, 3.40, 4.20)
+    w = 0.6
+    old = rescale_matrix(m, log_opinion_pool(outcome_probs_from_matrix(m), devig(odds), w))
+    assert np.array_equal(blend_matrix_with_odds(m, odds, w), old)
+    assert np.array_equal(blend_matrix_with_odds(m, odds, w, totals=None), old)

@@ -255,6 +255,11 @@ def cmd_blend_track(args: argparse.Namespace) -> int:
         print(f"   Brier modelo-puro : {res.brier_model:.4f}")
         print(f"   Brier blend       : {res.brier_blend:.4f}")
         print(f"   Δ = {res.delta:+.4f}  ({better}; menor Brier é melhor)")
+        if res.n_totals:
+            better_t = "blend MELHOR" if res.delta_totals > 0 else "modelo MELHOR" if res.delta_totals < 0 else "empate"
+            print(f"   Totals (ENG-35), {res.n_totals} jogo(s) — Brier binário do over/under:")
+            print(f"      modelo {res.brier_total_model:.4f} vs blend {res.brier_total_blend:.4f}")
+            print(f"      Δ = {res.delta_totals:+.4f}  ({better_t})")
 
     # Monitor de regime de empates (ENG-22) — sobre todos os jogos de grupo disputados.
     draw = draw_regime_report(edition)

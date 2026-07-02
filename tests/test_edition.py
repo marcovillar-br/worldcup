@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from worldcup.edition import _load_odds, _load_shootouts, load_edition
+from worldcup.edition import _load_odds, _load_shootouts, _load_totals, load_edition
 
 
 def test_as_of_clears_results_from_cutoff_onward():
@@ -53,6 +53,27 @@ def test_load_odds_parses_and_skips_blanks(tmp_path):
 
 def test_load_odds_missing_file_is_empty(tmp_path):
     assert _load_odds(tmp_path / "nope.csv") == {}
+
+
+def test_load_totals_parses_optional_columns(tmp_path):
+    # ENG-35: colunas total_line/over/under no MESMO odds.csv; em branco ou ausentes ⇒ sem totals
+    path = tmp_path / "odds.csv"
+    path.write_text(
+        "match_id,home,draw,away,total_line,over,under\n"
+        "21,1.90,3.40,4.20,2.5,1.85,1.95\n"
+        "22,2.10,3.30,3.60,,,\n",  # jogo com 1×2 mas sem totals: blend degrada para só-1×2
+        encoding="utf-8",
+    )
+    totals = _load_totals(path)
+    assert totals == {21: (2.5, 1.85, 1.95)}
+    assert set(_load_odds(path)) == {21, 22}  # o 1×2 não é afetado pelas colunas novas
+
+
+def test_load_totals_legacy_file_and_missing(tmp_path):
+    legacy = tmp_path / "odds.csv"
+    legacy.write_text("match_id,home,draw,away\n21,1.90,3.40,4.20\n", encoding="utf-8")
+    assert _load_totals(legacy) == {}  # arquivo pré-ENG-35 segue válido
+    assert _load_totals(tmp_path / "nope.csv") == {}
 
 
 def test_load_shootouts(tmp_path):

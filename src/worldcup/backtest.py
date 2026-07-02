@@ -215,17 +215,30 @@ def pooled_draw_calibration(
 
 @dataclass
 class BlendTracking:
-    """Tally prospectivo do blend vs. modelo-puro (Brier multiclasse) — Gate 3 do ENG-19."""
+    """Tally prospectivo do blend vs. modelo-puro (Brier multiclasse) — Gate 3 do ENG-19.
+
+    Os campos `*_total` medem o mercado de totals (ENG-35): Brier **binário** de P(over da linha)
+    do modelo vs. da matriz blendada com totals, nos jogos disputados que têm o mercado registrado.
+    `n_totals=0` ⇒ sem jogos com totals ainda (métrica silenciosa).
+    """
 
     weight: float
     n: int
     brier_model: float
     brier_blend: float
+    n_totals: int = 0
+    brier_total_model: float = 0.0
+    brier_total_blend: float = 0.0
 
     @property
     def delta(self) -> float:
         """Brier do modelo − Brier do blend. Positivo ⇒ blend melhor (Brier menor é melhor)."""
         return self.brier_model - self.brier_blend
+
+    @property
+    def delta_totals(self) -> float:
+        """Brier do modelo − Brier do blend no over/under (ENG-35). Positivo ⇒ blend melhor."""
+        return self.brier_total_model - self.brier_total_blend
 
 
 def _as_of_group_matrices(edition: Edition, historical: pd.DataFrame):
@@ -259,7 +272,7 @@ def prospective_blend_report(edition: Edition, weight: float | None = None) -> B
     o modelo **as-of** de cada jogo (`_as_of_group_matrices`). Como `weight` é pré-registrado, é
     out-of-sample. Sem jogos-com-odds ⇒ tudo zero (registre odds em `odds.csv`).
     """
-    from .blend import devig, log_opinion_pool
+    from .blend import blend_matrix_with_odds, devig, log_opinion_pool, prob_total_over
 
     w = edition.scoring.blend_weight if weight is None else weight
     if not any(f.is_group and f.played and f.match_id in edition.odds for f in edition.fixtures):
@@ -268,6 +281,9 @@ def prospective_blend_report(edition: Edition, weight: float | None = None) -> B
     model_probs: list[tuple[float, float, float]] = []
     blend_probs: list[tuple[float, float, float]] = []
     outcomes: list[int] = []
+    # métrica de totals (ENG-35): Brier binário de P(over) — modelo vs blend com totals
+    total_sq_model: list[float] = []
+    total_sq_blend: list[float] = []
     for f, mat in _as_of_group_matrices(edition, load_historical()):
         hg, ag = f.home_goals, f.away_goals
         if f.match_id not in edition.odds or hg is None or ag is None:
@@ -276,12 +292,23 @@ def prospective_blend_report(edition: Edition, weight: float | None = None) -> B
         model_probs.append(mp)
         blend_probs.append(log_opinion_pool(mp, devig(edition.odds[f.match_id]), w))
         outcomes.append(_outcome_index(hg, ag))
+        totals = edition.totals.get(f.match_id)
+        if totals is not None:
+            line = totals[0]
+            went_over = float(hg + ag > line)
+            blended = blend_matrix_with_odds(mat, edition.odds[f.match_id], w, totals=totals)
+            total_sq_model.append((prob_total_over(mat, line) - went_over) ** 2)
+            total_sq_blend.append((prob_total_over(blended, line) - went_over) ** 2)
 
+    n_totals = len(total_sq_model)
     return BlendTracking(
         weight=w,
         n=len(outcomes),
         brier_model=multiclass_brier(model_probs, outcomes),
         brier_blend=multiclass_brier(blend_probs, outcomes),
+        n_totals=n_totals,
+        brier_total_model=sum(total_sq_model) / n_totals if n_totals else 0.0,
+        brier_total_blend=sum(total_sq_blend) / n_totals if n_totals else 0.0,
     )
 
 

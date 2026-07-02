@@ -123,7 +123,8 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
 
     # Blend com odds de mercado (ENG-19): aplicado só na geração do palpite dos jogos que têm odds;
     # a simulação de campeão/avanço segue só com o modelo (odds em geral só existem para a rodada
-    # iminente). weight=0 ou sem odds ⇒ matriz do modelo intacta.
+    # iminente). weight=0 ou sem odds ⇒ matriz do modelo intacta. Com totals no odds.csv, a taxa
+    # total de gols também é ancorada no mercado (ENG-35); sem totals, blend só de 1×2.
     blend_weight = edition.scoring.blend_weight
     blended_games = 0
 
@@ -133,7 +134,7 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
         odds = edition.odds.get(fixture.match_id)
         if odds is not None and blend_weight > 0.0:
             blended_games += 1
-            return blend_matrix_with_odds(mat, odds, blend_weight)
+            return blend_matrix_with_odds(mat, odds, blend_weight, totals=edition.totals.get(fixture.match_id))
         return mat
 
     rows: list[dict] = []

@@ -14,14 +14,15 @@ termos próprios, tratados aqui.
 | Fonte | O que fornece | Acesso | Uso no produto |
 |---|---|---|---|
 | **martj42 / international_results** | `results.csv` (jogos de seleções desde 1872) + `shootouts.csv` (vencedor em pênaltis) | CSV público no GitHub (raw) · **licença CC0-1.0** (domínio público) | Base de **treino** do modelo |
-| **The Odds API** | Odds decimais 1×2 (mercado `h2h`) por jogo | API REST v4 (chave própria, **tier gratuito**) | **Blend** opcional com o mercado (ENG-19) |
+| **The Odds API** | Odds decimais 1×2 (`h2h`) + over/under (`totals`) por jogo | API REST v4 (chave própria, **tier gratuito**) | **Blend** opcional com o mercado (ENG-19/ENG-35) |
 | **Specs de edição** (autorais) | Formato do torneio, grupos, fixtures, pontuação | Mantidas no repo | Descrição da edição |
 
 **URLs/parâmetros (canônicos no código):**
 - `fetch_data.DEFAULT_URL` → `raw.githubusercontent.com/martj42/international_results/master/results.csv`
   (e `…/shootouts.csv`).
-- `scripts/fetch_odds.py` → `api.the-odds-api.com/v4/...`, mercado `h2h`, formato `decimal`, região
-  `eu` (tem Pinnacle), casa preferida **Pinnacle** (fallback: mediana das casas).
+- `scripts/fetch_odds.py` → `api.the-odds-api.com/v4/...`, mercados `h2h,totals`, formato `decimal`,
+  região `eu` (tem Pinnacle), casa preferida **Pinnacle** (fallback: mediana das casas; no totals, a
+  mediana é tirada na **linha modal** entre as casas, para não misturar preços de linhas diferentes).
 
 ## 2. Processamento
 
@@ -34,7 +35,9 @@ termos próprios, tratados aqui.
   `""` se o jogo não foi a pênaltis. É o **único desfecho de mata-mata determinável da fonte** (o
   martj42 não traz a fase); o `backtest` a usa para os bônus de prorrogação/pênaltis (ENG-12).
 - **Odds** (`scripts/fetch_odds.py`): busca e **mescla** no `odds.csv`, **preservando** os jogos já
-  disputados (não sobrescreve histórico de odds). Linhas em branco/ inválidas são ignoradas.
+  disputados (não sobrescreve histórico de odds). Linhas em branco/ inválidas são ignoradas. As
+  colunas `total_line,over,under` são **opcionais** (ENG-35): arquivos antigos (só 1×2) seguem
+  válidos; jogo sem totals fica com as colunas em branco (blend só de 1×2 nele).
 - Nenhum dado é alterado manualmente no cache; correções de resultado entram via `record`/`sync`.
 
 ## 3. Cadência de atualização

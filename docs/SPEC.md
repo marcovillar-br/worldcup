@@ -211,6 +211,24 @@ em três passos puros antes de virar palpite:
    Bate o 1×2-alvo **preservando** a distribuição condicional dos placares dentro de cada classe e a
    massa total — assim `best_prediction` (§5) e os bônus de placar exato seguem coerentes.
 
+**Totals — ancorar também a taxa de gols (ENG-35).** O rescale de 1×2 preserva a forma condicional,
+ou seja: os **gols esperados** — onde vivem o exato (+5) e o "gols do vencedor" (+3) do Sistema I —
+ficavam 100% modelo. Com o mercado de **over/under** (colunas opcionais `total_line,over,under` do
+mesmo `odds.csv`), o blend também corrige a taxa total:
+
+4. **Des-vig do par** (`devig_pair`): over/under → probabilidades sem margem (2 vias). Linhas
+   inteiras (push) e quarter-lines são tratadas como o limiar contínuo mais próximo (aproximação).
+5. **λ implícito** (`implied_total_rate`): inverte `P(Poisson(λ) > linha) = p_over` por bissecção —
+   o λ-total que o mercado está precificando na linha.
+6. **Pool de taxas**: o pool logarítmico de duas Poissons é **exatamente** Poisson com
+   `λ* = λ_modelo^{1−w} · λ_mercado^{w}` (média geométrica — mesma família do pool de 1×2).
+7. **Tilting exponencial** (`tilt_matrix_to_total`): multiplica a célula `(i,j)` por `c^{i+j}`, com
+   `c` resolvido para `E[gols totais] = λ*`. Num produto de Poissons isso equivale a escalar as duas
+   taxas por `c` — preserva a razão mandante/visitante e a correlação DC; só a taxa total muda.
+   Como tilt e rescale de 1×2 interagem, os passos 7 e 3 são **iterados** (3×), terminando no
+   rescale: o 1×2 fica exato e o total converge dentro de tolerância. Sem totals para o jogo ⇒
+   caminho antigo (passos 1–3) intacto.
+
 Aplicado em `pipeline.run` só na geração do palpite dos jogos com odds — **fase de grupos e mata-mata
 já definido pelo bracket real** (`scripts/fetch_odds.py` resolve os confrontos de KO via
 `sync.resolve_live_bracket` para casar as odds com os times resolvidos, ENG-28); a simulação de
@@ -219,7 +237,9 @@ matriz intacta (degradação graciosa). **Calibração de `w`:** o LOO-CV histó
 (não há odds de seleção 2010–2018 grátis/legais), então adota-se um **prior de princípio** `w≈0,6`
 (odds de fechamento são quase-otimamente calibradas) e valida-se **prospectivamente** na própria Copa
 2026 — `backtest.prospective_blend_report` compara o Brier multiclasse do blend vs. o do modelo-puro
-(as-of) nos jogos já disputados com odds (CLI `blend-track`). Ver ENG-19 no backlog.
+(as-of) nos jogos já disputados com odds (CLI `blend-track`); com totals registrados, o mesmo
+comando também acompanha o **Brier binário do over/under** (modelo vs. blend). Ver ENG-19/ENG-35 no
+backlog.
 
 ---
 

@@ -64,8 +64,10 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `knockout.py` — `predict_knockout()`: 3 camadas (placar 90', prorrogação, pênaltis) + quem avança.
 - `blend.py` — blend com odds de mercado (ENG-19): `devig` (tira a margem da casa) → `log_opinion_pool`
   (média geométrica ponderada modelo×mercado, peso `blend_weight`) → `rescale_matrix` (ajusta a matriz
-  de placares ao 1×2-alvo preservando a forma condicional). Aplicado em `pipeline.run` só nos jogos com
-  odds; sem odds ou `blend_weight=0` ⇒ matriz do modelo intacta (degradação graciosa).
+  de placares ao 1×2-alvo preservando a forma condicional). Com **totals** (ENG-35): `devig_pair` →
+  `implied_total_rate` (λ implícito da linha, Poisson) → `tilt_matrix_to_total` (tilting `c^(i+j)` ao
+  λ do pool geométrico), iterado com o rescale (1×2 exato). Aplicado em `pipeline.run` só nos jogos com
+  odds; sem odds ou `blend_weight=0` ⇒ matriz do modelo intacta; sem totals ⇒ blend só de 1×2.
 - `format_engine.py` — simulação genérica: standings, Monte Carlo, chaveamento determinístico.
 - `backtest.py` — valida o modelo nas 4 Copas passadas (`backtest`) e o blend prospectivamente na
   edição viva (`blend-track`): `multiclass_brier`, `reliability_draw`/`pooled_draw_calibration` +
@@ -103,7 +105,9 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   `risk` no `scoring.toml`**; omiti-lo herda um leve viés de ousadia (0.6), não o fiel 0.5.
   Também `blend_weight` (peso do mercado no blend com odds; `0` = só modelo, ausência do campo ⇒ 0;
   **a edição 2026 usa `0.6`** — ENG-19).
-- `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, por jogo. Ausente ⇒
+- `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, por jogo, mais as
+  colunas **opcionais** `total_line,over,under` (mercado de over/under — ENG-35; arquivos antigos sem
+  elas seguem válidos, jogo sem totals fica com blend só de 1×2). Ausente ⇒
   blend desligado. Preenchido por `scripts/fetch_odds.py` (busca The Odds API + **mescla**, preservando
   jogos já disputados — o `blend-track` acumula o tally; à mão, **acrescente**, não sobrescreva).
   Linhas em branco são ignoradas. **`odds.csv` é gitignored** — o ToS da The Odds API não permite

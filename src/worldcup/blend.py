@@ -14,11 +14,23 @@ público bem calibrado. Este módulo combina as duas fontes em três passos puro
 
 `blend_matrix_with_odds` compõe os três. A ausência de odds para um jogo ⇒ a matriz volta intacta
 (degradação graciosa): o blend nunca é obrigatório.
+
+**Totals (ENG-35).** O rescale de 1×2 preserva a forma condicional — ou seja, os *gols esperados*
+(onde vivem o exato +5 e o `winner_goals` +3 do Sistema I) ficavam 100% modelo. O mercado de
+**over/under** corrige isso: `devig_pair` tira a margem do par over/under, `implied_total_rate`
+inverte a linha para o λ-total implícito do mercado (Poisson), e o pool logarítmico de duas
+Poissons é **exatamente** Poisson com taxa `λm^(1−w)·λq^w` (média geométrica — mesma família do
+pool de 1×2). `tilt_matrix_to_total` aplica o alvo por *tilting exponencial* (`célula·c^(i+j)`),
+que num produto de Poissons equivale a escalar as duas taxas por `c` — preserva a partição
+mandante/visitante e a correlação DC. Como tilt e rescale de 1×2 interagem, `blend_matrix_with_odds`
+itera os dois e termina no rescale (1×2 exato; total dentro de tolerância). Sem totals ⇒ caminho
+antigo intacto.
 """
 
 from __future__ import annotations
 
 import numpy as np
+from scipy.stats import poisson
 
 from .scoring import outcome_probs_from_matrix
 
@@ -26,6 +38,8 @@ from .scoring import outcome_probs_from_matrix
 _EPS = 1e-12
 
 Triple = tuple[float, float, float]
+# Mercado de totals de um jogo: (linha de gols, odd decimal do over, odd decimal do under).
+TotalsTriple = tuple[float, float, float]
 
 
 def devig(odds: Triple) -> Triple:
@@ -85,15 +99,116 @@ def rescale_matrix(matrix: np.ndarray, target: Triple) -> np.ndarray:
     return matrix * factors
 
 
-def blend_matrix_with_odds(matrix: np.ndarray, odds: Triple, weight: float) -> np.ndarray:
-    """Compõe os três passos: des-vig das odds → pool com as probs do modelo → reescala a matriz.
+def devig_pair(over: float, under: float) -> tuple[float, float]:
+    """Odds decimais de over/under → probabilidades implícitas sem a margem (des-vig proporcional).
 
-    `weight=0` devolve a matriz do modelo intacta (atalho — degradação graciosa também cobre odds
-    ausentes, tratada por quem chama).
+    Mesma normalização do `devig` de 1×2, em 2 vias. Linhas inteiras (push) e quarter-lines são
+    tratadas como o limiar contínuo mais próximo — aproximação documentada (ver SPEC §8).
+    """
+    if over <= 1.0 or under <= 1.0:
+        raise ValueError(f"odds decimais devem ser > 1.0, recebido ({over}, {under})")
+    raw_over, raw_under = 1.0 / over, 1.0 / under
+    total = raw_over + raw_under
+    return raw_over / total, raw_under / total
+
+
+def expected_total_goals(matrix: np.ndarray) -> float:
+    """Gols totais esperados `E[i+j]` sob a matriz de placares (normalizada pela massa)."""
+    n = matrix.shape[0]
+    totals = np.arange(n)[:, None] + np.arange(n)[None, :]
+    mass = matrix.sum()
+    if mass <= _EPS:
+        return 0.0
+    return float((matrix * totals).sum() / mass)
+
+
+def implied_total_rate(line: float, p_over: float) -> float:
+    """λ-total implícito do mercado: resolve `P(Poisson(λ) > line) = p_over` por bissecção.
+
+    `line` é a linha de gols (tipicamente x.5); `p_over` a probabilidade des-vigada do over.
+    A função `λ ↦ P(T > line)` é estritamente crescente ⇒ raiz única.
+    """
+    if not 0.0 < p_over < 1.0:
+        raise ValueError(f"p_over deve estar em (0, 1), recebido {p_over}")
+    k = int(np.floor(line))  # P(T > line) = P(T ≥ k+1) = sf(k)
+    lo, hi = 1e-6, 30.0
+    for _ in range(80):
+        mid = (lo + hi) / 2.0
+        if float(poisson.sf(k, mid)) < p_over:
+            lo = mid
+        else:
+            hi = mid
+    return (lo + hi) / 2.0
+
+
+def tilt_matrix_to_total(matrix: np.ndarray, target_total: float) -> np.ndarray:
+    """Tilting exponencial da matriz para `E[gols totais] = target_total`: célula `(i,j)` × `c^(i+j)`.
+
+    Num produto de Poissons, multiplicar por `c^(i+j)` equivale a escalar as duas taxas por `c` —
+    preserva a razão mandante/visitante e a forma DC; só a taxa total muda. `c` sai por bissecção
+    (E[total] é estritamente crescente em `c`). A massa total da matriz é preservada. O alvo é
+    truncado ao máximo representável pela matriz (grade 0..n−1 por lado).
+    """
+    mass = matrix.sum()
+    if mass <= _EPS:
+        return matrix.copy()
+    n = matrix.shape[0]
+    totals = np.arange(n)[:, None] + np.arange(n)[None, :]
+    max_total = float(2 * (n - 1))
+    target = min(max(target_total, _EPS), max_total - 1e-9)
+
+    def _expected(c: float) -> float:
+        tilted = matrix * np.power(c, totals)
+        return float((tilted * totals).sum() / tilted.sum())
+
+    lo, hi = 1e-6, 1e6
+    for _ in range(200):
+        mid = np.sqrt(lo * hi)  # bissecção geométrica (c varia em ordens de magnitude)
+        if _expected(mid) < target:
+            lo = mid
+        else:
+            hi = mid
+    c = np.sqrt(lo * hi)
+    tilted = matrix * np.power(c, totals)
+    return tilted * (mass / tilted.sum())
+
+
+def prob_total_over(matrix: np.ndarray, line: float) -> float:
+    """P(gols totais > `line`) sob a matriz (normalizada pela massa) — métrica do blend-track."""
+    n = matrix.shape[0]
+    totals = np.arange(n)[:, None] + np.arange(n)[None, :]
+    mass = matrix.sum()
+    if mass <= _EPS:
+        return 0.0
+    return float(matrix[totals > line].sum() / mass)
+
+
+def blend_matrix_with_odds(
+    matrix: np.ndarray, odds: Triple, weight: float, totals: TotalsTriple | None = None
+) -> np.ndarray:
+    """Compõe os passos: des-vig das odds → pool com as probs do modelo → reescala a matriz.
+
+    Com `totals` (linha, over, under — ENG-35), também ancora a **taxa total de gols** no pool
+    modelo×mercado: tilt exponencial ao λ combinado, iterado com o rescale de 1×2 (que fica exato
+    por vir por último; o total converge em poucas iterações). `weight=0` devolve a matriz do
+    modelo intacta (atalho — degradação graciosa também cobre odds ausentes, tratada por quem chama).
     """
     if weight <= 0.0:
         return matrix
     model_probs = outcome_probs_from_matrix(matrix)
     market_probs = devig(odds)
     blended = log_opinion_pool(model_probs, market_probs, weight)
-    return rescale_matrix(matrix, blended)
+    if totals is None:
+        return rescale_matrix(matrix, blended)
+
+    line, over, under = totals
+    p_over, _p_under = devig_pair(over, under)
+    lam_market = implied_total_rate(line, p_over)
+    lam_model = expected_total_goals(matrix)
+    # pool logarítmico de Poissons ⇒ Poisson com a média geométrica ponderada das taxas
+    lam_target = max(lam_model, _EPS) ** (1.0 - weight) * lam_market**weight
+    out = matrix
+    for _ in range(3):
+        out = tilt_matrix_to_total(out, lam_target)
+        out = rescale_matrix(out, blended)
+    return out

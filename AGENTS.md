@@ -176,6 +176,11 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   (fonte de verdade, rastreada). Consulte ao trabalhar em melhorias; cada item tem refs, critério
   de aceite e o commit que o fechou.
 - Rode as checagens de **Qualidade** (ruff, mypy, pytest) antes de concluir mudanças.
+- **Régua de markdown**: linhas de prosa em `.md` respeitam **≤100 caracteres UTF-8** (não bytes).
+  Hook de pre-commit (`scripts/check_markdown_line_length.py`) alerta linhas novas >100 chars.
+  Isenções automáticas: tabelas (`|`), URLs, comandos (`uv run`), diagramas C4, blocos de código.
+  Varredura manual do legado é on-demand via `scripts/reformat_markdown_lines.py` (cuidado com
+  qualidade de prosa — reflow automático é frágil).
 
 ## Limitações conhecidas
 

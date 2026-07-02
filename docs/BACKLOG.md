@@ -48,6 +48,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-32](#eng-32) | P3 | scoring/knockout | ✅ | Palpite de 90' no KO tende a 0×0 (empate→pênaltis) e zera quando o favorito vence nos 90' — é E[pts]-ótimo ou artefato? |
 | [ENG-33](#eng-33) | P1 | cli/history | 🔴 | Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã |
 | [ENG-34](#eng-34) | P2 | efficiency | 🔴 | Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada |
+| [ENG-35](#eng-35) | P2 | blend/odds | 🔴 | Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo; mercado de over/under não é usado |
+| [ENG-36](#eng-36) | P2 | scoring/estratégia | 🔴 | Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão nos jogos de peso ×2/×4, não E[pts] |
 
 ---
 
@@ -1038,4 +1040,62 @@ quando uma reconstrução nova diverge da persistida (em vez de substituí-la em
 **Aceite:** duas rodagens consecutivas (com `sync-results`/`fetch_odds` entre elas) mantêm o teto dos
 jogos já medidos idêntico e destacam qualquer drift por jogo; teste de regressão do cache (jogo medido
 não re-pontua diferente). `pytest` verde.
+**Commit:** —
+
+## ENG-35
+**Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo** · P2 · `blend`/`odds` · 🔴 todo
+
+O blend (ENG-19) faz `devig` → `log_opinion_pool` → `rescale_matrix`: ajusta a matriz de placares ao
+1×2-alvo **preservando a forma condicional**. Ou seja: o mercado corrige *quem ganha*, mas os **gols
+esperados** — onde vivem o exato (+5) e o `winner_goals` (+3), a maior fatia dos pontos do Sistema I —
+continuam 100% Dixon-Coles. A The Odds API oferece o mercado de **totals** (over/under) para os mesmos
+eventos que o `fetch_odds.py` já busca (hoje só `markets=h2h`); a linha de gols do mercado embute
+escalação/fadiga/clima que o modelo não vê. Corrigir a taxa total de gols da matriz para a linha do
+mercado tornaria o *placar* palpitado tão informado quanto o *lado* — a melhoria de acurácia mais
+barata disponível (mesma infra, mesmo fetch, mesma chave).
+
+**Refs:** `blend.rescale_matrix`/`blend_matrix_with_odds` (só 1×2 hoje), `scripts/fetch_odds.py`
+(`markets=h2h` → acrescentar `totals`), `data/editions/<ano>/odds.csv` (schema ganharia colunas de
+totals, opcionais/retrocompatíveis), `pipeline.run` (aplicação por jogo). Relacionado: ENG-19, ENG-28.
+**Correção proposta:** (1) `fetch_odds` passa a pedir `h2h,totals` e grava `total_line,over,under`
+(opcionais; linhas antigas seguem válidas); (2) novo passo no blend: des-vigar o over/under, inferir o
+λ-total implícito do mercado na linha (Poisson: resolver P(gols > linha) = p_over) e **reescalar a
+taxa total da matriz** para o pool modelo×mercado (mesmo `blend_weight`), preservando a partição
+home/away e depois reaplicando o rescale de 1×2; (3) degradação graciosa idêntica à do 1×2: sem
+totals ⇒ matriz intacta. Validar com `blend-track` estendido (Brier de faixa de gols ou log-loss do
+placar exato, modelo vs blendado).
+**Aceite:** teste de regressão: matriz com λ conhecido + totals sintéticos ⇒ taxa total blendada
+converge ao alvo e o 1×2 final continua batendo com o pool; sem colunas de totals, output byte-igual
+ao atual. Métrica prospectiva no `blend-track` mostrando o efeito. `pytest`/`mypy` verdes.
+**Commit:** —
+
+## ENG-36
+**Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão, não E[pts]** · P2 · `scoring`/`estratégia` · 🔴 todo
+
+`Scorer.best_prediction` maximiza E[pts] contra a verdade — ótimo para acumular pontos, mas bolão é
+jogo **diferencial** contra N humanos: ranking só muda quando o palpite **diverge** do pelotão e a
+divergência acerta. Humanos aglomeram no favorito com placar redondo; seguir o E[pts]-máximo em jogo
+claro ≈ palpitar igual a todo mundo ≈ preservar a posição atual. Em 2026-07-01 ficou nítido: 98% de
+captura do teto (execução perfeita) e mesmo assim 11º→21º — captura perfeita do consenso não
+redistribui posições. O botão de `risk` não resolve (perturba o placar, não o lado, e é cego a
+adversários — decisão viva de 2026-06-17 no `BOLAO.md`). A alavanca real: nos jogos de peso ×2/×4
+(QF→final), divergência barata e deliberada — zebra em 1×2 apertado, placar exato fora do modal —
+onde um único acerto descorrelacionado ≈ 40–50 pts (final ×4) enquanto o pelotão zera junto.
+
+**Refs:** `scoring.Scorer.best_prediction` (objetivo atual), `format_engine.monte_carlo` (infra de
+simulação reaproveitável), `scoring.toml::phase_weights` (onde a alavanca mora), `BOLAO.md`
+(decisão do risk 2026-06-17; standing/gap como inputs). Relacionado: ENG-32 (mesma tensão
+E[pts]-vs-realizado no KO), ⚪ENG-24 (base aproximada limita a precisão do E[pts] absoluto, não do
+diferencial).
+**Correção proposta (investigação primeiro, como no ENG-32):** (1) modelar o pelotão como apostadores
+de consenso (palpite = favorito do mercado com placar modal; sensibilidade: % do pelotão que segue o
+consenso); (2) Monte Carlo dos jogos restantes (reusa `monte_carlo`/matrizes): para cada política no
+jogo-alvo (E[pts]-máximo vs alternativas divergentes), simular a distribuição de pontos meus vs
+pelotão e estimar **P(top-k | gap atual, jogos restantes)**; (3) se a política divergente dominar em
+P(top-k) sem custo material de E[pts] nos cenários de gap real, expor como modo opt-in da CLI (ex.:
+`predict --pool-gap <pts> --pool-size <n>`), edition-agnóstico; senão, ⚪ descartar com o número.
+**Aceite:** relatório reproduzível (script em `scratchpad/` ou `scripts/`) com P(top-k) por política
+em ≥2 cenários de gap (atrás/na frente), e decisão numérica manter/expor; se expor, teste cobrindo a
+seleção divergente (jogo apertado ⇒ lado zebra escolhido quando o modo ativo) e docs sincronizados.
+`pytest` verde.
 **Commit:** —

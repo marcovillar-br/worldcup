@@ -12,6 +12,11 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **`sync-results` quebrava com
+  `AttributeError: 'Namespace' object has no attribute 'pool_behind'`**
+  (`cli.py`): o parser de `sync-results` nunca ganhou `--pool-behind` (adicionado ao `predict` no
+  ENG-36), mas `cmd_sync_results` delega para `cmd_predict`, que lê `args.pool_behind` direto.
+  Adicionado `--pool-behind` ao parser de `sync-results`, espelhando o do `predict`.
 - **Re-arquivar no mesmo dia não sobrescreve mais o palpite da manhã** (`cli.archive_outputs`):
   o segundo `--archive` do dia (pós-`record`/`sync-results`) gravava os jogos disputados como
   `FINAL` em cima do snapshot da manhã — perdendo o dado não-reprodutível que o `history/` existe

@@ -393,6 +393,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     sr.add_argument("--no-predict", action="store_true", help="só sincroniza, não repalpita")
     sr.add_argument(
+        "--pool-behind",
+        action="store_true",
+        help="modo endgame de bolão (ENG-36): palpita a ZEBRA nos jogos de peso máximo (final). "
+        "Use só quando estiver atrás no ranking — na frente, custa P(#1); ver scripts/eng36_pool_sim.py",
+    )
+    sr.add_argument(
         "--source-url",
         action="append",
         default=None,

@@ -46,10 +46,11 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-30](#eng-30) | P3 | pipeline/render | ✅ | Jogos de KO FINAL não mostram prorrogação/pênaltis/quem avançou (dados existem) |
 | [ENG-31](#eng-31) | P3 | cli | ✅ | `worldcup status`: briefing read-only de start-of-day (rehidrata contexto em 1 saída) |
 | [ENG-32](#eng-32) | P3 | scoring/knockout | ✅ | Palpite de 90' no KO tende a 0×0 (empate→pênaltis) e zera quando o favorito vence nos 90' — é E[pts]-ótimo ou artefato? |
-| [ENG-33](#eng-33) | P1 | cli/history | 🔴 | Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã |
+| [ENG-33](#eng-33) | P1 | cli/history | ✅ | Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã |
 | [ENG-34](#eng-34) | P2 | efficiency | 🔴 | Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada |
 | [ENG-35](#eng-35) | P2 | blend/odds | ✅ | Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo; mercado de over/under não é usado |
 | [ENG-36](#eng-36) | P2 | scoring/estratégia | ✅ | Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão nos jogos de peso ×2/×4, não E[pts] |
+| [ENG-37](#eng-37) | P3 | processo/docs | 🔴 | Padrão de largura de linha nos `.md`: régua definida (100 caracteres) + hook + varredura única |
 
 ---
 
@@ -991,7 +992,7 @@ nunca empata no KO). 134 testes verdes. Relatório reproduzível: `scratchpad/en
 **Commit:** 6e5f4e2
 
 ## ENG-33
-**Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã** · P1 · `cli`/`history` · 🔴 todo
+**Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã** · P1 · `cli`/`history` · ✅ feito
 
 `cli.archive_outputs` grava `history/<data>.csv` **sobrescrevendo sem olhar o que já existe**. A rotina
 diária tem dois momentos de archive no mesmo dia: o da manhã (palpites da rodada) e o pós-resultado
@@ -1013,7 +1014,14 @@ foi preservado.
 **Aceite:** teste de regressão — arquiva com palpite em J_x, registra o resultado de J_x, arquiva de
 novo (mesma data): o snapshot mantém o palpite da manhã de J_x (não `FINAL`) e os demais jogos
 atualizam. `pytest` verde.
-**Commit:** —
+**Resolução:** merge por jogo em `cli.archive_outputs` (helper `_merge_preserved_rows`): linha
+`PREVISTO` do snapshot existente que o run novo traria como `FINAL` é **preservada** (e logada no
+console, com os jogos); pendentes/novas atualizam; o MD é rerenderizado das linhas mescladas.
+Snapshots **reconstruídos** (`--as-of`) ficam fora do merge — são regeneráveis por definição
+(re-rodar após corrigir um placar **deve** sobrescrever). Optou-se pelo merge (não pelo `--force`)
+por ser à prova de esquecimento na rotina diária. Testes: o do aceite + repalpite intradiário de
+jogo ainda pendente atualiza normalmente. Docs: README (`--archive`), AGENTS (`history/`), CHANGELOG.
+**Commit:** e5b9748
 
 ## ENG-34
 **Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada** · P2 · `scripts/efficiency.py` · 🔴 todo
@@ -1124,3 +1132,25 @@ campanha nas Decisões vivas do `BOLAO.md` (refazer a sim na véspera da final c
 Testes: zebra nas 3 camadas, E[pts]-ótimo dentro do lado, `pool_behind=False` inalterado, flag no
 parser. 154 verdes; docs sincronizados (README/AGENTS/CHANGELOG/BOLAO).
 **Commit:** 931be03
+
+## ENG-37
+**Padrão de largura de linha nos `.md`: régua definida (100 caracteres) + hook + varredura única** · P3 · processo/docs · 🔴 todo
+
+Não existe regra de formatação para markdown no repo (o pre-commit só tem ruff/`bolao-sync`/
+`backlog-integrity`); a convenção observável é quebra suave em ~100 caracteres, mas ela é violada
+em vários pontos antigos: os links de docs no topo do `AGENTS.md` (~125), entradas do `CHANGELOG.md`
+(~106) e entradas do histórico do `BOLAO.md` em linha única (~260). Decisão do usuário (2026-07-01):
+manter um padrão. A régua deve ser em **caracteres**, não bytes — em UTF-8 acento vale 2 bytes e
+travessão 3, então uma linha de 95 caracteres em português "estoura" 100 bytes sem estar longa.
+
+**Refs:** `.pre-commit-config.yaml` (onde o hook entra), `scripts/check_backlog.py` (modelo de hook
+local em Python), `AGENTS.md` §Convenções e cuidados (onde documentar a régua).
+**Correção proposta:** (1) fixar a régua em **100 caracteres** e documentá-la no `AGENTS.md`;
+(2) hook de pre-commit (markdownlint `MD013` ou script local no padrão do `check_backlog`) com
+**isenções**: `data/editions/*/history/*.md` (snapshots imutáveis — não se reescreve registro),
+linhas de tabela, URLs/links longos e blocos de código; (3) varredura única reembrulhando os `.md`
+de prosa (`AGENTS.md`, `README.md`, `CHANGELOG.md`, `docs/`, `BOLAO.md`) para conformar o legado.
+**Aceite:** hook bloqueia linha nova >100 caracteres em `.md` fora das isenções; varredura única
+aplicada (repo conforme); régua documentada no `AGENTS.md`; `pre-commit run --all-files` e `pytest`
+verdes.
+**Commit:** —

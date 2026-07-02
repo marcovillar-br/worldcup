@@ -12,11 +12,13 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-02)
+## Estado atual (atualizado em 2026-07-02, noite)
 
-- **82 de 104 jogos disputados (J1–J82).** J81 EUA 3×1 Bósnia fechado via `sync-results`. Hoje
-  (02/07): **J83 Portugal×Croácia, J84 Espanha×Áustria, J85 Suíça×Argélia** (ainda pendentes,
-  palpites 2×0/2×0/2×1). **Standing (02/07): 295 pts, 21º** (líder **353**) ·
+- **83 de 104 jogos disputados (J1–J82 + J84).** **J84 Espanha 3×0 Áustria** fechado à noite
+  (Oyarzabal 2×, Pedro Porro; decidido nos 90'; confirmado FIFA/Yahoo/Al Jazeera; a fonte do
+  `sync-results` ainda não tinha) — tool palpitou 2×0: acertou o lado, pagou nível "gols do
+  perdedor". **J83 Portugal×Croácia (2×0) e J85 Suíça×Argélia (2×1) jogam mais tarde** (23h ET),
+  ainda pendentes. **Standing (02/07): 295 pts, 21º** (líder **353**) ·
   **eficiência 88,9%** (teto as-of do tool 332;
   `efficiency.py --my-points 295 --leader 353 --compare-archive`). Líder **ACIMA** do teto de novo
   ⇒ variância de exatos no KO, não estratégia superior (mesmo padrão das entradas anteriores).

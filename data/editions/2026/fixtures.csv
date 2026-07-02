@@ -79,7 +79,7 @@ match_id,stage,group,date,home,away,neutral,third_groups,home_goals,away_goals,k
 78,R32,,2026-06-30,2E,2I,True,,1,2,
 79,R32,,2026-06-30,1A,3rd,True,C|E|F|H|I,2,0,
 80,R32,,2026-07-01,1L,3rd,True,E|H|I|J|K,2,1,England
-81,R32,,2026-07-01,1D,3rd,True,B|E|F|I|J,,,
+81,R32,,2026-07-01,1D,3rd,True,B|E|F|I|J,2,0,United States
 82,R32,,2026-07-01,1G,3rd,True,A|E|H|I|J,3,2,Belgium
 83,R32,,2026-07-02,2K,2L,True,,,,
 84,R32,,2026-07-02,1H,2J,True,,,,

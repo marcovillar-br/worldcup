@@ -12,10 +12,17 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-01)
+## Estado atual (atualizado em 2026-07-02)
 
-- **81 de 104 jogos disputados (J1–J82, menos J81).** Fase de grupos completa + J73–J80/J82 do
-  mata-mata. Em 01/07 fecharam **J80 Inglaterra 2×1 RD Congo** (Kane 2× no 2º tempo, virada)
+- **82 de 104 jogos disputados (J1–J82).** J81 EUA 3×1 Bósnia fechado via `sync-results`. Hoje
+  (02/07): **J83 Portugal×Croácia, J84 Espanha×Áustria, J85 Suíça×Argélia** (ainda pendentes,
+  palpites 2×0/2×0/2×1). **Standing (02/07): 295 pts, 21º** (líder **353**) ·
+  **eficiência 88,9%** (teto as-of do tool 332;
+  `efficiency.py --my-points 295 --leader 353 --compare-archive`). Líder **ACIMA** do teto de novo
+  ⇒ variância de exatos no KO, não estratégia superior (mesmo padrão das entradas anteriores).
+- **81 de 104 jogos disputados (J1–J82, menos J81) [snapshot de 01/07].** Fase de grupos completa +
+  J73–J80/J82 do mata-mata. Em 01/07 fecharam
+  **J80 Inglaterra 2×1 RD Congo** (Kane 2× no 2º tempo, virada)
   e **J82 Bélgica 3×2 Senegal na prorrogação** (2×2 nos 90'; pênalti de Tielemans aos 125' — placar
   registrado com prorrogação, convenção martj42/SPEC; buscados na internet e confirmados em ≥2
   fontes: englandfootball/Olympics/Outlook e ESPN/Outlook/Yahoo). O tool acertou os dois lados
@@ -98,6 +105,16 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   aquilo, então a eficiência passada continua justa.
 
 ## Histórico
+
+- 2026-07-02
+  — **J81 fechado via `sync-results` (82/104); bug de CLI encontrado e corrigido no processo.**
+  `sync-results --archive` quebrava com `AttributeError: 'pool_behind'` — o parser de
+  `sync-results` nunca ganhou `--pool-behind` (adicionado ao `predict` no ENG-36), mas
+  `cmd_sync_results` delega para `cmd_predict`, que lê `args.pool_behind` direto. Corrigido
+  (`cli.py`, espelhando o argumento do `predict`); ruff/mypy/pytest verdes (156 testes). Re-rodado
+  o sync com sucesso: J81 **EUA 3×1 Bósnia**. Hoje 02/07: R32 continua com J83 Portugal×Croácia,
+  J84 Espanha×Áustria, J85 Suíça×Argélia. **Eficiência: 295 pts vs teto as-of 332 = 88,9%**
+  (líder 353, ACIMA do teto — variância de exatos no KO, padrão recorrente).
 
 - 2026-07-01 (fim do dia)
   — **J80/J82 fechados (buscados na internet); 285 pts, 21º, eficiência 88,0%.** A fonte do

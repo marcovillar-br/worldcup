@@ -42,8 +42,8 @@ avisos informativos da biblioteca em `stderr` — ex.: quais seleções o `min_m
 ajuste. Por padrão só avisos de nível `WARNING` aparecem (ex.: ajuste do modelo não-convergido).
 
 `status` (alias `ws`) é um **briefing read-only** para reidratar o contexto no início da sessão:
-numa saída só mostra jogos disputados/total, fase atual, os jogos de hoje (disputado ✓ / pendente
-⏳),
+numa saída só mostra jogos disputados/total, fase atual, os jogos de hoje (disputado ✓ /
+pendente ⏳),
 os próximos palpites, o standing (do `BOLAO.md`) e o que depende de você (seus pontos para a
 eficiência, jogos atrasados que a fonte ainda não tem). Não muta nada — a atualização de fato
 (`sync-results`/`predict`) continua nos comandos próprios. `--date AAAA-MM-DD` sobrescreve "hoje".
@@ -59,8 +59,8 @@ de zebra) e **otimizado para impressão** (Ctrl+P → salvar em PDF, com quebra 
 
 `out/` é regenerável (gitignored) e sobrescrito a cada run. Para guardar o **histórico** de como
 os palpites evoluem rodada a rodada, use `predict --archive` ou `sync-results --archive` (ambos
-aceitam `--archive AAAA-MM-DD`): grava um
-snapshot imutável e **versionado** em `data/editions/<edição>/history/<data>.{csv,md}`. Faz sentido
+aceitam `--archive AAAA-MM-DD`): grava snapshot imutável e **versionado** em
+`data/editions/<edição>/history/<data>.{csv,md}`. Faz sentido
 porque, depois que novos resultados entram e o modelo reajusta, o palpite de um dia não é mais
 reproduzível. Re-arquivar na mesma data (ex.: pós-`record`) faz **merge por jogo**: o palpite da
 manhã de um jogo que já virou `FINAL` é preservado, nunca sobrescrito.
@@ -68,17 +68,14 @@ manhã de um jogo que já virou `FINAL` é preservado, nunca sobrescrito.
 **Blend com odds de mercado (opcional):** `data/editions/<edição>/odds.csv` com
 `match_id,home,draw,away` em odds decimais e, opcionalmente, `total_line,over,under` (o mercado de
 **over/under** — ENG-35). A forma prática de preencher é
-`uv run python scripts/fetch_odds.py` (busca 1×2 **e totals** da The Odds API com a chave em `.env`
-e
-**mescla** no `odds.csv`, preservando os jogos já disputados — o `blend-track` acumula o tally sobre
-todos eles). Para editar à mão, **acrescente** os jogos de cada rodada (não sobrescreva). A
-ferramenta
-tira a margem da casa, combina as odds com as probabilidades do modelo (média geométrica ponderada,
-peso `blend_weight`) e ajusta o palpite; com totals, também ancora a **taxa de gols** do placar no
-mercado (sem totals num jogo, só o 1×2 é corrigido). A edição 2026 já vem com `blend_weight = 0.6`
-no
-`scoring.toml` (prior de princípio: odds de fechamento são bem calibradas); `--blend-weight 0` ou a
-ausência de `odds.csv` ⇒ só o modelo, sem mudança. Por que ajuda: o modelo é estatístico e cego a
+`uv run python scripts/fetch_odds.py` (busca 1×2 e totals da The Odds API com chave em `.env`,
+**mescla** no `odds.csv`, preservando jogos já disputados — `blend-track` acumula tally).
+Para editar à mão, **acrescente** jogos de cada rodada (não sobrescreva). Ferramenta
+tira margem da casa, combina odds com probabilidades do modelo (média geométrica ponderada,
+peso `blend_weight`) e ajusta palpite; com totals, também ancora **taxa de gols** do placar
+no mercado (sem totals num jogo, só 1×2 corrigido). Edição 2026 já vem com `blend_weight = 0.6`
+no `scoring.toml` (odds de fechamento bem calibradas); `--blend-weight 0` ou ausência de
+`odds.csv` ⇒ só modelo, sem mudança. Por que ajuda: o modelo é estatístico e cego a
 escalações/lesões/motivação, que as odds capturam. Para medir se o blend está de fato ajudando,
 rode `worldcup blend-track` conforme registra odds + resultados — compara o Brier do blend vs. o do
 modelo-puro nos jogos já disputados com odds (e, havendo totals, o Brier binário do over/under).
@@ -116,14 +113,11 @@ gradual**.
 ## Validação e estratégia
 
 Rode `uv run worldcup backtest --edition 2022` para ver quantos pontos o modelo teria feito na
-Copa de 2022 (treinando só com jogos anteriores). Com a régua de pontos **corrigida** (bônus de
-placar
-hierárquicos, não somados), subir o risco **não** melhora os pontos de forma confiável: no backtest
-de
-2022 o conservador (`risk=0.0`) faz mais que o agressivo (`1.0`), e o fiel (`0.5`) fica no meio — um
-resultado ruidoso de uma Copa só. A alavanca de ranking é **acurácia** (blend de odds), não ousadia;
-o
-default `0.5` (maximiza pontos esperados) é o recomendado.
+Copa de 2022 (só com jogos anteriores). Com régua de pontos **corrigida** (bônus hierárquicos,
+não somados), subir risco **não** melhora pontos confiavelmente: no backtest 2022 o conservador
+(`risk=0.0`) faz mais que agressivo (`1.0`), fiel (`0.5`) fica no meio — resultado ruidoso de
+uma Copa. Alavanca de ranking é **acurácia** (blend de odds), não ousadia; default `0.5`
+(maximiza pontos esperados) é recomendado.
 
 **Eficiência da sua campanha** — quanto dos pontos que o tool renderia você capturou:
 

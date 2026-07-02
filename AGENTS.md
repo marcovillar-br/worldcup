@@ -9,10 +9,10 @@ soma;
 
 **Metodologia (matemática, derivações, exemplos numéricos): [`docs/SPEC.md`](docs/SPEC.md).**
 **Arquitetura visual (C4: Contexto→Container→Componentes→Dinâmica): [`docs/C4.md`](docs/C4.md).**
-**Produto (requisitos, personas, escopo): [`docs/PRD.md`](docs/PRD.md) · termos:
-[`docs/GLOSSARIO.md`](docs/GLOSSARIO.md).**
-**Modelo (uso, métricas, calibração): [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) · dados
-(proveniência, licença): [`docs/DATA.md`](docs/DATA.md).**
+**Produto (requisitos, personas, escopo): [`docs/PRD.md`](docs/PRD.md) · termos:**
+**[`docs/GLOSSARIO.md`](docs/GLOSSARIO.md).**
+**Modelo (uso, métricas, calibração): [`docs/MODEL_CARD.md`](docs/MODEL_CARD.md) · dados**
+**(proveniência, licença): [`docs/DATA.md`](docs/DATA.md).**
 
 ## Tom da interação
 
@@ -34,9 +34,9 @@ Nada específico de um ano fica no código. Cada edição é descrita por **dado
 ## Comandos (sempre via uv)
 
 Ambiente: `uv sync` (a partir do `uv.lock`). O **catálogo completo da CLI `worldcup`**
-(`predict`/`sync-results`/`record`/`backtest`/`blend-track`, com `--archive` e `--as-of`) é canônico
-no
-**[`README.md`](README.md)** — não duplicar aqui. As checagens de qualidade ficam abaixo.
+(`predict`/`sync-results`/`record`/`backtest`/`blend-track`, com `--archive` e `--as-of`)
+é canônico no **[`README.md`](README.md)** — não duplicar aqui. As checagens de qualidade
+ficam abaixo.
 
 ## Qualidade (rode antes de concluir mudanças)
 
@@ -70,16 +70,12 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   `pool_behind=True` (ENG-36, via `predict --pool-behind`): palpita o lado **zebra** nas 3 camadas —
   só nos jogos de peso máximo (final) e só quando o usuário está atrás no bolão (bolão é jogo
   diferencial; números em `scripts/eng36_pool_sim.py`).
-- `blend.py` — blend com odds de mercado (ENG-19): `devig` (tira a margem da casa) →
-  `log_opinion_pool`
-  (média geométrica ponderada modelo×mercado, peso `blend_weight`) → `rescale_matrix` (ajusta a
-  matriz
-  de placares ao 1×2-alvo preservando a forma condicional). Com **totals** (ENG-35): `devig_pair` →
+- `blend.py` — blend com odds de mercado (ENG-19): `devig` (tira a margem) → `log_opinion_pool`
+  (média geométrica ponderada modelo×mercado, peso `blend_weight`) → `rescale_matrix` (ajusta
+  matriz ao 1×2-alvo preservando forma condicional). Com **totals** (ENG-35): `devig_pair` →
   `implied_total_rate` (λ implícito da linha, Poisson) → `tilt_matrix_to_total` (tilting `c^(i+j)`
-  ao
-  λ do pool geométrico), iterado com o rescale (1×2 exato). Aplicado em `pipeline.run` só nos jogos
-  com
-  odds; sem odds ou `blend_weight=0` ⇒ matriz do modelo intacta; sem totals ⇒ blend só de 1×2.
+  ao λ do pool geométrico), iterado com rescale (1×2 exato). Aplicado em `pipeline.run` só nos
+  jogos com odds; sem odds ou `blend_weight=0` ⇒ matriz intacta; sem totals ⇒ blend só de 1×2.
 - `format_engine.py` — simulação genérica: standings, Monte Carlo, chaveamento determinístico.
 - `backtest.py` — valida o modelo nas 4 Copas passadas (`backtest`) e o blend prospectivamente na
   edição viva (`blend-track`): `multiclass_brier`, `reliability_draw`/`pooled_draw_calibration` +
@@ -117,22 +113,18 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   `risk` no `scoring.toml`**; omiti-lo herda um leve viés de ousadia (0.6), não o fiel 0.5.
   Também `blend_weight` (peso do mercado no blend com odds; `0` = só modelo, ausência do campo ⇒ 0;
   **a edição 2026 usa `0.6`** — ENG-19).
-- `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, por jogo, mais as
-  colunas **opcionais** `total_line,over,under` (mercado de over/under — ENG-35; arquivos antigos
-  sem
-  elas seguem válidos, jogo sem totals fica com blend só de 1×2). Ausente ⇒
-  blend desligado. Preenchido por `scripts/fetch_odds.py` (busca The Odds API + **mescla**,
-  preservando
-  jogos já disputados — o `blend-track` acumula o tally; à mão, **acrescente**, não sobrescreva).
-  Linhas em branco são ignoradas. **`odds.csv` é gitignored** — o ToS da The Odds API não permite
-  redistribuir odds em repo público (ver `docs/DATA.md` §6); vive só local, e o veredito de blend é
-  reproduzível localmente. Mantenha o arquivo (não o apague); **nunca** versione odds nem a chave
-  (que vive no `.env`).
-- `shootouts.csv` — **opcional** (ENG-30): `match_id,winner` (vencedor de disputa de pênaltis, nome
-  canônico). Carregado em `Edition.shootouts`; usado para mostrar o desfecho real
-  (prorrogação/pênaltis/
-  quem avançou) dos jogos de KO **já disputados** quando a fonte oficial ainda tem latência
-  (ENG-15).
+- `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, mais as
+  colunas **opcionais** `total_line,over,under` (mercado de over/under — ENG-35; arquivos
+  antigos sem elas seguem válidos). Ausente ⇒ blend desligado. Preenchido por
+  `scripts/fetch_odds.py` (busca The Odds API + **mescla**, preservando jogos já disputados
+  — `blend-track` acumula tally; à mão, **acrescente**, não sobrescreva). Linhas em branco
+  ignoradas. **`odds.csv` é gitignored** — ToS da The Odds API não permite redistribuir em
+  repo público (ver `docs/DATA.md` §6); vive só local. Veredito de blend reproduzível
+  localmente. Mantenha arquivo (não apague); **nunca** versione odds nem chave (em `.env`).
+- `shootouts.csv` — **opcional** (ENG-30): `match_id,winner` (vencedor de disputa de
+  pênaltis, nome canônico). Carregado em `Edition.shootouts`; usado para mostrar o desfecho
+  real (prorrogação/pênaltis/quem avançou) dos jogos de KO **já disputados** quando a
+  fonte oficial ainda tem latência (ENG-15).
   **Captura manual:** preencha **só com placares verificados em ≥2 fontes confiáveis** (regra
   `confirmar-placares-multiplas-fontes`). Versionado (fato público, durável); linhas sem vencedor
   são
@@ -156,18 +148,23 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 
 - **Nomes de seleção**: canônico em inglês internamente; PT só na exibição (`teams.display`).
   Arquivos de dados usam o canônico. Novos aliases vão em `teams._ALIASES`.
-- **Mando**: aplicado quando `neutral == false` (anfitriões em casa). A flag vem da fonte. O mando é
-  de quem está em `tournament.toml::hosts`, **não** necessariamente da coluna `home`: a escala
-  oficial
-  pode listar o anfitrião como visitante num jogo no estádio dele (Copa 2026, jogos 50/51/60), e a
-  vantagem segue o anfitrião. Regra centralizada em `MatrixCache._host_away` →
+- **Mando**: aplicado quando `neutral == false` (anfitriões em casa). A flag vem da fonte.
+  O mando é de quem está em `tournament.toml::hosts`, **não** da coluna `home`: a escala
+  oficial pode listar anfitrião como visitante num jogo no estádio dele (Copa 2026, jogos
+  50/51/60); vantagem segue anfitrião. Regra centralizada em `MatrixCache._host_away` →
   `score_matrix(host_away=…)`.
 - **Gerados (no .gitignore)**: `out/`, `data/historical_results.csv`, caches,
-  **`data/editions/*/odds.csv`**
-  (odds reais — gitignored por ToS, ver `docs/DATA.md` §6). Versionar só specs de edição, código,
-  testes e a skill. **Exceção deliberada:** os runs **reais** em `data/editions/<ano>/history/` são
-  versionados — snapshots imutáveis e não-reprodutíveis (ver acima); os `*.reconstruido.*` ficam no
-  `.gitignore` (regeneráveis via `--as-of`).
+  **`data/editions/*/odds.csv`** (odds reais — gitignored por ToS, ver `docs/DATA.md` §6).
+  Versionar só specs, código,
+  testes e skill. **Exceção deliberada:** runs **reais** em
+  `data/editions/<ano>/history/` são versionados — snapshots imutáveis; `*.reconstruido.*`
+  ficam em `.gitignore` (regeneráveis via `--as-of`).
+  testes e skill. **Exceção deliberada:** runs **reais** em
+  `data/editions/<ano>/history/` são versionados — snapshots imutáveis; `*.reconstruido.*`
+  ficam em `.gitignore` (regeneráveis via `--as-of`).
+  testes e skill. **Exceção deliberada:** runs **reais** em
+  `data/editions/<ano>/history/` são versionados — snapshots imutáveis; `*.reconstruido.*`
+  ficam em `.gitignore` (regeneráveis via `--as-of`).
 - **Higiene de artefatos**: limpeza é **sob demanda** via `scripts/clean-artifacts.sh`
   (dry-run por padrão; `--force` apaga). Poda transcripts de sessão (`~/.claude/.../*.jsonl`) com
   mais de 7 dias preservando a sessão ativa, e o scratch `tmp/`. **A memória

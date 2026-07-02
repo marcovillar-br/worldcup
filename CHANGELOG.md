@@ -1,8 +1,7 @@
 # Changelog
 
-Todas as mudanças relevantes deste projeto. Formato baseado em
-[Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/); versionamento
-[SemVer](https://semver.org/lang/pt-BR/).
+Todas as mudanças relevantes deste projeto. Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/);
+versionamento: [SemVer](https://semver.org/lang/pt-BR/).
 
 **Convenção de tag:** cada marco recebe uma tag `vX.Y.Z` apontando para o commit do release;
 a seção correspondente aqui sai de `[Não lançado]` para `[X.Y.Z] - AAAA-MM-DD`. A versão é
@@ -21,12 +20,11 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   preservada (e logada); jogos pendentes/novos atualizam. Snapshots reconstruídos (`--as-of`)
   seguem sobrescrevendo — são regeneráveis por definição. (ENG-33)
 - **Peso de fase aplicado na contabilidade de pontos/teto** (`Scorer.weighted_points` +
-  `scripts/efficiency.py`): o app pontua o mata-mata vezes o peso da fase (R32–SF ×2, final ×4) e
-  isso **nunca era aplicado** (`ScoringConfig.weight` existia, mas ninguém o chamava) — o
-  teto/eficiência
-  subcontava cada jogo de KO, inflando a eficiência conforme o mata-mata avança. Agora o placar dos
-  90'
-  do KO entra ponderado. A pontuação da **fase de grupos é idêntica** (peso ×1). (ENG-27 parte 1)
+  `scripts/efficiency.py`): app pontua mata-mata vezes peso da fase (R32–SF ×2, final ×4),
+  mas **nunca era aplicado** (`ScoringConfig.weight` existia, ninguém chamava) — teto/
+  eficiência subcontava cada jogo de KO, inflando conforme mata-mata avança. Agora placar dos
+  90' do KO entra ponderado. Pontuação da **fase de grupos é idêntica** (peso ×1). (ENG-27
+  parte 1)
 - **Bônus de prorrogação/pênaltis no teto de eficiência** (`scripts/efficiency.py`): reconstrói o
   desfecho da fonte — placar dos 90' (results) + `shootouts`, com a inferência
   *empate-90'-sem-shootout

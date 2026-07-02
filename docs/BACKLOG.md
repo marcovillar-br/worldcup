@@ -48,7 +48,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-32](#eng-32) | P3 | scoring/knockout | ✅ | Palpite de 90' no KO tende a 0×0 (empate→pênaltis) e zera quando o favorito vence nos 90' — é E[pts]-ótimo ou artefato? |
 | [ENG-33](#eng-33) | P1 | cli/history | 🔴 | Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã |
 | [ENG-34](#eng-34) | P2 | efficiency | 🔴 | Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada |
-| [ENG-35](#eng-35) | P2 | blend/odds | 🔴 | Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo; mercado de over/under não é usado |
+| [ENG-35](#eng-35) | P2 | blend/odds | ✅ | Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo; mercado de over/under não é usado |
 | [ENG-36](#eng-36) | P2 | scoring/estratégia | 🔴 | Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão nos jogos de peso ×2/×4, não E[pts] |
 
 ---
@@ -1043,7 +1043,7 @@ não re-pontua diferente). `pytest` verde.
 **Commit:** —
 
 ## ENG-35
-**Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo** · P2 · `blend`/`odds` · 🔴 todo
+**Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo** · P2 · `blend`/`odds` · ✅ feito
 
 O blend (ENG-19) faz `devig` → `log_opinion_pool` → `rescale_matrix`: ajusta a matriz de placares ao
 1×2-alvo **preservando a forma condicional**. Ou seja: o mercado corrige *quem ganha*, mas os **gols
@@ -1067,7 +1067,17 @@ placar exato, modelo vs blendado).
 **Aceite:** teste de regressão: matriz com λ conhecido + totals sintéticos ⇒ taxa total blendada
 converge ao alvo e o 1×2 final continua batendo com o pool; sem colunas de totals, output byte-igual
 ao atual. Métrica prospectiva no `blend-track` mostrando o efeito. `pytest`/`mypy` verdes.
-**Commit:** —
+**Resolução:** `blend.devig_pair`/`implied_total_rate` (bissecção na Poisson) /
+`expected_total_goals`/`tilt_matrix_to_total` (tilting `c^(i+j)`; num produto de Poissons escala as
+duas taxas por `c`, preservando a partição mandante/visitante) + pool geométrico de taxas (pool
+logarítmico de Poissons é Poisson na média geométrica), iterado 3× com o `rescale_matrix` (1×2 exato
+por vir por último). `odds.csv` com colunas opcionais `total_line,over,under` (`edition._load_totals`
+→ `Edition.totals`; legado válido); `fetch_odds.py` busca `h2h,totals` (fallback: mediana na linha
+modal); `blend-track` com Brier binário do over/under. 17 testes novos (inversão do λ, invariância do
+share sob tilting, alvos do pool, schema legado, extração/fallback). 150 testes verdes. Efeito real
+em 01/07 (8 jogos com totals): J81 3×1→2×0, J86/J87 1×0→2×0, J89 0×1→1×2; sem totals ⇒ caminho
+antigo byte-idêntico.
+**Commit:** 61a6d78
 
 ## ENG-36
 **Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão, não E[pts]** · P2 · `scoring`/`estratégia` · 🔴 todo

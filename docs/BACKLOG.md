@@ -55,7 +55,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-37](#eng-37) | P3 | processo/docs | ✅ | Padrão de largura de linha nos `.md`: régua definida (100 caracteres) + scripts on-demand |
 | [ENG-38](#eng-38) | P2 | blend/backtest | ✅ | `blend_weight` fixado por prior (0,6), nunca otimizado com dado — sweep de Brier por peso |
 | [ENG-39](#eng-39) | P2 | scoring/estratégia | ✅ | Simulador de endgame é juiz e parte: gerador = modelo, cego à subestimação de empate em final |
-| [ENG-40](#eng-40) | P2 | knockout/cli | 🔴 | Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra superada |
+| [ENG-40](#eng-40) | P2 | knockout/cli | ✅ | Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra superada |
 
 ---
 
@@ -1348,7 +1348,7 @@ dia, com e sem inflação).
 
 ## ENG-40
 **Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra
-superada** · P2 · `knockout`/`cli` · 🔴 todo
+superada** · P2 · `knockout`/`cli` · ✅ feito
 
 A regra de endgame v2 (ENG-39) é "na final, atrás ⇒ empate nos 90' + camadas", mas o único modo
 endgame da CLI (`predict --pool-behind`, ENG-36) palpita a **zebra** nas 3 camadas — política
@@ -1366,4 +1366,13 @@ da final com o standing real para confirmar que a dominância se mantém.
 **Aceite:** com o modo ativo, o palpite da final sai empate nos 90' (melhor placar da diagonal
 por E[pts]) + camadas ET/pênaltis; jogos de peso não-máximo inalterados; teste cobrindo a seleção;
 docs (README/AGENTS/CHANGELOG/BOLAO/skill) sincronizadas; `pytest` verde.
-**Commit:** —
+**Resolução (parametrizado, default empate):** `predict_knockout(pool_behind=)` vira
+`None|"empate"|"zebra"` (valor inválido ⇒ ValueError); o modo `empate` usa
+`_empate_prediction` (melhor placar da diagonal por E[pts]) e mantém camadas ET/pênaltis e
+avanço fiéis; `zebra` preserva o ENG-36 para a comparação da véspera (a reavaliação
+com o standing do dia segue na decisão viva do `BOLAO.md`). CLI: `--pool-behind [empate|zebra]`
+em `predict` e `sync-results` (sem valor ⇒ `empate`). Verificado ponta-a-ponta: J104 sai 0×0
++ "vai aos pênaltis" com o modo; J101–J103 (peso ×2) inalterados; `out/` vivo restaurado
+fiel. Testes: empate força a melhor diagonal, camadas/avanço idênticos ao fiel, `None`
+inalterado, valor inválido levanta, parser dos 2 subcomandos. 162 verdes.
+**Commit:** f04c73b

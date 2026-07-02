@@ -33,6 +33,7 @@ uv run worldcup predict --edition 2026 --archive   # +snapshot versionado do dia
 uv run worldcup record --edition 2026 --match <id> --home 2 --away 1   # registra um placar manualmente
 uv run worldcup backtest --edition 2022       # valida o modelo numa Copa passada
 uv run worldcup blend-track --edition 2026     # Brier blend vs modelo (ENG-19) + monitor de empates (ENG-22)
+uv run worldcup blend-track --edition 2026 --sweep   # varre blend_weight 0.0..1.0 e mostra o Brier de cada peso (ENG-38)
 uv run pytest        # testes
 uv run ruff check .  # lint
 ```
@@ -74,8 +75,9 @@ com `match_id,home,draw,away` em odds decimais e, opcionalmente, `total_line,ove
 Para editar à mão, **acrescente** jogos de cada rodada (não sobrescreva). Ferramenta tira
 margem da casa, combina odds com probabilidades do modelo (média geométrica ponderada, peso
 `blend_weight`) e ajusta palpite; com totals, também ancora **taxa de gols** do placar
-no mercado (sem totals num jogo, só 1×2 corrigido). Edição 2026 já vem com `blend_weight = 0.6`
-no `scoring.toml` (odds de fechamento bem calibradas); `--blend-weight 0` ou ausência
+no mercado (sem totals num jogo, só 1×2 corrigido). Edição 2026 usa `blend_weight = 0.8`
+no `scoring.toml` (escolhido com dado via `blend-track --sweep`, ENG-38 — o Brier caiu
+monotonicamente com mais peso de mercado); `--blend-weight 0` ou ausência
 de `odds.csv` ⇒ só modelo, sem mudança. Por que ajuda: o modelo é estatístico e cego a
 escalações/lesões/motivação, que as odds capturam. Para medir se o blend está de fato
 ajudando, rode `worldcup blend-track` conforme registra odds + resultados — compara o
@@ -144,12 +146,16 @@ palpite diverge e a divergência acerta. A simulação de pelotão quantifica:
 uv run python scripts/eng36_pool_sim.py --edition 2026 --my-points 285 --leader 337 --pool-size 60
 ```
 
-Compara políticas (fiel / placar alternativo / zebra na final / SF / QF) em P(#1), P(top-3) e
-E[pts]. Resultado (01/07, 3000 torneios): **atrás**, zebra só na final multiplica P(#1) por ~6
-(0,7%→4,0%) custando ~7 pts esperados; divergir antes (SF/QF) não adiciona nada; **na frente**, fiel
-domina (47% vs 35%). Para aplicar na prática: `worldcup predict --pool-behind` palpita a **zebra**
-(90' + prorrogação + pênaltis) **só nos jogos de peso máximo** (a final) — use apenas na manhã da
-final e apenas se estiver **atrás** no ranking.
+Compara políticas (fiel / placar alternativo / zebra na final / SF / QF / **empate na final** —
+ENG-39) em P(#1), P(top-3) e E[pts]. Resultado (02/07, 3000 torneios, standing 295/353/21º):
+**atrás**, `empate-final` (empata os 90' da final com o melhor placar por E[pts] + camadas
+prorrogação/pênaltis) domina a zebra — P(top-3) 8,4% vs 5,5% **a custo zero de E[pts]** — e a
+vantagem cresce sob o gerador realista: `--draw-inflate-final P` infla P(empate 90') **só do
+gerador** da final (5 das 8 finais desde 1994 empataram nos 90', ~60%, vs ~28% no modelo) e a
+0,60 dá P(#1) 4,9% / P(top-3) 14,3% contra 1,2%/3,8% da zebra; **na frente**, fiel domina.
+`worldcup predict --pool-behind` ainda palpita a **zebra** nos jogos de peso máximo (ENG-36);
+a política dominante `empate-final` está no backlog para ser exposta (ENG-40) — até lá,
+aplique-a manualmente na manhã da final, e apenas se estiver **atrás** no ranking.
 
 **Apresentação do projeto** — um deck HTML autocontido (tema "Placar Noturno", 16:9, navegável) que
 explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):

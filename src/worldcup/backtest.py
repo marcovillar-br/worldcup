@@ -31,7 +31,9 @@ from .teams import canonical
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from .edition import Edition
+    import numpy as np
+
+    from .edition import Edition, Fixture
 
 # Início aproximado de cada Copa (para cortar o treino antes do torneio).
 _WORLD_CUP_START = {2010: "2010-06-11", 2014: "2014-06-12", 2018: "2018-06-14", 2022: "2022-11-20"}
@@ -265,18 +267,23 @@ def _as_of_group_matrices(edition: Edition, historical: pd.DataFrame):
             yield f, cache.matrix(f.home, f.away, f.neutral)
 
 
-def prospective_blend_report(edition: Edition, weight: float | None = None) -> BlendTracking:
-    """Valida o blend prospectivamente nos jogos de grupo já disputados que têm odds (ENG-19, Gate 3).
+def _collect_blend_games(edition: Edition) -> list[tuple[Fixture, np.ndarray]]:
+    """Jogos de grupo disputados com odds + matriz **as-of** (1 fit/dia) — base do report e do sweep.
 
-    Compara o **Brier multiclasse** do modelo-puro vs. do blend(`weight`) com o resultado real, usando
-    o modelo **as-of** de cada jogo (`_as_of_group_matrices`). Como `weight` é pré-registrado, é
-    out-of-sample. Sem jogos-com-odds ⇒ tudo zero (registre odds em `odds.csv`).
+    Só grupo: no mata-mata a convenção martj42 registra o placar **com prorrogação**, o que torna o
+    desfecho de 90' (o que as odds 1×2 precificam) ambíguo em jogo decidido na ET — incluir esses
+    jogos corromperia o Brier em silêncio.
     """
-    from .blend import blend_matrix_with_odds, devig, log_opinion_pool, prob_total_over
+    return [
+        (f, mat)
+        for f, mat in _as_of_group_matrices(edition, load_historical())
+        if f.match_id in edition.odds and f.home_goals is not None and f.away_goals is not None
+    ]
 
-    w = edition.scoring.blend_weight if weight is None else weight
-    if not any(f.is_group and f.played and f.match_id in edition.odds for f in edition.fixtures):
-        return BlendTracking(weight=w, n=0, brier_model=0.0, brier_blend=0.0)
+
+def _tracking_for_weight(edition: Edition, games: list[tuple[Fixture, np.ndarray]], w: float) -> BlendTracking:
+    """Tally de Brier (1×2 e totals) de um peso `w` sobre os jogos já coletados."""
+    from .blend import blend_matrix_with_odds, devig, log_opinion_pool, prob_total_over
 
     model_probs: list[tuple[float, float, float]] = []
     blend_probs: list[tuple[float, float, float]] = []
@@ -284,10 +291,10 @@ def prospective_blend_report(edition: Edition, weight: float | None = None) -> B
     # métrica de totals (ENG-35): Brier binário de P(over) — modelo vs blend com totals
     total_sq_model: list[float] = []
     total_sq_blend: list[float] = []
-    for f, mat in _as_of_group_matrices(edition, load_historical()):
+    for f, mat in games:
         hg, ag = f.home_goals, f.away_goals
-        if f.match_id not in edition.odds or hg is None or ag is None:
-            continue
+        assert hg is not None  # garantido por _collect_blend_games
+        assert ag is not None
         mp = outcome_probs_from_matrix(mat)
         model_probs.append(mp)
         blend_probs.append(log_opinion_pool(mp, devig(edition.odds[f.match_id]), w))
@@ -310,6 +317,32 @@ def prospective_blend_report(edition: Edition, weight: float | None = None) -> B
         brier_total_model=sum(total_sq_model) / n_totals if n_totals else 0.0,
         brier_total_blend=sum(total_sq_blend) / n_totals if n_totals else 0.0,
     )
+
+
+def prospective_blend_report(edition: Edition, weight: float | None = None) -> BlendTracking:
+    """Valida o blend prospectivamente nos jogos de grupo já disputados que têm odds (ENG-19, Gate 3).
+
+    Compara o **Brier multiclasse** do modelo-puro vs. do blend(`weight`) com o resultado real, usando
+    o modelo **as-of** de cada jogo (`_as_of_group_matrices`). Como `weight` é pré-registrado, é
+    out-of-sample. Sem jogos-com-odds ⇒ tudo zero (registre odds em `odds.csv`).
+    """
+    w = edition.scoring.blend_weight if weight is None else weight
+    if not any(f.is_group and f.played and f.match_id in edition.odds for f in edition.fixtures):
+        return BlendTracking(weight=w, n=0, brier_model=0.0, brier_blend=0.0)
+    return _tracking_for_weight(edition, _collect_blend_games(edition), w)
+
+
+def blend_weight_sweep(edition: Edition, weights: Sequence[float]) -> list[BlendTracking]:
+    """Brier do blend numa **grade de pesos** — escolhe `blend_weight` com dado, não com prior (ENG-38).
+
+    Uma única passada as-of coleta as matrizes (o custo caro, 1 fit/dia); cada peso é só uma
+    reavaliação do pool logarítmico. ⚠️ O w* minimiza o Brier **in-sample da grade** (n ainda
+    pequeno): use como evidência direcional, não como verdade fina — degraus de 0,1 bastam.
+    """
+    games = _collect_blend_games(edition)
+    if not games:
+        return [BlendTracking(weight=w, n=0, brier_model=0.0, brier_blend=0.0) for w in weights]
+    return [_tracking_for_weight(edition, games, w) for w in weights]
 
 
 @dataclass

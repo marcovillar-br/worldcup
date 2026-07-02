@@ -86,8 +86,10 @@ def test_load_shootouts(tmp_path):
 
 
 def test_2026_blend_weight_prior():
-    # prior de princípio do ENG-19 (Gate 2): w≈0.6 travado — mudar deve ser deliberado
-    assert load_edition(2026).scoring.blend_weight == 0.6
+    # w=0.8 deliberado (ENG-38, 2026-07-02): `blend-track --sweep` em 49 jogos deu Brier
+    # monotônico decrescente em w (mercado > modelo); 0.8 captura o grosso sem abraçar o extremo
+    # w*=1.0 em amostra pequena. Prior original do ENG-19 era 0.6. Travado: mudar é deliberado.
+    assert load_edition(2026).scoring.blend_weight == 0.8
 
 
 def test_2026_phase_weights():

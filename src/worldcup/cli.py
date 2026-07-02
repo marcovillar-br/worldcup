@@ -277,9 +277,28 @@ def cmd_backtest(args: argparse.Namespace) -> int:
 
 
 def cmd_blend_track(args: argparse.Namespace) -> int:
-    from .backtest import draw_regime_report, prospective_blend_report
+    from .backtest import blend_weight_sweep, draw_regime_report, prospective_blend_report
 
     edition = load_edition(args.edition)
+
+    if args.sweep:
+        weights = [round(0.1 * i, 1) for i in range(11)]
+        results = blend_weight_sweep(edition, weights)
+        if results[0].n == 0:
+            print("ℹ️  Nenhum jogo disputado com odds em odds.csv — nada para varrer.")
+            return 0
+        best = min(results, key=lambda r: r.brier_blend)
+        print(f"📐 Sweep de blend_weight — {results[0].n} jogo(s) de grupo com odds (Brier menor é melhor):")
+        for r in results:
+            marks = " ← mínimo" if r is best else ""
+            marks += "  (em uso)" if r.weight == edition.scoring.blend_weight else ""
+            totals_col = f"   totals {r.brier_total_blend:.4f}" if r.n_totals else ""
+            print(f"   w={r.weight:.1f}  Brier 1×2 {r.brier_blend:.4f}{totals_col}{marks}")
+        print(
+            f"   w* = {best.weight:.1f}. Amostra pequena — mudança de scoring.toml só com margem "
+            "clara sobre o w em uso e registrada no BOLAO.md."
+        )
+        return 0
 
     res = prospective_blend_report(edition, args.blend_weight)
     if res.n == 0:
@@ -438,6 +457,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="W",
         help="peso do mercado a avaliar (0..1; default: o da edição)",
+    )
+    blt.add_argument(
+        "--sweep",
+        action="store_true",
+        help="varre w=0.0..1.0 (passo 0.1) e mostra o Brier de cada peso (ENG-38); ignora --blend-weight",
     )
     blt.set_defaults(func=cmd_blend_track)
 

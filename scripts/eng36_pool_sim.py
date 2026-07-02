@@ -6,11 +6,20 @@ pelotão e a divergência acerta. Este script simula os jogos **restantes** da e
 modelo+blend atuais, mesmo caminho do `predict`), um pelotão de apostadores sintéticos (consenso /
 ruidoso / caça-empate) ancorado nos pontos reais do bolão, e compara políticas para o usuário:
 
-  fiel        — sempre o palpite do tool (predict_knockout: 90' sem empate + camadas ET/pên.)
-  exato-alt   — mesmo lado do tool, mas o 2º melhor placar por E[pts] (descorrelação de placar)
-  zebra-final — fiel até a final; na final (e 3º lugar), se atrás, lado zebra
-  zebra-sf    — idem, a partir das semifinais
-  zebra-qf    — idem, a partir das quartas, só em jogo apertado (P(favorito) < limiar)
+  fiel         — sempre o palpite do tool (predict_knockout: 90' sem empate + camadas ET/pên.)
+  exato-alt    — mesmo lado do tool, mas o 2º melhor placar por E[pts] (descorrelação de placar)
+  zebra-final  — fiel até a final; na final (e 3º lugar), se atrás, lado zebra
+  zebra-sf     — idem, a partir das semifinais
+  zebra-qf     — idem, a partir das quartas, só em jogo apertado (P(favorito) < limiar)
+  empate-final — fiel até a final; NA FINAL, se atrás, empata os 90' (melhor placar de empate por
+                 E[pts]) + camadas ET/pên. — a arma do líder, cirúrgica no peso ×4 (ENG-39)
+  empate-close — idem, também em QF/SF apertados (P(favorito) < limiar)
+
+Sensibilidade (ENG-39): `--draw-inflate-final P` infla P(empate 90') do **GERADOR** da final para P
+(via `rescale_matrix`, preservando a forma condicional), mantendo as matrizes de PALPITE intactas.
+Motivo: o gerador padrão é o próprio modelo (juiz e parte) — ele não pode punir a si mesmo por
+subestimar empate em final. Base empírica: 5 das 8 finais desde 1994 empatadas nos 90'
+(~60%), contra ~27–30% no DC para times parelhos.
 
 Saída: P(#1), P(top-3), E[pontos finais] por política, nos cenários "atrás" (standing real) e
 "na frente" (contrafactual). Reproduzível:
@@ -32,7 +41,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from worldcup.blend import blend_matrix_with_odds
+from worldcup.blend import blend_matrix_with_odds, rescale_matrix
 from worldcup.edition import Edition, load_edition
 from worldcup.fetch_data import load_historical
 from worldcup.format_engine import MatrixCache
@@ -96,6 +105,22 @@ def zebra_pick(matrix: np.ndarray, scorer: Scorer) -> Pick:
     cells = _side_cells(matrix.shape[0], side)
     h, a = max(cells, key=lambda c: scorer.expected_points(c, matrix))
     return (h, a, side, side)
+
+
+def empate_pick(matrix: np.ndarray, scorer: Scorer) -> Pick:
+    """Empate nos 90' (melhor placar da diagonal por E[pts]) + camadas ET/pên. como o tool (ENG-39).
+
+    A arma do líder, aplicada onde ela é +EV: jogo apertado de peso alto, em que P(empate 90') real
+    supera a precificada pela base do app. Difere do `drawhunter_pick` (empate MODAL) por otimizar
+    o placar de empate por E[pts], e das zebras por não trocar de lado.
+    """
+    n = matrix.shape[0]
+    d = max(range(n), key=lambda k: scorer.expected_points((k, k), matrix))
+    lam_h, lam_a = _expected_goals(matrix)
+    et_h, et_d, et_a = _extra_time_probs(lam_h, lam_a)
+    et = max((("home", et_h), ("penalties", et_d), ("away", et_a)), key=lambda kv: kv[1])[0]
+    ph, _pd, pa = outcome_probs_from_matrix(matrix)
+    return (d, d, et, "home" if ph >= pa else "away")
 
 
 def tool_pick(home: str, away: str, matrix: np.ndarray, scorer: Scorer) -> Pick:
@@ -259,6 +284,14 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--my-rank", type=int, default=21)
     p.add_argument("--pool-size", type=int, default=60)
     p.add_argument("--close-threshold", type=float, default=0.62, help="P(favorito) abaixo disso = jogo apertado")
+    p.add_argument(
+        "--draw-inflate-final",
+        type=float,
+        default=None,
+        metavar="P",
+        help="sensibilidade (ENG-39): infla P(empate 90') do GERADOR da final para P (ex.: 0.45); "
+        "palpites seguem usando as matrizes originais (o modelo não sabe que o mundo mudou)",
+    )
     args = p.parse_args(argv)
 
     edition = load_edition(args.edition)
@@ -271,6 +304,11 @@ def main(argv: list[str] | None = None) -> int:
     games = remaining_games(edition)
     resolver = MatchupResolver(edition)
     print(f"🎲 {len(games)} jogos restantes; {args.sims} torneios simulados; pool={args.pool_size}.")
+    if args.draw_inflate_final is not None:
+        print(
+            f"⚠️  Sensibilidade ENG-39: P(empate 90') do GERADOR da final inflada para "
+            f"{args.draw_inflate_final:.0%} (palpites seguem cegos à mudança)."
+        )
 
     # memoização por confronto: matriz (com blend quando há odds) e picks por arquétipo
     mat_memo: dict[tuple[int, str, str], np.ndarray] = {}
@@ -286,6 +324,19 @@ def main(argv: list[str] | None = None) -> int:
             mat_memo[key] = mat
         return mat_memo[key]
 
+    truth_memo: dict[tuple[int, str, str], np.ndarray] = {}
+
+    def truth_matrix_for(g: SimGame, home: str, away: str, belief: np.ndarray) -> np.ndarray:
+        """Matriz do GERADOR: igual à de palpite, salvo a final sob --draw-inflate-final (ENG-39)."""
+        if args.draw_inflate_final is None or g.stage != "final":
+            return belief
+        key = (g.match_id, home, away)
+        if key not in truth_memo:
+            ph, _pd, pa = outcome_probs_from_matrix(belief)
+            scale = (1.0 - args.draw_inflate_final) / max(ph + pa, 1e-12)
+            truth_memo[key] = rescale_matrix(belief, (ph * scale, args.draw_inflate_final, pa * scale))
+        return truth_memo[key]
+
     def memo_pick(kind: str, g: SimGame, home: str, away: str, mat: np.ndarray, rng: np.random.Generator) -> Pick:
         key = (kind, (g.match_id, home, away))
         if key not in pick_memo:
@@ -295,6 +346,8 @@ def main(argv: list[str] | None = None) -> int:
                 pick_memo[key] = exato_alt_pick(home, away, mat, scorer)
             elif kind == "zebra":
                 pick_memo[key] = zebra_pick(mat, scorer)
+            elif kind == "empate":
+                pick_memo[key] = empate_pick(mat, scorer)
             elif kind == "consensus":
                 pick_memo[key] = consensus_pick(mat)
             elif kind == "drawhunter":
@@ -309,9 +362,12 @@ def main(argv: list[str] | None = None) -> int:
         ("ATRÁS (standing real)", args.my_points, args.leader, args.my_rank),
         ("NA FRENTE (contrafactual)", args.leader + 3, args.leader, 1),
     ]
-    policies = ["fiel", "exato-alt", "zebra-final", "zebra-sf", "zebra-qf"]
+    policies = ["fiel", "exato-alt", "zebra-final", "zebra-sf", "zebra-qf", "empate-final", "empate-close"]
     zebra_stages = {"zebra-final": {"final", "3rd_place"}, "zebra-sf": {"final", "3rd_place", "SF"}}
     zebra_stages["zebra-qf"] = zebra_stages["zebra-sf"] | {"QF"}
+    # empate-final: só a final (o 3º lugar é historicamente aberto/decidido — empate lá é -EV);
+    # empate-close: também QF/SF, mas só em jogo apertado (mesmo limiar das zebras).
+    empate_stages = {"empate-final": {"final"}, "empate-close": {"final", "SF", "QF"}}
 
     for label, my_pts0, leader_pts, my_rank in scenarios:
         opp_pts0, opp_kinds = build_pool(my_pts0, leader_pts, args.pool_size, my_rank)
@@ -329,7 +385,7 @@ def main(argv: list[str] | None = None) -> int:
                 mat = matrix_for(g, home, away)
                 probs = outcome_probs_from_matrix(mat)
                 weight = edition.scoring.weight(g.stage)
-                actual90, aet, apen, adv = simulate_game(mat, rng)
+                actual90, aet, apen, adv = simulate_game(truth_matrix_for(g, home, away, mat), rng)
                 winners[g.match_id] = home if adv == "home" else away
                 losers[g.match_id] = away if adv == "home" else home
                 # adversários
@@ -347,7 +403,18 @@ def main(argv: list[str] | None = None) -> int:
                         and behind
                         and (g.stage != "QF" or fav_prob < args.close_threshold)
                     )
-                    kind = "zebra" if use_zebra else ("exato_alt" if pol == "exato-alt" else "tool")
+                    use_empate = (
+                        pol in empate_stages
+                        and g.stage in empate_stages[pol]
+                        and behind
+                        and (g.stage == "final" or fav_prob < args.close_threshold)
+                    )
+                    if use_empate:
+                        kind = "empate"
+                    elif use_zebra:
+                        kind = "zebra"
+                    else:
+                        kind = "exato_alt" if pol == "exato-alt" else "tool"
                     pk = memo_pick(kind, g, home, away, mat, rng)
                     mine[pol] += score_pick(scorer, pk, actual90, aet, apen, probs, weight)
             for pol in policies:

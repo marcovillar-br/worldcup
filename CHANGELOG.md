@@ -11,6 +11,23 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
+### Adicionado
+- **`blend-track --sweep`** (ENG-38): varre `blend_weight` 0,0..1,0 (passo 0,1) sobre os jogos de
+  grupo disputados com odds e mostra o Brier de cada peso, com **uma só passada as-of** (1 fit/dia;
+  cada peso é só uma reavaliação do pool logarítmico). Motivou subir o `blend_weight` da edição
+  2026 de 0,6 (prior) para **0,8** (dado): Brier monotônico decrescente em w — 0,4420 (modelo-puro)
+  → 0,4179 (0,6) → 0,4100 (1,0). Só grupo: no KO a convenção martj42 registra o placar com
+  prorrogação, o que torna o desfecho de 90' (o que as odds precificam) ambíguo.
+- **Política `empate-final` + sensibilidade de gerador no `eng36_pool_sim`** (ENG-39): nova
+  política que, atrás no ranking, **empata os 90' da final** (melhor placar da diagonal por E[pts])
+  com camadas de prorrogação/pênaltis — a arma do líder, cirúrgica no peso ×4. E
+  `--draw-inflate-final P`: infla P(empate 90') **só do gerador** da final (via `rescale_matrix`),
+  mantendo as matrizes de palpite cegas — corrige o viés juiz-e-parte da simulação (o gerador
+  padrão é o próprio modelo, que subestima empate em final: ~28% vs ~60% histórico desde 1994).
+  Resultado: `empate-final` domina `zebra-final` em **todos** os geradores (P(top-3) 8,4% vs 5,5%
+  no baseline, 14,3% vs 3,8% no histórico) a custo zero de E[pts] — a regra de endgame do ENG-36
+  muda de "zebra na final" para "empate na final" (expor no `predict` = ENG-40).
+
 ### Corrigido
 - **`resolve_live_bracket` não propagava vencedor de KO decidido nos 90' sem `ko_outcome`**
   (`sync.py`): jogos registrados **à mão** com placar decisivo ficam sem `ko_outcome` (o `record`

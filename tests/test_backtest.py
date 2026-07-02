@@ -125,6 +125,29 @@ def test_prospective_blend_weight_zero_equals_model(monkeypatch):
     assert res.delta == pytest.approx(0.0)
 
 
+def test_blend_weight_sweep_shares_one_pass(monkeypatch):
+    # ENG-38: a grade reusa a MESMA coleta as-of; w=0 reproduz o modelo-puro e o Brier do
+    # modelo é idêntico em todos os pesos (só o blend varia).
+    monkeypatch.setattr(bt, "load_historical", mini_historical)
+    ed = load_edition(2026)
+    ed.odds.clear()
+    played = [f for f in ed.fixtures if f.is_group and f.played][:2]
+    for f in played:
+        ed.odds[f.match_id] = (2.0, 3.3, 3.7)
+    results = bt.blend_weight_sweep(ed, [0.0, 0.5, 1.0])
+    assert [r.weight for r in results] == [0.0, 0.5, 1.0]
+    assert all(r.n == len(played) for r in results)
+    assert results[0].brier_blend == pytest.approx(results[0].brier_model)
+    assert len({round(r.brier_model, 12) for r in results}) == 1  # coleta compartilhada
+
+
+def test_blend_weight_sweep_empty_without_odds():
+    ed = load_edition(2026)
+    ed.odds.clear()
+    results = bt.blend_weight_sweep(ed, [0.0, 1.0])
+    assert all(r.n == 0 for r in results)
+
+
 # ------------------------------------------------ monitor de regime de empates (ENG-22)
 def test_draw_regime_stats_known_z():
     # 20 jogos, P(empate)=0.25 cada, 8 empates: E=5, Var=20*0.25*0.75=3.75, z=3/sqrt(3.75)

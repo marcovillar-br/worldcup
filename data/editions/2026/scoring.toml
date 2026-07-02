@@ -11,11 +11,12 @@ system = "sistema_i"
 # ranking quando está atrás); <0.5 = conservador (tende ao favorito). Default fiel = 0.5.
 risk = 0.5
 
-# Peso do mercado no blend com odds.csv (ENG-19). Prior de princípio ~0.6: odds de fechamento
-# des-vigadas são preditor quase-otimamente calibrado, então confiamos um pouco mais no mercado
-# que no modelo quando há odds. Efetivo SÓ nos jogos presentes em odds.csv (ausente ⇒ só modelo).
-# Acompanhe o ganho real com `worldcup blend-track` conforme registrar odds + resultados.
-blend_weight = 0.6
+# Peso do mercado no blend com odds.csv (ENG-19). Prior original 0.6; elevado a 0.8 em 2026-07-02
+# com dado (ENG-38): `blend-track --sweep` em 49 jogos disputados com odds deu Brier MONOTÔNICO
+# decrescente em w (0.4420 no modelo-puro → 0.4100 em w=1.0). 0.8 captura a maior parte do ganho
+# sem abraçar o extremo w*=1.0 numa amostra pequena. Efetivo SÓ nos jogos presentes em odds.csv
+# (ausente ⇒ só modelo). Reavalie com `blend-track --sweep` conforme a amostra crescer.
+blend_weight = 0.8
 
 # Peso por fase (Equilíbrio gradual): grupos 1x, eliminatórias 2x, final 4x.
 # Não muda o placar ótimo de um jogo isolado, mas indica onde arriscar mais decide o ranking.

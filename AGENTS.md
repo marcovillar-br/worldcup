@@ -111,7 +111,8 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   default do **campo ausente** é `0.6` (`ScoringConfig`, não `0.5`): cada edição deve
   **fixar `risk` no `scoring.toml`**; omiti-lo herda um leve viés de ousadia (0.6), não o fiel 0.5.
   Também `blend_weight` (peso do mercado no blend com odds; `0` = só modelo, ausência do campo ⇒ 0;
-  **a edição 2026 usa `0.6`** — ENG-19).
+  **a edição 2026 usa `0.8`** — prior 0.6 do ENG-19 elevado com dado via
+  `blend-track --sweep`, ENG-38).
 - `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, mais as colunas
   **opcionais** `total_line,over,under` (mercado de over/under — ENG-35; arquivos antigos sem elas
   seguem válidos). Ausente ⇒ blend desligado. Preenchido por `scripts/fetch_odds.py` (busca The Odds

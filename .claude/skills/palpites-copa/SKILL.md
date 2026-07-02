@@ -77,7 +77,7 @@ Para mata-mata empatado nos 90'/prorrogação, acrescente `--ko-winner "<Seleç�
 
 ### 2.5 Atualizar odds de mercado (blend, ENG-19)
 Antes de palpitar a próxima rodada, atualize as odds (a edição 2026 já roda blendada,
-`blend_weight = 0.6`):
+`blend_weight = 0.8` — escolhido com dado via `blend-track --sweep`, ENG-38):
 ```bash
 uv run python scripts/fetch_odds.py --edition 2026   # busca The Odds API + mescla no odds.csv
 ```

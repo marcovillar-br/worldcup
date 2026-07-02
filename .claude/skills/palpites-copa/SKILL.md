@@ -1,6 +1,11 @@
 ---
 name: palpites-copa
-description: Gera e atualiza os palpites do bolão da Copa do Mundo usando o app worldcup (modelo Dixon-Coles). Use SEMPRE que o usuário pedir palpites da Copa, quiser os palpites da próxima rodada/fase, quiser registrar resultados de jogos já disputados, perguntar quem é o favorito/campeão, quiser repalpitar depois que jogos aconteceram, ou perguntar sobre sua eficiência/desempenho no bolão ("estou indo bem?", "quanto deixei na mesa?") — mesmo que não diga "worldcup" explicitamente. Cobre fase de grupos e mata-mata (90 min, prorrogação e pênaltis).
+description: Gera e atualiza os palpites do bolão da Copa do Mundo usando o app worldcup (modelo
+Dixon-Coles). Use SEMPRE que o usuário pedir palpites da Copa, quiser os palpites da próxima
+rodada/fase, quiser registrar resultados de jogos já disputados, perguntar quem é o
+favorito/campeão, quiser repalpitar depois que jogos aconteceram, ou perguntar sobre sua
+eficiência/desempenho no bolão ("estou indo bem?", "quanto deixei na mesa?") — mesmo que não diga
+"worldcup" explicitamente. Cobre fase de grupos e mata-mata (90 min, prorrogação e pênaltis).
 ---
 
 # Palpites da Copa (bolão)
@@ -55,10 +60,12 @@ uv run worldcup record --edition 2026 --match <ID> --home <gols_mandante> --away
 ```
 ⚠️ **`--home`/`--away` seguem a ordem `mandante,visitante` do fixture**, que
 nem sempre é a intuitiva: a escala oficial lista o anfitrião como *visitante* em alguns jogos no
-estádio dele (ex.: o fixture do jogo 60 é `Turkey × United States`, não `EUA × Turquia`). **Confira a
+estádio dele (ex.: o fixture do jogo 60 é `Turkey × United States`, não `EUA × Turquia`). **Confira
+a
 ordem do fixture antes de registrar** e mapeie o placar ditado para ela — senão grava invertido.
 
-⚠️ **No registro manual** (quando a fonte oficial do `sync-results` ainda não tem o jogo e você busca
+⚠️ **No registro manual** (quando a fonte oficial do `sync-results` ainda não tem o jogo e você
+busca
 o placar na internet): **confirme em ≥2 fontes independentes antes de `record`** (ESPN, FIFA, Yahoo,
 Olympics, etc.) — placar **e** ordem mandante×visitante. **Nunca** registre a partir de uma única
 busca/resumo. (Isso **não** se aplica ao `sync-results`: a fonte canônica dele já é a referência.)
@@ -121,8 +128,10 @@ Mede quanto dos pontos que o tool renderia o usuário capturou. **Exige os ponto
 uv run python scripts/efficiency.py --edition 2026 --my-points <PTS> [--leader <PTS>] --compare-archive
 ```
 Para cada jogo disputado, reconstrói o palpite **as-of** (o que o tool mostrava na manhã do jogo) e
-o pontua pelo Sistema I contra o real → o **teto** que seguir o tool à risca renderia. No mata-mata o
-placar dos 90' entra com o **peso de fase** (R32–SF ×2, final ×4) e o bônus de prorrogação/pênaltis é
+o pontua pelo Sistema I contra o real → o **teto** que seguir o tool à risca renderia. No mata-mata
+o
+placar dos 90' entra com o **peso de fase** (R32–SF ×2, final ×4) e o bônus de prorrogação/pênaltis
+é
 somado quando a fonte (`shootouts.csv`) confirma o desfecho (ENG-27); jogos empatados nos 90' sem
 shootout na fonte são pulados. `eficiência = seus_pontos / teto`.
 

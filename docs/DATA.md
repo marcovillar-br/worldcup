@@ -18,15 +18,18 @@ termos próprios, tratados aqui.
 | **Specs de edição** (autorais) | Formato do torneio, grupos, fixtures, pontuação | Mantidas no repo | Descrição da edição |
 
 **URLs/parâmetros (canônicos no código):**
-- `fetch_data.DEFAULT_URL` → `raw.githubusercontent.com/martj42/international_results/master/results.csv`
+- `fetch_data.DEFAULT_URL` →
+  `raw.githubusercontent.com/martj42/international_results/master/results.csv`
   (e `…/shootouts.csv`).
 - `scripts/fetch_odds.py` → `api.the-odds-api.com/v4/...`, mercados `h2h,totals`, formato `decimal`,
   região `eu` (tem Pinnacle), casa preferida **Pinnacle** (fallback: mediana das casas; no totals, a
-  mediana é tirada na **linha modal** entre as casas, para não misturar preços de linhas diferentes).
+  mediana é tirada na **linha modal** entre as casas, para não misturar preços de linhas
+  diferentes).
 
 ## 2. Processamento
 
-- **Normalização** (`fetch_data.normalize`): recorte a partir de **2006-01-01**, só jogos disputados,
+- **Normalização** (`fetch_data.normalize`): recorte a partir de **2006-01-01**, só jogos
+  disputados,
   nomes mapeados para o **canônico em inglês** (`teams.canonical`), saída em
   `data/historical_results.csv` com 8 colunas (`fetch_data.OUTPUT_COLUMNS`):
   `date, home_team, away_team, home_score, away_score, tournament, neutral, penalty_winner`.
@@ -80,7 +83,8 @@ Verificado em **2026-06** contra as fontes primárias:
 2. **Redistribuição de odds (The Odds API) — RESOLVIDO: não versionar.** O ToS **permite** usar odds
    em ferramentas analíticas voltadas ao usuário, mas **proíbe redistribuí-las como produto de dados
    autônomo** (feeds/arquivos crus para terceiros); o tier gratuito é descrito como "para
-   desenvolvimento e teste". Um `odds.csv` num repo público é zona cinzenta. **Decisão:** `odds.csv` é
+   desenvolvimento e teste". Um `odds.csv` num repo público é zona cinzenta. **Decisão:** `odds.csv`
+   é
    **gitignored** (`data/editions/*/odds.csv`) — vive só local; o veredito de blend permanece
    reproduzível localmente. Remove o risco sem custo prático relevante.
 3. **Cota/uso da The Odds API — OK.** Uso dentro do **tier gratuito** (limite de requisições), sem
@@ -89,4 +93,5 @@ Verificado em **2026-06** contra as fontes primárias:
 ## 7. Referências
 
 [`MODEL_CARD.md`](MODEL_CARD.md) (uso dos dados no modelo) · [`SPEC.md`](SPEC.md) §2 (ingestão) ·
-[`PRD.md`](PRD.md) §8 (contratos) · [`AGENTS.md`](../AGENTS.md) (operação) · `LICENSE` (código, MIT).
+[`PRD.md`](PRD.md) §8 (contratos) · [`AGENTS.md`](../AGENTS.md) (operação) · `LICENSE` (código,
+MIT).

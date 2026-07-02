@@ -42,7 +42,8 @@ avisos informativos da biblioteca em `stderr` — ex.: quais seleções o `min_m
 ajuste. Por padrão só avisos de nível `WARNING` aparecem (ex.: ajuste do modelo não-convergido).
 
 `status` (alias `ws`) é um **briefing read-only** para reidratar o contexto no início da sessão:
-numa saída só mostra jogos disputados/total, fase atual, os jogos de hoje (disputado ✓ / pendente ⏳),
+numa saída só mostra jogos disputados/total, fase atual, os jogos de hoje (disputado ✓ / pendente
+⏳),
 os próximos palpites, o standing (do `BOLAO.md`) e o que depende de você (seus pontos para a
 eficiência, jogos atrasados que a fonte ainda não tem). Não muta nada — a atualização de fato
 (`sync-results`/`predict`) continua nos comandos próprios. `--date AAAA-MM-DD` sobrescreve "hoje".
@@ -67,12 +68,15 @@ manhã de um jogo que já virou `FINAL` é preservado, nunca sobrescrito.
 **Blend com odds de mercado (opcional):** `data/editions/<edição>/odds.csv` com
 `match_id,home,draw,away` em odds decimais e, opcionalmente, `total_line,over,under` (o mercado de
 **over/under** — ENG-35). A forma prática de preencher é
-`uv run python scripts/fetch_odds.py` (busca 1×2 **e totals** da The Odds API com a chave em `.env` e
+`uv run python scripts/fetch_odds.py` (busca 1×2 **e totals** da The Odds API com a chave em `.env`
+e
 **mescla** no `odds.csv`, preservando os jogos já disputados — o `blend-track` acumula o tally sobre
-todos eles). Para editar à mão, **acrescente** os jogos de cada rodada (não sobrescreva). A ferramenta
+todos eles). Para editar à mão, **acrescente** os jogos de cada rodada (não sobrescreva). A
+ferramenta
 tira a margem da casa, combina as odds com as probabilidades do modelo (média geométrica ponderada,
 peso `blend_weight`) e ajusta o palpite; com totals, também ancora a **taxa de gols** do placar no
-mercado (sem totals num jogo, só o 1×2 é corrigido). A edição 2026 já vem com `blend_weight = 0.6` no
+mercado (sem totals num jogo, só o 1×2 é corrigido). A edição 2026 já vem com `blend_weight = 0.6`
+no
 `scoring.toml` (prior de princípio: odds de fechamento são bem calibradas); `--blend-weight 0` ou a
 ausência de `odds.csv` ⇒ só o modelo, sem mudança. Por que ajuda: o modelo é estatístico e cego a
 escalações/lesões/motivação, que as odds capturam. Para medir se o blend está de fato ajudando,
@@ -106,15 +110,19 @@ do git (`.gitignore`); só os runs reais (`--archive`) são versionados em `hist
 
 A pontuação real é configurada pelo admin do grupo. Edite `data/editions/2026/scoring.toml`
 para casar com o sistema (I / Simplificado / Só-vencedor) e o peso por fase do seu grupo.
-O default já vem calibrado como **Sistema I** (base 1–13 + bônus reais do app) **+ Equilíbrio gradual**.
+O default já vem calibrado como **Sistema I** (base 1–13 + bônus reais do app) **+ Equilíbrio
+gradual**.
 
 ## Validação e estratégia
 
 Rode `uv run worldcup backtest --edition 2022` para ver quantos pontos o modelo teria feito na
-Copa de 2022 (treinando só com jogos anteriores). Com a régua de pontos **corrigida** (bônus de placar
-hierárquicos, não somados), subir o risco **não** melhora os pontos de forma confiável: no backtest de
+Copa de 2022 (treinando só com jogos anteriores). Com a régua de pontos **corrigida** (bônus de
+placar
+hierárquicos, não somados), subir o risco **não** melhora os pontos de forma confiável: no backtest
+de
 2022 o conservador (`risk=0.0`) faz mais que o agressivo (`1.0`), e o fiel (`0.5`) fica no meio — um
-resultado ruidoso de uma Copa só. A alavanca de ranking é **acurácia** (blend de odds), não ousadia; o
+resultado ruidoso de uma Copa só. A alavanca de ranking é **acurácia** (blend de odds), não ousadia;
+o
 default `0.5` (maximiza pontos esperados) é o recomendado.
 
 **Eficiência da sua campanha** — quanto dos pontos que o tool renderia você capturou:
@@ -128,8 +136,10 @@ e o pontua contra o resultado real — a soma é o **teto** que seguir o tool à
 `eficiência = seus_pontos / teto`. `--compare-archive` confronta com os snapshots reais de
 `history/` e lista onde a reconstrução diverge (quanto do gap é ruído de reconstrução vs. dias sem
 snapshot arquivado). Cobre a fase de grupos com pontuação exata; no mata-mata pontua os 90' **com o
-peso de fase** (R32–SF ×2, final ×4) e soma os bônus de prorrogação/pênaltis (±3 ×peso) quando a fonte
-(`shootouts.csv`) confirma o desfecho; jogos empatados nos 90' ainda sem shootout na fonte são pulados
+peso de fase** (R32–SF ×2, final ×4) e soma os bônus de prorrogação/pênaltis (±3 ×peso) quando a
+fonte
+(`shootouts.csv`) confirma o desfecho; jogos empatados nos 90' ainda sem shootout na fonte são
+pulados
 (ENG-27).
 
 **Endgame de bolão (ENG-36)** — bolão é jogo **diferencial**: seguir o E[pts]-máximo pontua junto
@@ -161,7 +171,8 @@ inclua o HTML no mesmo commit.
 
 ## Limitações conhecidas
 
-(Resumo para o usuário; a fonte canônica, com o detalhamento técnico, é [`docs/SPEC.md`](docs/SPEC.md) §9.2.)
+(Resumo para o usuário; a fonte canônica, com o detalhamento técnico, é
+[`docs/SPEC.md`](docs/SPEC.md) §9.2.)
 
 - **Modelo baseado em resultados**: pondera muito os jogos recentes, então favorece quem vem
   bem (seleções da América do Sul aparecem fortes) e pode subestimar potências em má fase
@@ -171,7 +182,8 @@ inclua o HTML no mesmo commit.
 - **Melhores terceiros**: a alocação aos slots usa casamento por restrição de grupos (Annex C da
   FIFA aproximado) e **pode divergir** da tabela oficial — há mais de um emparelhamento válido. Dá
   para cravar a alocação oficial da combinação realizada via `[group_stage.third_allocation]` no
-  `tournament.toml` (feito em 2026). Depois da fase de grupos, **confira os 8 confrontos dos 16-avos**
+  `tournament.toml` (feito em 2026). Depois da fase de grupos, **confira os 8 confrontos dos
+  16-avos**
   com o bracket oficial.
 
 ## Licença

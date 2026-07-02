@@ -1,13 +1,18 @@
 ---
 name: backlog
-description: Registra, revisa e resolve itens do backlog de engenharia em docs/BACKLOG.md. Use SEMPRE que o usuário quiser anotar uma melhoria/dívida/bug para depois ("coloca no backlog", "registra um item", "abre um ENG"), revisar/priorizar o que está aberto, ou executar/fechar um item ("resolve o ENG-1", "implementa o próximo do backlog"). Codifica a DINÂMICA (verbos e invariantes); o FORMATO mora em docs/BACKLOG.md (fonte de verdade) — não o reescreva aqui.
+description: Registra, revisa e resolve itens do backlog de engenharia em docs/BACKLOG.md. Use
+SEMPRE que o usuário quiser anotar uma melhoria/dívida/bug para depois ("coloca no backlog",
+"registra um item", "abre um ENG"), revisar/priorizar o que está aberto, ou executar/fechar um item
+("resolve o ENG-1", "implementa o próximo do backlog"). Codifica a DINÂMICA (verbos e invariantes);
+o FORMATO mora em docs/BACKLOG.md (fonte de verdade) — não o reescreva aqui.
 ---
 
 # Backlog de engenharia
 
 Esta skill define **como** registrar e resolver itens no backlog. A **estrutura** (colunas do
 índice, seções de detalhe, legendas) é a do próprio [`docs/BACKLOG.md`](../../../docs/BACKLOG.md) —
-leia o cabeçalho dele e **siga o formato que já estiver lá**; nunca duplique/reinvente o formato aqui.
+leia o cabeçalho dele e **siga o formato que já estiver lá**; nunca duplique/reinvente o formato
+aqui.
 
 A integridade é garantida por um hook de pre-commit (`scripts/check_backlog.py`): IDs únicos,
 índice↔detalhe casados, status do índice == status do detalhe, e item ✅ com ref de commit. Se o

@@ -76,9 +76,45 @@ class KnockoutPrediction:
         return f"{self.home_goals}x{self.away_goals}"
 
 
-def predict_knockout(home: str, away: str, matrix: np.ndarray, scorer: Scorer) -> KnockoutPrediction:
-    """Gera o palpite de mata-mata em 3 camadas a partir da matriz de placares."""
+def _zebra_prediction(matrix: np.ndarray, scorer: Scorer) -> tuple[int, int]:
+    """Melhor placar por E[pts] DENTRO do lado azarão (modo bolão-atrás, ENG-36).
+
+    Num bolão, ranking só muda quando o palpite diverge do pelotão (que aglomera no favorito) e a
+    divergência acerta. Restringe a escolha às células de vitória do lado com MENOR P(vitória) e
+    maximiza E[pts] dentro delas — descorrelação máxima ao menor custo de E[pts] dentro do lado.
+    """
+    p_home, _p_draw, p_away = outcome_probs_from_matrix(matrix)
+    zebra_home = p_home < p_away
+    n = matrix.shape[0]
+    cells = [(i, j) for i in range(n) for j in range(n) if (i > j) == zebra_home and i != j]
+    return max(cells, key=lambda c: scorer.expected_points(c, matrix))
+
+
+def predict_knockout(
+    home: str, away: str, matrix: np.ndarray, scorer: Scorer, *, pool_behind: bool = False
+) -> KnockoutPrediction:
+    """Gera o palpite de mata-mata em 3 camadas a partir da matriz de placares.
+
+    `pool_behind=True` (ENG-36, modo endgame de bolão): palpita o lado **zebra** — 90' pelo melhor
+    E[pts] dentro do lado azarão e camadas ET/pênaltis também nele. Use SÓ nos jogos de peso máximo
+    (final) e SÓ quando estiver atrás no ranking: a simulação (`scripts/eng36_pool_sim.py`) mostra
+    P(#1) 0,7%→4,0% atrás, mas 47%→35% quando na frente — a regra é condicional ao standing.
+    """
     p_home, p_draw, p_away = outcome_probs_from_matrix(matrix)
+
+    if pool_behind:
+        zh, za = _zebra_prediction(matrix, scorer)
+        zebra_side = "home" if zh > za else "away"
+        return KnockoutPrediction(
+            home=home,
+            away=away,
+            home_goals=zh,
+            away_goals=za,
+            extra_time=zebra_side,
+            penalty_winner=zebra_side,
+            advancer=home if zebra_side == "home" else away,
+            p_advance_home=p_home + p_draw * (p_home / (p_home + p_away) if (p_home + p_away) > 0 else 0.5),
+        )
 
     # camada 1: melhor placar dos 90 min. No KO proíbe empate (ENG-32): um palpite de empate zera
     # sempre que o jogo é decidido no tempo normal, e seu ganho de E[pts] é marginal e apoiado numa

@@ -69,3 +69,12 @@ def test_archive_outputs_marks_reconstructed(tmp_path, monkeypatch):
     csv_p, md_p = cli.archive_outputs(_tiny_run(), 2026, "2026-06-11", reconstructed=True)
     assert csv_p.name == "2026-06-11.reconstruido.csv"  # sufixo no nome
     assert "reconstruído" in md_p.read_text()  # banner de aviso no topo do MD
+
+
+def test_predict_parser_accepts_pool_behind():
+    # ENG-36: flag opt-in do modo endgame; default False (fiel)
+    from worldcup.cli import build_parser
+
+    p = build_parser()
+    assert p.parse_args(["predict"]).pool_behind is False
+    assert p.parse_args(["predict", "--pool-behind"]).pool_behind is True

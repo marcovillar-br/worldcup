@@ -72,6 +72,16 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   **2026-06-17** do Histórico.
 - Execução **sob demanda**: o usuário prefere rodar os comandos manualmente; não propor
   cron/agendamento.
+- **Regra de endgame (ENG-36, 01/07): na manhã da FINAL, se estiver atrás no ranking, rode
+  `predict --pool-behind`** — palpite (90' + prorrogação + pênaltis) no lado **zebra** da final.
+  Números da simulação de pelotão (`scripts/eng36_pool_sim.py`, 3000 torneios, pelotão ancorado no
+  standing real 285/337/21º de 60): **fiel dá P(#1)=0,7%** (pontuar junto com o pelotão preserva a
+  posição); **zebra só na final: P(#1)=4,0% (~6×), P(top3) 2,2%→8,5%, custo ~7 pts esperados**;
+  divergir antes (SF/QF) não adiciona P(#1) e só custa; mudar só o placar (mesmo lado) não move
+  ranking. **Na frente: NÃO usar** (fiel 47% vs zebra 35%). Refaça a simulação na véspera da final
+  com o standing atualizado (`--my-points/--leader/--my-rank`) para confirmar o lado da regra.
+  Complementa (não contradiz) a decisão do `risk`: aquilo era tilt de placar cego a adversários;
+  isto é troca de LADO, condicional ao standing, concentrada no peso ×4.
 - **Palpite de 90' do mata-mata nunca sai empate (ENG-32, 01/07):** o E[pts] puro apostava 0×0/1×1 em
   ~25% dos KO e zerava quando o jogo era decidido no tempo normal (te custou J73 e J79). Medido nos
   backtests: a vantagem de E[pts] do empate era ~0,04/jogo (e apoiada em super-estimar empate no KO),

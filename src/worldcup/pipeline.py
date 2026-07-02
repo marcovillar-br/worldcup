@@ -110,8 +110,20 @@ def _final_ko_layers(f, shootouts: dict[int, str]) -> tuple[str, str, str]:
     return "", "", avanca  # empate nos 90', desfecho ET/pênaltis ainda não capturado
 
 
-def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRun:
-    """Executa o pipeline completo e devolve as linhas de palpite dos 104 jogos."""
+def _max_ko_weight(edition: Edition) -> float:
+    """Maior peso de fase entre os estágios de mata-mata da edição (alvo do modo pool_behind)."""
+    stages = edition.spec.group_stage.knockout_stages
+    return max((edition.scoring.weight(s) for s in stages), default=1.0)
+
+
+def run(edition: Edition, n_sims: int = 5000, seed: int = 12345, pool_behind: bool = False) -> PredictionRun:
+    """Executa o pipeline completo e devolve as linhas de palpite dos 104 jogos.
+
+    `pool_behind=True` (ENG-36): modo endgame de bolão — nos jogos de KO de peso **máximo** da
+    edição (a final, no Equilíbrio gradual), o palpite sai no lado **zebra** (descorrelação do
+    pelotão). Nos demais jogos, nada muda. Use só quando estiver atrás no ranking (a simulação
+    mostra que na frente o modo custa P(#1): ver `scripts/eng36_pool_sim.py`).
+    """
     historical = load_historical()
     train = build_training_frame(edition, historical)
     model = DixonColesModel(FitConfig()).fit(train)
@@ -188,7 +200,9 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345) -> PredictionRu
                     mais_provavel=p.modal_scoreline,
                 )
             else:
-                kp = predict_knockout(home, away, mat, scorer)
+                # ENG-36: zebra só no(s) estágio(s) de peso máximo (final) quando pool_behind
+                zebra = pool_behind and edition.scoring.weight(f.stage) >= _max_ko_weight(edition)
+                kp = predict_knockout(home, away, mat, scorer, pool_behind=zebra)
                 et, pen = _ko_layer_text(kp, display(home), display(away))
                 row.update(
                     palpite=kp.scoreline,

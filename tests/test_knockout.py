@@ -78,3 +78,29 @@ def test_layer1_never_predicts_a_draw_in_knockout():
     kp = predict_knockout("H", "A", m, _scorer())
     assert kp.home_goals != kp.away_goals  # camada 1 nunca empata no KO
     assert kp.extra_time == "penalties"  # equilíbrio ⇒ pênaltis (camada 2 inalterada)
+
+
+def test_pool_behind_picks_the_underdog_side_with_all_layers():
+    # ENG-36: modo bolão-atrás — 90' no lado ZEBRA (melhor E[pts] dentro dele), camadas ET/pên.
+    # e avanço também na zebra (descorrelação máxima do pelotão, que aglomera no favorito).
+    m = _poisson_matrix(2.8, 0.6)  # mandante claramente favorito -> zebra = visitante
+    kp = predict_knockout("H", "A", m, _scorer(), pool_behind=True)
+    assert kp.away_goals > kp.home_goals  # lado zebra
+    assert kp.extra_time == "away"
+    assert kp.penalty_winner == "away"
+    assert kp.advancer == "A"
+
+
+def test_pool_behind_zebra_score_is_expected_points_optimal_within_side():
+    m = _poisson_matrix(2.8, 0.6)
+    kp = predict_knockout("H", "A", m, _scorer(), pool_behind=True)
+    sc = _scorer()
+    n = m.shape[0]
+    away_cells = [(i, j) for i in range(n) for j in range(n) if j > i]
+    best = max(away_cells, key=lambda c: sc.expected_points(c, m))
+    assert (kp.home_goals, kp.away_goals) == best
+
+
+def test_pool_behind_false_is_unchanged():
+    m = _poisson_matrix(2.8, 0.6)
+    assert predict_knockout("H", "A", m, _scorer()) == predict_knockout("H", "A", m, _scorer(), pool_behind=False)

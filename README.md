@@ -131,6 +131,21 @@ peso de fase** (R32–SF ×2, final ×4) e soma os bônus de prorrogação/pêna
 (`shootouts.csv`) confirma o desfecho; jogos empatados nos 90' ainda sem shootout na fonte são pulados
 (ENG-27).
 
+**Endgame de bolão (ENG-36)** — bolão é jogo **diferencial**: seguir o E[pts]-máximo pontua junto
+com o pelotão (que aglomera no favorito) e **preserva** sua posição; ranking só muda quando o
+palpite diverge e a divergência acerta. A simulação de pelotão quantifica:
+
+```bash
+uv run python scripts/eng36_pool_sim.py --edition 2026 --my-points 285 --leader 337 --pool-size 60
+```
+
+Compara políticas (fiel / placar alternativo / zebra na final / SF / QF) em P(#1), P(top-3) e
+E[pts]. Resultado (01/07, 3000 torneios): **atrás**, zebra só na final multiplica P(#1) por ~6
+(0,7%→4,0%) custando ~7 pts esperados; divergir antes (SF/QF) não adiciona nada; **na frente**,
+fiel domina (47% vs 35%). Para aplicar na prática: `worldcup predict --pool-behind` palpita a
+**zebra** (90' + prorrogação + pênaltis) **só nos jogos de peso máximo** (a final) — use apenas
+na manhã da final e apenas se estiver **atrás** no ranking.
+
 **Apresentação do projeto** — um deck HTML autocontido (tema "Placar Noturno", 16:9, navegável) que
 explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):
 

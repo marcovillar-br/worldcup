@@ -63,6 +63,15 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   Simulador. Mantido `base_log_coeff = 7,55` + round; resíduo ±1/jogo é limitação aceita (ver SPEC §4.1).
 
 ### Adicionado
+- **Modo endgame de bolão `predict --pool-behind`** (`knockout.predict_knockout(pool_behind=…)` +
+  `pipeline.run`): bolão é jogo **diferencial** — o E[pts]-máximo pontua junto com o pelotão e
+  preserva a posição; ranking só muda quando o palpite diverge e acerta. A simulação de pelotão
+  (`scripts/eng36_pool_sim.py`, 3000 torneios, pelotão sintético ancorado no standing real) mostra:
+  atrás, zebra **só na final** multiplica P(#1) por ~6 (0,7%→4,0%; top-3 2,2%→8,5%) custando ~7 pts
+  esperados; divergir antes (SF/QF) não adiciona P(#1); mudar só o placar (mesmo lado) não move nada;
+  na frente, fiel domina (47% vs 35%). O flag palpita a zebra (90' por E[pts] dentro do lado azarão +
+  camadas ET/pênaltis) **apenas nos estágios de peso máximo** da edição (a final, no Equilíbrio
+  gradual) — opt-in, condicional ao standing, edition-agnóstico. (ENG-36)
 - **Blend de totals — a taxa de gols do placar agora segue o mercado** (`blend.py`): o rescale de
   1×2 preserva a forma condicional, então os gols esperados (onde vivem o exato +5 e o
   `winner_goals` +3) ficavam 100% modelo. Novos passos: `devig_pair` (des-vig do over/under) →

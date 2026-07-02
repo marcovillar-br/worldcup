@@ -124,14 +124,16 @@ def cmd_predict(args: argparse.Namespace) -> int:
         edition = edition.as_of(as_of)
         print(f"⏪ Visão reconstruída de {as_of} ({edition.spec.name}, {args.sims} simulações)...")
         print("   usando apenas os resultados conhecidos até a véspera; out/ não será alterado.")
-        pred = run(edition, n_sims=args.sims, seed=args.seed)
+        pred = run(edition, n_sims=args.sims, seed=args.seed, pool_behind=args.pool_behind)
         print_console_summary(pred)
         a_csv, _a_md = archive_outputs(pred, args.edition, as_of, reconstructed=True)
         print(f"\n🗄️  Snapshot reconstruído: {a_csv}")
         return 0
 
     print(f"⚙️  Gerando palpites de {edition.spec.name} ({args.sims} simulações)...")
-    pred = run(edition, n_sims=args.sims, seed=args.seed)
+    if args.pool_behind:
+        print("🎲 Modo bolão-atrás (ENG-36): palpite ZEBRA nos jogos de peso máximo (final). Use só se estiver atrás.")
+    pred = run(edition, n_sims=args.sims, seed=args.seed, pool_behind=args.pool_behind)
     csv_path, md_path, html_path = save_outputs(pred, args.edition)
     print_console_summary(pred)
     print(
@@ -317,6 +319,12 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         metavar="DATA",
         help="arquiva snapshot versionado em data/editions/<ed>/history/<DATA>.{csv,md} (default: hoje)",
+    )
+    pr.add_argument(
+        "--pool-behind",
+        action="store_true",
+        help="modo endgame de bolão (ENG-36): palpita a ZEBRA nos jogos de peso máximo (final). "
+        "Use só quando estiver atrás no ranking — na frente, custa P(#1); ver scripts/eng36_pool_sim.py",
     )
     pr.add_argument(
         "--as-of",

@@ -1285,4 +1285,4 @@ do `AGENTS.md` **triplicado** por um `sed` malformado, e duas linhas de blockquo
 Resultado: **100% compliance técnica** (zero violações) + qualidade semântica revisada arquivo
 por arquivo, sem fragmentos órfãos remanescentes (exceto sintaxe de diagrama Mermaid, que não é
 prosa).
-**Commit:** 1b9e3c4
+**Commit:** 53518c9

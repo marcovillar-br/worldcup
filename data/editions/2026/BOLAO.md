@@ -20,6 +20,15 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   **eficiência 88,9%** (teto as-of do tool 332;
   `efficiency.py --my-points 295 --leader 353 --compare-archive`). Líder **ACIMA** do teto de novo
   ⇒ variância de exatos no KO, não estratégia superior (mesmo padrão das entradas anteriores).
+- **Config em uso (desde 02/07 à tarde): `risk 0.5` + `blend_weight 0.8`** (era 0,6; subido com
+  dado — `blend-track --sweep`, ENG-38: Brier monotônico decrescente em w, 0,4420 modelo-puro →
+  0,4100 em w=1,0; 0,8 captura o grosso sem abraçar o extremo em n=49). `odds.csv` com **65 jogos**
+  após fix do bracket (J90/J91/J92 estavam SEM blend por bug — ver Histórico 02/07): efeito
+  imediato, **J91 Brasil×Noruega caiu de 3×0 (85% model-only) para 2×0** (mercado dá ~50%),
+  J92 México×Inglaterra virou 1×2.
+- **Regra de endgame REVISTA (ENG-39, 02/07): na manhã da FINAL, se atrás, EMPATE nos 90'**
+  (melhor placar de empate por E[pts] + camadas prorrogação/pênaltis) — substitui a zebra do
+  ENG-36. Ver Decisões vivas.
 - **81 de 104 jogos disputados (J1–J82, menos J81) [snapshot de 01/07].** Fase de grupos completa +
   J73–J80/J82 do mata-mata. Em 01/07 fecharam
   **J80 Inglaterra 2×1 RD Congo** (Kane 2× no 2º tempo, virada)
@@ -83,17 +92,20 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   (campo de 60, KO, números) na entrada **2026-06-17** do Histórico.
 - Execução **sob demanda**: o usuário prefere rodar os comandos manualmente; não propor
   cron/agendamento.
-- **Regra de endgame (ENG-36, 01/07): na manhã da FINAL, se estiver atrás no ranking, rode
-  `predict --pool-behind`** — palpite (90' + prorrogação + pênaltis) no lado **zebra** da final.
-  Números da simulação de pelotão (`scripts/eng36_pool_sim.py`, 3000 torneios, pelotão ancorado no
-  standing real 285/337/21º de 60): **fiel dá P(#1)=0,7%**
-  (pontuar junto com o pelotão preserva a posição);
-  **zebra só na final: P(#1)=4,0% (~6×), P(top3) 2,2%→8,5%, custo ~7 pts esperados**; divergir antes
-  (SF/QF) não adiciona P(#1) e só custa; mudar só o placar (mesmo lado) não move ranking.
-  **Na frente: NÃO usar** (fiel 47% vs zebra 35%). Refaça a simulação na véspera da final com o
-  standing atualizado (`--my-points/--leader/--my-rank`) para confirmar o lado da regra. Complementa
-  (não contradiz) a decisão do `risk`: aquilo era tilt de placar cego a adversários; isto é troca de
-  LADO, condicional ao standing, concentrada no peso ×4.
+- **Regra de endgame v2 (ENG-39, 02/07, substitui a zebra do ENG-36): na manhã da FINAL, se
+  estiver atrás, palpite EMPATE nos 90'** (melhor placar de empate por E[pts], hoje ~1×1) **+
+  camadas de prorrogação/pênaltis** — a arma do líder, aplicada só onde ela é +EV. Por quê: (1) o
+  simulador do ENG-36 era **juiz e parte** (gerador = o próprio modelo), incapaz de punir a
+  subestimação de empate em final — **5 das 8 finais desde 1994 empataram nos 90' (~60%) vs ~28%
+  no modelo**; (2) com a política `empate-final` adicionada e a sensibilidade
+  `--draw-inflate-final`, ela **domina a zebra em TODOS os geradores**: baseline P(top3) 8,4% vs
+  5,5% (custo zero de E[pts]; a zebra custa ~8 pts); gerador histórico (60%) P(#1) 4,9% e P(top3)
+  14,3% vs 1,2%/3,8% da zebra — e **ganha** E[pts] (+13). `empate-close` (QF/SF apertadas também)
+  ≈ empate-final; simplicidade favorece só a final. **Na frente: fiel segue dominante no baseline
+  (48% vs 41%)** — refazer a sim na véspera da final com o standing do dia, com e sem
+  `--draw-inflate-final 0.45/0.60`, para confirmar o lado. ⚠️ `predict --pool-behind` ainda gera a
+  ZEBRA (ENG-36); até o ENG-40 expor o empate-final, o palpite de empate é aplicado **à mão** no
+  app. A zebra continua válida como referência histórica (entrada 01/07), mas está **superada**.
 - **Palpite de 90' do mata-mata nunca sai empate (ENG-32, 01/07):** o E[pts] puro apostava 0×0/1×1
   em ~25% dos KO e zerava quando o jogo era decidido no tempo normal (te custou J73 e J79). Medido
   nos backtests: a vantagem de E[pts] do empate era ~0,04/jogo
@@ -105,6 +117,22 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   aquilo, então a eficiência passada continua justa.
 
 ## Histórico
+
+- 2026-07-02 (tarde)
+  — **Revisão crítica do projeto rendeu 1 bug real + 2 alavancas; regra de endgame revista.**
+  (1) **Bug (blend mudo no R16):** `resolve_live_bracket` só propagava vencedor de KO com
+  `ko_outcome`, mas jogo decidido nos 90' registrado à mão fica sem o campo (J77/J78/J79) —
+  J90/J91/J92 não casavam odds e rodavam **model-only**. Corrigido + `fetch_odds` agora loga
+  eventos não casados. Refetch: `odds.csv` 62→**65**; **J91 Brasil×Noruega despencou de 3×0 (85%
+  model-only) para 2×0 (mercado ~50%)** — era o palpite mais frágil da lista. (2) **`blend_weight`
+  0,6→0,8 com dado (ENG-38):** novo `blend-track --sweep` em 49 jogos deu Brier **monotônico**
+  decrescente em w (0,4420 → 0,4100 em w=1,0); 0,8 captura o grosso hedgeando o extremo. (3)
+  **Regra de endgame v2 (ENG-39):** política `empate-final` + sensibilidade `--draw-inflate-final`
+  no `eng36_pool_sim` (o gerador padrão é o próprio modelo — juiz e parte — e finais empatam ~60%
+  nos 90' historicamente vs ~28% no modelo). `empate-final` domina a zebra em todos os geradores
+  (baseline: top3 8,4% vs 5,5% a custo zero; histórico 60%: P(#1) 4,9% / top3 14,3% vs 1,2%/3,8%).
+  Decisão viva atualizada: **na final, atrás ⇒ empate nos 90' + camadas** (à mão até o ENG-40).
+  Standing do dia: 295 pts, 21º, líder 353; eficiência 88,9% (teto 332).
 
 - 2026-07-02
   — **J81 fechado via `sync-results` (82/104); bug de CLI encontrado e corrigido no processo.**

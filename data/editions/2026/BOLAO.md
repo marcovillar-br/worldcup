@@ -109,6 +109,20 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   (ENG-40, 02/07 à noite) já gera o empate na final (hoje 0×0 + "vai aos pênaltis" + Argentina);
   `--pool-behind zebra` mantém a política antiga para comparação. A zebra segue como referência
   histórica (entrada 01/07), mas está **superada**.
+- **Limiar de poder da regra de endgame — matemática da virada (03/07):** a regra do empate é
+  **~grátis** quando atrás (ENG-39/40: custo ~zero de E[pts]) ⇒ **se chegar atrás na final, usar
+  sempre**. Mas o **poder de virar** é limitado pelo que UMA final (×4) move em diferencial.
+  Base ≈ `1+7,55·log₁₀(1/p)`; final entre fortes (p≈0,10 → base ≈8,5): cravar exato ≈ (8,5+5)×4 ≈
+  **54 pts**, só-vencedor ≈ 34, errar vencedor = 0. Swing **diferencial** (você − líder): massa em
+  ±0–20; extremos +34 (você vencedor / líder erra) a +54 (você crava / líder zera) são eventos de
+  ~1–5% (2–3σ num jogo só). **Limiar:** gap na manhã da final **≤ ~15–20 → a regra decide**;
+  ~20–34 → só se cravar e o líder tropeçar (~5–10%); **> ~35 → irrelevante, nenhuma final cobre.**
+  **Hoje o gap é −48 (325 vs 373) ⇒ fora do alcance da final.** A virada depende de **erodir ~30
+  pts até J102** — não por ousadia (Sistema I não paga risco de placar), mas por (a) **regressão da
+  variância de exatos do líder** (ele segue ACIMA do teto do tool, estatisticamente devida) + (b)
+  seguir capturando teto (eficiência 90%). Só então a final vira arma. Reavaliar o gap a cada
+  rodada; jogos de maior alavancagem restantes (peso × coin-flip): **final J104 (×4)** ≫ J94/J92
+  (R16), J99 (QF), J88 (R32, hoje).
 - **Palpite de 90' do mata-mata nunca sai empate (ENG-32, 01/07):** o E[pts] puro apostava 0×0/1×1
   em ~25% dos KO e zerava quando o jogo era decidido no tempo normal (te custou J73 e J79). Medido
   nos backtests: a vantagem de E[pts] do empate era ~0,04/jogo

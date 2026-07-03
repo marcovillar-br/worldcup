@@ -12,16 +12,16 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-02, noite)
+## Estado atual (atualizado em 2026-07-03)
 
-- **83 de 104 jogos disputados (J1–J82 + J84).** **J84 Espanha 3×0 Áustria** fechado à noite
-  (Oyarzabal 2×, Pedro Porro; decidido nos 90'; confirmado FIFA/Yahoo/Al Jazeera; a fonte do
-  `sync-results` ainda não tinha) — tool palpitou 2×0: acertou o lado, pagou nível "gols do
-  perdedor". **J83 Portugal×Croácia (2×0) e J85 Suíça×Argélia (2×1) jogam mais tarde** (23h ET),
-  ainda pendentes. **Standing (02/07): 295 pts, 21º** (líder **353**) ·
-  **eficiência 88,9%** (teto as-of do tool 332;
-  `efficiency.py --my-points 295 --leader 353 --compare-archive`). Líder **ACIMA** do teto de novo
-  ⇒ variância de exatos no KO, não estratégia superior (mesmo padrão das entradas anteriores).
+- **85 de 104 jogos disputados (J1–J85).** No dia 02/07 à noite fecharam **J83 Portugal 2×1
+  Croácia** (tool palpitou 2×0 — acertou lado e mando) e **J85 Suíça 2×0 Argélia** (tool cravou
+  2×0), sincronizados pela fonte pública em 03/07. **Standing (03/07): 325 pts, 17º** (líder
+  **373**) · **eficiência 90,3%** (teto as-of do tool 360;
+  `efficiency.py --my-points 325 --leader 373 --compare-archive`). +30 pts e subiu 21º→17º. Líder
+  **ACIMA** do teto de novo (373 > 360) ⇒ variância de exatos no KO, não estratégia superior
+  (mesmo padrão das entradas anteriores). Hoje 03/07: 16-avos J86 Argentina×Cabo Verde (2×0),
+  J87 Colômbia×Gana (2×0), J88 Austrália×Egito (0×1, zebra fiel — avanço 42%).
 - **Config em uso (desde 02/07 à tarde): `risk 0.5` + `blend_weight 0.8`** (era 0,6; subido com
   dado — `blend-track --sweep`, ENG-38: Brier monotônico decrescente em w, 0,4420 modelo-puro →
   0,4100 em w=1,0; 0,8 captura o grosso sem abraçar o extremo em n=49). `odds.csv` com **65 jogos**

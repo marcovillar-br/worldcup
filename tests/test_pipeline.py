@@ -95,7 +95,7 @@ def test_build_training_frame_no_double_count():
     dobro: entram uma vez só, com o boost — não também a peso 1.0 pela base."""
     import pandas as pd
 
-    from worldcup.pipeline import CURRENT_EDITION_BOOST, build_training_frame
+    from worldcup.pipeline import build_training_frame
 
     ed = load_edition(2026).as_of("2026-06-20")  # alguns jogos de grupo já disputados
     played = next(f for f in ed.fixtures if f.played and f.home in ed.teams and f.away in ed.teams)
@@ -123,13 +123,13 @@ def test_build_training_frame_no_double_count():
             },
         ]
     )
-    train = build_training_frame(ed, historical)
+    train = build_training_frame(ed, historical, boost=5.0)
 
     key = train.apply(lambda r: (str(r["date"])[:10], frozenset((r["home_team"], r["away_team"]))), axis=1)
     match_key = (str(played.date)[:10], frozenset((played.home, played.away)))
     matches = train[key == match_key]
     assert len(matches) == 1  # uma única cópia, não duas
-    assert matches.iloc[0]["weight_mult"] == CURRENT_EDITION_BOOST  # a do fixture (boost), não a base
+    assert matches.iloc[0]["weight_mult"] == 5.0  # a do fixture (boost explícito), não a 1.0 da base
     assert matches.iloc[0]["home_score"] == played.home_goals  # placar autoritativo é o do fixture
     # a linha de enchimento (dia diferente) permanece intacta
     assert (train["tournament"] == "Friendly").sum() == 1
@@ -140,7 +140,7 @@ def test_build_training_frame_feeds_knockout_with_boost():
     reais das seleções e o boost — não fica preso à base histórica a peso 1.0."""
     import pandas as pd
 
-    from worldcup.pipeline import CURRENT_EDITION_BOOST, build_training_frame
+    from worldcup.pipeline import build_training_frame
     from worldcup.sync import resolve_live_bracket
 
     ed = load_edition(2026).as_of("2026-07-04")  # mata-mata em andamento (16-avos disputados)
@@ -150,8 +150,8 @@ def test_build_training_frame_feeds_knockout_with_boost():
     assert played_ko.home not in ed.teams  # o fixture guarda slot (`W##`/`2D`), não a seleção real
     assert home in ed.teams  # ...que resolve_live_bracket resolve para a seleção real
 
-    train = build_training_frame(ed, pd.DataFrame(columns=["date", "home_team", "away_team"]))
+    train = build_training_frame(ed, pd.DataFrame(columns=["date", "home_team", "away_team"]), boost=5.0)
     key = train.apply(lambda r: (str(r["date"])[:10], frozenset((r["home_team"], r["away_team"]))), axis=1)
     match = train[key == (str(played_ko.date)[:10], frozenset((home, away)))]
     assert len(match) == 1  # entra pelos nomes reais, uma vez
-    assert match.iloc[0]["weight_mult"] == CURRENT_EDITION_BOOST  # com boost, não a peso 1.0 da base
+    assert match.iloc[0]["weight_mult"] == 5.0  # entra no frame boostado (não filtrado como slot órfão)

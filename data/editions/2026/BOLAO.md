@@ -135,6 +135,16 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
+- 2026-07-04 (noite, +tarde)
+  — **ENG-44: `edition_boost` calibrado → fixado em 1.0 (sem boost); campeão volta a equilibrar.**
+  O sweep `blend-track --boost-sweep` (novo) deu Brier as-of **monotônico crescente** em boost
+  (1.0=0,4707 → 6.0=0,4876 → 12.0=0,5035): boostar a forma recente **superajusta e piora** a
+  previsão. O peso virou config `edition_boost` no `scoring.toml` (antes era constante 6.0 em
+  código) e a 2026 foi para **1.0**. **Campeão calibrado: Argentina 22,7%, Espanha 19,7%, França
+  12,9%, Brasil 10,8%, Inglaterra 9,2%** — campo equilibrado, sem a volatilidade do 6.0 (que jogava
+  Argentina a 12,9% e Espanha a 29,1%). **Este é o número em uso agora.** Config vigente:
+  `risk 0.5` + `blend_weight 0.8` + `edition_boost 1.0`.
+
 - 2026-07-04 (noite)
   — **ENG-42: KO passa a alimentar o ajuste com boost — favorita vira para Espanha.** Os jogos de
   mata-mata guardam slots (`W73`) no fixture e escapavam do boost 6.0, chegando ao modelo só pela

@@ -285,9 +285,27 @@ def cmd_backtest(args: argparse.Namespace) -> int:
 
 
 def cmd_blend_track(args: argparse.Namespace) -> int:
-    from .backtest import blend_weight_sweep, draw_regime_report, prospective_blend_report
+    from .backtest import blend_weight_sweep, boost_sweep, draw_regime_report, prospective_blend_report
 
     edition = load_edition(args.edition)
+
+    if args.boost_sweep:
+        boosts = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 10.0, 12.0]
+        bres = boost_sweep(edition, boosts)
+        if bres[0].n == 0:
+            print("ℹ️  Nenhum jogo de grupo disputado — nada para varrer.")
+            return 0
+        bbest = min(bres, key=lambda r: r.brier_model)
+        print(f"📐 Sweep de edition_boost — {bres[0].n} jogo(s) de grupo as-of (Brier modelo menor é melhor):")
+        for br in bres:
+            marks = " ← mínimo" if br is bbest else ""
+            marks += "  (em uso)" if br.boost == edition.scoring.edition_boost else ""
+            print(f"   boost={br.boost:>4.1f}  Brier {br.brier_model:.4f}{marks}")
+        print(
+            f"   boost* = {bbest.boost:.1f}. Amostra pequena e só grupo (KO com ET é 1×2 ambíguo) — "
+            "mudança do boost só com margem clara e registrada no BOLAO.md."
+        )
+        return 0
 
     if args.sweep:
         weights = [round(0.1 * i, 1) for i in range(11)]
@@ -478,6 +496,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--sweep",
         action="store_true",
         help="varre w=0.0..1.0 (passo 0.1) e mostra o Brier de cada peso (ENG-38); ignora --blend-weight",
+    )
+    blt.add_argument(
+        "--boost-sweep",
+        action="store_true",
+        help="varre o peso dos jogos da edição (edition_boost) e mostra o Brier as-of do modelo (ENG-44)",
     )
     blt.set_defaults(func=cmd_blend_track)
 

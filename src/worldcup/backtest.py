@@ -243,12 +243,13 @@ class BlendTracking:
         return self.brier_total_model - self.brier_total_blend
 
 
-def _as_of_group_matrices(edition: Edition, historical: pd.DataFrame):
+def _as_of_group_matrices(edition: Edition, historical: pd.DataFrame, boost: float | None = None):
     """Itera `(fixture, matriz as-of)` dos jogos de grupo já disputados, reajustando o modelo por dia.
 
     Base comum dos diagnósticos da **edição viva** (blend — ENG-19; regime de empates — ENG-22): cada
     jogo usa o modelo ajustado só com o conhecido até a véspera (`Edition.as_of`), agrupando por data
-    para 1 fit por dia (out-of-sample por construção).
+    para 1 fit por dia (out-of-sample por construção). `boost` sobrescreve o peso dos jogos da edição
+    no ajuste (calibração — ENG-44); `None` usa o default de `build_training_frame`.
     """
     from collections import defaultdict
 
@@ -260,11 +261,44 @@ def _as_of_group_matrices(edition: Edition, historical: pd.DataFrame):
             by_date[f.date].append(f)
     for d in sorted(by_date):
         model = DixonColesModel(FitConfig()).fit(
-            build_training_frame(edition.as_of(d), historical), ref_date=pd.Timestamp(d)
+            build_training_frame(edition.as_of(d), historical, boost=boost), ref_date=pd.Timestamp(d)
         )
         cache = MatrixCache(model, edition.hosts)
         for f in by_date[d]:
             yield f, cache.matrix(f.home, f.away, f.neutral)
+
+
+@dataclass
+class BoostTracking:
+    """Brier out-of-sample do modelo (sem blend) para um valor de `edition_boost` (ENG-44)."""
+
+    boost: float
+    n: int
+    brier_model: float
+
+
+def boost_sweep(edition: Edition, boosts: Sequence[float]) -> list[BoostTracking]:
+    """Brier as-of do modelo numa grade de `boost` — calibra `edition_boost` com dado (ENG-44).
+
+    Para cada peso, reajusta as-of (1 fit/dia) e mede o Brier multiclasse 1×2 dos jogos de grupo
+    disputados, prevendo cada um só com o conhecido até a véspera. Mede o **modelo puro** (sem blend):
+    é o boost que se calibra, e o blend com mercado mascararia seu efeito. ⚠️ Só jogos de grupo (o KO
+    tem placar com prorrogação — 1×2 ambíguo, mesma razão do `blend-track`); e o mínimo é in-sample
+    da grade num n ainda pequeno — evidência direcional, não verdade fina.
+    """
+    from .fetch_data import load_historical
+    from .scoring import outcome_probs_from_matrix
+
+    historical = load_historical()
+    out: list[BoostTracking] = []
+    for b in boosts:
+        probs: list[tuple[float, float, float]] = []
+        outcomes: list[int] = []
+        for f, matrix in _as_of_group_matrices(edition, historical, boost=b):
+            probs.append(outcome_probs_from_matrix(matrix))
+            outcomes.append(0 if f.home_goals > f.away_goals else (1 if f.home_goals == f.away_goals else 2))
+        out.append(BoostTracking(boost=b, n=len(probs), brier_model=multiclass_brier(probs, outcomes)))
+    return out
 
 
 def _collect_blend_games(edition: Edition) -> list[tuple[Fixture, np.ndarray]]:

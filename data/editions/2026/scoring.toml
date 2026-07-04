@@ -18,6 +18,13 @@ risk = 0.5
 # (ausente ⇒ só modelo). Reavalie com `blend-track --sweep` conforme a amostra crescer.
 blend_weight = 0.8
 
+# Peso de cada jogo já disputado da edição no ajuste do modelo (ENG-42/44). 1.0 = pesa como um
+# jogo histórico (sem boost). Calibrado com dado (2026-07-04) via `blend-track --boost-sweep`: o
+# Brier as-of do modelo é MONOTÔNICO CRESCENTE em boost (1.0=0.4707 → 6.0=0.4876 → 12.0=0.5035),
+# i.e., boostar a forma recente SUPERAJUSTA e piora a previsão. Fixado em 1.0 (o mínimo do sweep;
+# antes era 6.0 em código). Reavalie com o sweep conforme a amostra crescer.
+edition_boost = 1.0
+
 # Peso por fase (Equilíbrio gradual): grupos 1x, eliminatórias 2x, final 4x.
 # Não muda o placar ótimo de um jogo isolado, mas indica onde arriscar mais decide o ranking.
 [phase_weights]

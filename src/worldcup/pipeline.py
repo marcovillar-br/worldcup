@@ -28,9 +28,6 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Peso extra dado aos jogos já disputados da própria Copa (realimentação).
-CURRENT_EDITION_BOOST = 6.0
-
 
 def _pct_round(*probs: float) -> list[int]:
     """Arredonda probabilidades (0..1) para inteiros que somam exatamente 100.
@@ -49,10 +46,15 @@ def _pct_round(*probs: float) -> list[int]:
     return floors
 
 
-def build_training_frame(edition: Edition, historical: pd.DataFrame) -> pd.DataFrame:
+def build_training_frame(edition: Edition, historical: pd.DataFrame, boost: float | None = None) -> pd.DataFrame:
     """Histórico + jogos já disputados da edição (com peso alto) para o ajuste do modelo.
 
-    Os jogos da edição corrente entram **uma única vez**, com `CURRENT_EDITION_BOOST`. Se a base
+    `boost` é o peso dado a cada jogo disputado da edição; `None` (default) usa
+    `edition.scoring.edition_boost` (ENG-42/44 — calibrado por `blend-track --boost-sweep`; a 2026
+    usa 1.0, sem boost, após o sweep mostrar Brier crescente em boost). Passa-se explícito só no
+    próprio sweep.
+
+    Os jogos da edição corrente entram **uma única vez**, com `boost`. Se a base
     histórica já contém esses mesmos jogos (acontece quando `fetch-data` é rodado no meio da Copa —
     martj42 traz o torneio em andamento), eles são **removidos da base** antes do append, senão
     seriam contados em dobro (peso 1.0 na base + boost via fixtures → 7.0 efetivo), inflando o peso
@@ -66,6 +68,7 @@ def build_training_frame(edition: Edition, historical: pd.DataFrame) -> pd.DataF
     """
     from .sync import resolve_live_bracket
 
+    b = edition.scoring.edition_boost if boost is None else boost
     ko_matchups = resolve_live_bracket(edition)  # {match_id: (mandante, visitante)} real dos KO disputados
     rows = []
     for f in edition.fixtures:
@@ -80,7 +83,7 @@ def build_training_frame(edition: Edition, historical: pd.DataFrame) -> pd.DataF
                     "away_score": f.away_goals,
                     "tournament": "FIFA World Cup",
                     "neutral": f.neutral,
-                    "weight_mult": CURRENT_EDITION_BOOST,
+                    "weight_mult": b,
                 }
             )
     if not rows:

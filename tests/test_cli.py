@@ -128,3 +128,23 @@ def test_predict_parser_accepts_pool_behind():
         assert p.parse_args([cmd]).pool_behind is None
         assert p.parse_args([cmd, "--pool-behind"]).pool_behind == "empate"
         assert p.parse_args([cmd, "--pool-behind", "zebra"]).pool_behind == "zebra"
+
+
+def test_blend_track_boost_sweep(monkeypatch, capsys):
+    # ENG-44: --boost-sweep imprime o Brier as-of do modelo por valor de boost, marcando o mínimo.
+    from worldcup import backtest
+    from worldcup.backtest import BoostTracking
+
+    def fake_sweep(edition, boosts):
+        # o mínimo cai num boost baixo (≠ 6.0 em uso) — o caso que motivou o ENG-44
+        briers = {2.0: 0.40}
+        return [BoostTracking(boost=b, n=48, brier_model=briers.get(b, 0.45)) for b in boosts]
+
+    monkeypatch.setattr(backtest, "boost_sweep", fake_sweep)
+    code = main(["blend-track", "--boost-sweep"])
+    out = capsys.readouterr().out
+    assert code == 0
+    assert "boost= 2.0" in out
+    assert "← mínimo" in out
+    assert "(em uso)" in out  # marca o boost corrente (edition.scoring.edition_boost)
+    assert "boost* = 2.0" in out

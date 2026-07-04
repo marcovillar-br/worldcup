@@ -73,6 +73,11 @@ class ScoringConfig(BaseModel):
     risk: float = Field(default=0.6, ge=0.0, le=1.0)
     # peso do mercado no blend com odds (ENG-19): 0 = só modelo (default), 1 = só mercado.
     blend_weight: float = Field(default=0.0, ge=0.0, le=1.0)
+    # peso de cada jogo já disputado da edição no ajuste do modelo (ENG-42/44): 1 = pesa como um
+    # jogo histórico (sem boost). O sweep as-of da 2026 mostrou Brier monotônico crescente em boost
+    # (1.0 = mínimo) — boostar superajusta a forma recente. Default 1.0 (sem boost); cada edição
+    # pode sobrescrever com `blend-track --boost-sweep`.
+    edition_boost: float = Field(default=1.0, ge=1.0)
     phase_weights: dict[str, float] = Field(default_factory=dict)
     sistema_i: dict[str, float] = Field(default_factory=dict)
     simplificado: dict[str, float] = Field(default_factory=dict)

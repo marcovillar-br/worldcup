@@ -79,7 +79,9 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `format_engine.py` — simulação genérica: standings, Monte Carlo, chaveamento determinístico.
 - `backtest.py` — valida o modelo nas 4 Copas passadas (`backtest`) e o blend prospectivamente na
   edição viva (`blend-track`): `multiclass_brier`, `reliability_draw`/`pooled_draw_calibration` +
-  monitor de regime de empates (z-score). Treina só com jogos anteriores a cada Copa.
+  monitor de regime de empates (z-score). Treina só com jogos anteriores a cada Copa. Sweeps as-of
+  de calibração: `blend-track --sweep` (blend_weight, ENG-38) e `blend-track --boost-sweep`
+  (`edition_boost`, ENG-44) — Brier out-of-sample por valor, só jogos de grupo.
 - `sync.py` — resolve o bracket só com resultados reais e preenche `fixtures.csv`.
 - `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites.
 - `render.py` — camada de **apresentação** (funções puras): `render_markdown`/`render_html` +
@@ -113,7 +115,13 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   **fixar `risk` no `scoring.toml`**; omiti-lo herda um leve viés de ousadia (0.6), não o fiel 0.5.
   Também `blend_weight` (peso do mercado no blend com odds; `0` = só modelo, ausência do campo ⇒ 0;
   **a edição 2026 usa `0.8`** — prior 0.6 do ENG-19 elevado com dado via
-  `blend-track --sweep`, ENG-38).
+  `blend-track --sweep`, ENG-38). E `edition_boost` (peso de cada jogo disputado da edição no
+  ajuste — ENG-42/44; `1.0` = sem boost, pesa como jogo histórico; ausência ⇒ 1.0). **A edição
+  2026 usa `1.0`**: `blend-track --boost-sweep` mostrou Brier as-of **monotônico crescente** em
+  boost (boostar a forma recente superajusta e piora a previsão) — o valor antigo em código era
+  6.0. `pipeline.build_training_frame` lê o campo (KO disputado é resolvido de slot p/ seleção via
+  `sync.resolve_live_bracket` e entra pelo mesmo caminho; o dedup por (data, par) evita
+  double-count com a base — ENG-41).
 - `odds.csv` — **opcional** (ENG-19): `match_id,home,draw,away` em odds decimais, mais as colunas
   **opcionais** `total_line,over,under` (mercado de over/under — ENG-35; arquivos antigos sem elas
   seguem válidos). Ausente ⇒ blend desligado. Preenchido por `scripts/fetch_odds.py` (busca The Odds

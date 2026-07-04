@@ -11,6 +11,16 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
+### Alterado
+- **`edition_boost` calibrado com dado e virou config por edição** (ENG-44): o peso dos jogos
+  disputados da edição no ajuste era a constante de código `CURRENT_EDITION_BOOST = 6.0`, nunca
+  validada. Novo `blend-track --boost-sweep` mede o Brier as-of do modelo por valor de boost; na
+  2026 deu **monotônico crescente** (1.0=0,4707 → 6.0=0,4876 → 12.0=0,5035) — boostar a forma
+  recente **superajusta e piora** a previsão. O boost virou campo `edition_boost` no `scoring.toml`
+  (default 1.0, como `risk`/`blend_weight`) e a 2026 foi fixada em **1.0** (sem boost). Efeito no
+  campeão: campo mais equilibrado (Argentina 22,7%, Espanha 19,7%) em vez do 6.0 volátil
+  (Argentina 12,9% / Espanha 29,1%). Cobertura: `test_blend_track_boost_sweep`.
+
 ### Corrigido
 - **Resultados de mata-mata alimentam o ajuste sem o boost** (ENG-42): os jogos de KO guardam
   slots (`W73`, `2D`) em `home`/`away`, então escapavam do filtro `.isin(edition.teams)` e só

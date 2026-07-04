@@ -34,6 +34,7 @@ uv run worldcup record --edition 2026 --match <id> --home 2 --away 1   # registr
 uv run worldcup backtest --edition 2022       # valida o modelo numa Copa passada
 uv run worldcup blend-track --edition 2026     # Brier blend vs modelo (ENG-19) + monitor de empates (ENG-22)
 uv run worldcup blend-track --edition 2026 --sweep   # varre blend_weight 0.0..1.0 e mostra o Brier de cada peso (ENG-38)
+uv run worldcup blend-track --edition 2026 --boost-sweep   # varre o peso dos jogos da edição (edition_boost) e mostra o Brier as-of do modelo (ENG-44)
 uv run pytest        # testes
 uv run ruff check .  # lint
 ```

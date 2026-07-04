@@ -57,8 +57,9 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-39](#eng-39) | P2 | scoring/estratégia | ✅ | Simulador de endgame é juiz e parte: gerador = modelo, cego à subestimação de empate em final |
 | [ENG-40](#eng-40) | P2 | knockout/cli | ✅ | Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra superada |
 | [ENG-41](#eng-41) | P1 | pipeline/model | ✅ | Jogos da edição contados em dobro no ajuste quando a base histórica já os contém (peso 7.0) |
-| [ENG-42](#eng-42) | P2 | pipeline/model | 🔴 | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
+| [ENG-42](#eng-42) | P2 | pipeline/model | 🟡 | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
 | [ENG-43](#eng-43) | P3 | observabilidade | 🔴 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
+| [ENG-44](#eng-44) | P2 | model/backtest | 🔴 | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
 
 ---
 
@@ -1407,7 +1408,7 @@ casando (data, {mandante,visitante}) com os jogos disputados antes do append. Co
 
 ## ENG-42
 **Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots**
-· P2 · `pipeline`/`model` · 🔴 todo
+· P2 · `pipeline`/`model` · 🟡 fazendo
 
 A realimentação com boost (`build_training_frame`) usa `f.home`/`f.away`, mas os jogos de
 mata-mata no `fixtures.csv` guardam **slots** (`W73`, `2D`), não nomes de seleção — então o filtro
@@ -1426,6 +1427,37 @@ duas rotas de realimentação. Alternativa: derivar os nomes do próprio `ko_out
 **Aceite:** jogo de KO disputado entra no treino com `CURRENT_EDITION_BOOST` (nomes reais),
 uma única vez; teste afirmando que um resultado de KO disputado está no frame de treino com o
 boost; `pytest` verde.
+**Resolução:** `build_training_frame` chama `sync.resolve_live_bracket` (resolve slots→seleções só
+com resultados reais) e usa os nomes resolvidos para os jogos de KO disputados; assim passam pelo
+filtro `.isin(edition.teams)` e entram com o boost, uma vez (o dedup do ENG-41 remove a cópia da
+base). Coberto por `test_build_training_frame_feeds_knockout_with_boost`. **Efeito:** favorita
+Argentina 24,8%→12,9%, Espanha 20,4%→29,1% — a virada expôs que o boost 6.0 nunca foi calibrado
+(ENG-44); a correção estrutural (unificar rotas) está certa, o valor do peso é a questão aberta.
+**Commit:** —
+
+## ENG-44
+**`CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier**
+· P2 · `model`/`backtest` · 🔴 todo
+
+`pipeline.CURRENT_EDITION_BOOST` (6.0) multiplica o peso dos jogos disputados da edição no ajuste.
+Foi fixado a olho quando só havia jogos de grupo e **nunca validado por backtest**. O ENG-42, ao
+levar o boost também ao mata-mata, revelou o quanto ele domina: a favorita ao título virou de
+Argentina para Espanha (24,8%→12,9% vs 20,4%→29,1%) — uma vitória apertada da Argentina a peso 6
+derruba o rating. Com o decaimento temporal do modelo, os jogos recentes já pesam muito; 6.0 pode
+estar superajustando a forma recentíssima. Não há evidência de que 6.0 seja bom nem ruim — falta
+medir.
+
+**Refs:** `pipeline.CURRENT_EDITION_BOOST`, `pipeline.build_training_frame`,
+`backtest._as_of_group_matrices` (fit as-of por dia, base do sweep), `backtest.multiclass_brier`,
+`blend-track --sweep` (padrão de sweep já existente, a espelhar).
+**Correção proposta:** sweep out-of-sample do boost (ex.: 1..10) medindo Brier/log-loss multiclasse
+dos jogos disputados da edição viva, reajustando as-of (1 fit/dia por valor), análogo ao
+`blend-track --sweep`. Escolher o mínimo; se ≠ 6.0, atualizar — de preferência tornando o boost
+**configurável por edição** (`scoring.toml`, como `risk`/`blend_weight`), não constante de código.
+Considerar também se KO merece peso distinto de grupo (é o sinal mais recente/decisivo).
+**Aceite:** comando/flag que imprime Brier por valor de boost numa passada as-of; boost escolhido
+com base no mínimo (documentado no `BOLAO.md`); se virar config, defaults por edição fixados e
+teste cobrindo a leitura; `pytest` verde.
 **Commit:** —
 
 ## ENG-43

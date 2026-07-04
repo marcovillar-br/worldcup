@@ -12,6 +12,14 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **Resultados de mata-mata alimentam o ajuste sem o boost** (ENG-42): os jogos de KO guardam
+  slots (`W73`, `2D`) em `home`/`away`, então escapavam do filtro `.isin(edition.teams)` e só
+  chegavam ao modelo pela base histórica (peso 1.0) — e **só se ela estivesse atualizada** (foi o
+  que deixou o modelo cego ao mata-mata em ENG-41). `build_training_frame` agora resolve os slots
+  dos KO disputados para os nomes reais via `sync.resolve_live_bracket` e os alimenta pelo mesmo
+  caminho boostado dos jogos de grupo, unificando as duas rotas de realimentação. Regressão coberta
+  por `test_build_training_frame_feeds_knockout_with_boost`. ⚠️ Expôs que `CURRENT_EDITION_BOOST`
+  (6.0) nunca foi calibrado — ver ENG-44.
 - **Double-count dos jogos da edição no ajuste do modelo** (ENG-41): quando a base histórica já
   contém a Copa em andamento (acontece ao rodar `fetch-data` no meio do torneio — martj42 traz o
   torneio vivo), os jogos de grupo entravam **duas vezes** no treino (peso 1.0 pela base + boost

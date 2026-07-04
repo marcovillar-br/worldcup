@@ -133,3 +133,25 @@ def test_build_training_frame_no_double_count():
     assert matches.iloc[0]["home_score"] == played.home_goals  # placar autoritativo é o do fixture
     # a linha de enchimento (dia diferente) permanece intacta
     assert (train["tournament"] == "Friendly").sum() == 1
+
+
+def test_build_training_frame_feeds_knockout_with_boost():
+    """ENG-42: jogo de KO disputado (fixture guarda slot `W##`/`2D`) entra no treino com os nomes
+    reais das seleções e o boost — não fica preso à base histórica a peso 1.0."""
+    import pandas as pd
+
+    from worldcup.pipeline import CURRENT_EDITION_BOOST, build_training_frame
+    from worldcup.sync import resolve_live_bracket
+
+    ed = load_edition(2026).as_of("2026-07-04")  # mata-mata em andamento (16-avos disputados)
+    ko = resolve_live_bracket(ed)
+    played_ko = next(f for f in ed.fixtures if f.played and not f.is_group and f.match_id in ko)
+    home, away = ko[played_ko.match_id]
+    assert played_ko.home not in ed.teams  # o fixture guarda slot (`W##`/`2D`), não a seleção real
+    assert home in ed.teams  # ...que resolve_live_bracket resolve para a seleção real
+
+    train = build_training_frame(ed, pd.DataFrame(columns=["date", "home_team", "away_team"]))
+    key = train.apply(lambda r: (str(r["date"])[:10], frozenset((r["home_team"], r["away_team"]))), axis=1)
+    match = train[key == (str(played_ko.date)[:10], frozenset((home, away)))]
+    assert len(match) == 1  # entra pelos nomes reais, uma vez
+    assert match.iloc[0]["weight_mult"] == CURRENT_EDITION_BOOST  # com boost, não a peso 1.0 da base

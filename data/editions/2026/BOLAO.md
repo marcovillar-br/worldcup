@@ -135,6 +135,16 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
+- 2026-07-04 (noite)
+  — **ENG-42: KO passa a alimentar o ajuste com boost — favorita vira para Espanha.** Os jogos de
+  mata-mata guardam slots (`W73`) no fixture e escapavam do boost 6.0, chegando ao modelo só pela
+  base histórica a peso 1.0. `build_training_frame` agora resolve os slots dos KO disputados
+  (`resolve_live_bracket`) e os alimenta boostados, como os de grupo. **Efeito grande:** Espanha
+  **29,1%** (era 20,4%), Argentina **12,9%** (era 24,8%) — a vitória apertada da Argentina (3×2
+  Cabo Verde) a peso 6 derruba o rating. ⚠️ A virada expôs que **`CURRENT_EDITION_BOOST`=6.0 nunca
+  foi calibrado** (aberto ENG-44 para o sweep de Brier); a correção estrutural está certa, mas o
+  valor do peso é questão aberta — **ceticismo com os números de campeão até calibrar.**
+
 - 2026-07-04 (tarde)
   — **Bug de realimentação corrigido: o modelo não estava aprendendo com o mata-mata (ENG-41).**
   A `historical_results.csv` estava congelada em 25/06 e os resultados de KO só chegam ao ajuste

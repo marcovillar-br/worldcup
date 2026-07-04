@@ -58,15 +58,24 @@ def build_training_frame(edition: Edition, historical: pd.DataFrame) -> pd.DataF
     seriam contados em dobro (peso 1.0 na base + boost via fixtures → 7.0 efetivo), inflando o peso
     dos resultados recentes e distorcendo o ajuste. A chave de casamento é (data, {mandante,
     visitante}) — o resultado real da edição é sempre o do `fixtures.csv`.
+
+    Os jogos de mata-mata guardam **slots** (`W73`, `2D`) em `home`/`away`, não seleções — então
+    são resolvidos para os nomes reais via `resolve_live_bracket` (só resultados reais) antes de
+    entrar. Sem isso escapariam do filtro `.isin(edition.teams)` e o KO só chegaria ao modelo pela
+    base histórica (peso 1.0, refém da atualidade dela) — a subponderação do ENG-42.
     """
+    from .sync import resolve_live_bracket
+
+    ko_matchups = resolve_live_bracket(edition)  # {match_id: (mandante, visitante)} real dos KO disputados
     rows = []
     for f in edition.fixtures:
         if f.played:
+            home, away = ko_matchups.get(f.match_id, (f.home, f.away))
             rows.append(
                 {
                     "date": pd.Timestamp(f.date),
-                    "home_team": f.home,
-                    "away_team": f.away,
+                    "home_team": home,
+                    "away_team": away,
                     "home_score": f.home_goals,
                     "away_score": f.away_goals,
                     "tournament": "FIFA World Cup",
@@ -77,7 +86,7 @@ def build_training_frame(edition: Edition, historical: pd.DataFrame) -> pd.DataF
     if not rows:
         return historical
     extra = pd.DataFrame(rows)
-    # só faz sentido somar jogos de grupo (times reais); KO com nomes reais também vale
+    # grupo já vem com times reais; KO agora também (resolvido acima) — o filtro barra só slots órfãos
     extra = extra[extra["home_team"].isin(edition.teams) & extra["away_team"].isin(edition.teams)]
     base = _drop_edition_games(historical, extra)
     base["weight_mult"] = 1.0

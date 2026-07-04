@@ -22,6 +22,11 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (Argentina 12,9% / Espanha 29,1%). Cobertura: `test_blend_track_boost_sweep`.
 
 ### Corrigido
+- **Jogos já disputados mostravam `0/0/0` (HTML) e `//` (MD) nas colunas de probabilidade**
+  (`render`): jogo `FINAL` não tem previsão de 1×2 (já aconteceu) e sai do pipeline com `P_*`
+  vazios; o HTML coagia vazio→0 (`_pct`), exibindo `0/0/0` + barra vazia — parecia "0% de tudo" /
+  buraco de render. Agora linhas `FINAL` mostram `—` nas colunas **M / E / V** e **Prob.** (HTML) e
+  em **Probabilidades** (MD). Cobertura: `test_final_group_game_shows_dash_not_zeros_in_mev`.
 - **Resultados de mata-mata alimentam o ajuste sem o boost** (ENG-42): os jogos de KO guardam
   slots (`W73`, `2D`) em `home`/`away`, então escapavam do filtro `.isin(edition.teams)` e só
   chegavam ao modelo pela base histórica (peso 1.0) — e **só se ela estivesse atualizada** (foi o

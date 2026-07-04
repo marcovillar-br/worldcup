@@ -59,6 +59,23 @@ def test_render_html_marks_final_games_with_real_score():
     assert "tag fin" in html_out  # marca como final
 
 
+def test_final_group_game_shows_dash_not_zeros_in_mev():
+    # jogo FINAL não tem previsão (já aconteceu): M/E/V vira "—", não "0/0/0" (HTML) nem "//" (MD).
+    # P_* vazios, como um jogo realmente disputado sai do pipeline.
+    final_row = _group_row(status="FINAL", placar_real="1x1", P_mandante="", P_empate="", P_visitante="")
+    run = _run_with([final_row])
+    html_out = render_html(run)
+    md_out = render_markdown(run)
+    assert "0/0/0" not in html_out
+    assert "//" not in md_out
+    assert "—" in html_out
+    assert "| — |" in md_out  # célula de probabilidades da linha de grupo
+
+    # o jogo ainda PREVISTO mostra as probabilidades normalmente (não "—")
+    previsto = render_html(_run_with([_group_row(P_mandante="73", P_empate="19", P_visitante="9")]))
+    assert "73/19/9" in previsto
+
+
 def test_outputs_render_for_knockout_rows():
     ko = dict.fromkeys(CSV_COLUMNS, "")
     ko.update(

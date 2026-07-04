@@ -72,7 +72,8 @@ def render_markdown(run: PredictionRun) -> str:
                 "|---|---|---|---|---|---|---|---|---|",
             ]
             for r in rows:
-                probs = f"{r['P_mandante']}/{r['P_empate']}/{r['P_visitante']}"
+                # jogo FINAL não tem previsão (já aconteceu) — "—" em vez de "//" das colunas vazias
+                probs = "—" if r["status"] == "FINAL" else f"{r['P_mandante']}/{r['P_empate']}/{r['P_visitante']}"
                 out.append(
                     f"| {r['jogo']} | {r['data']} | {r['grupo']} | {r['mandante']} | "
                     f"**{r['palpite']}** | {r['visitante']} | {probs} | {r['ousado']} | "
@@ -214,20 +215,28 @@ def render_html(run: PredictionRun) -> str:
                 final = r["status"] == "FINAL"
                 upset = bool(r["ousado"]) and not final
                 cls = "final" if final else ("upset" if upset else "")
-                ph, pd_, pa = _pct(r["P_mandante"]), _pct(r["P_empate"]), _pct(r["P_visitante"])
                 score = r["placar_real"] if final else r["palpite"]
                 tag = (
                     '<span class="tag fin">final</span>'
                     if final
                     else ('<span class="bolt tag">⚡ zebra</span>' if upset else "")
                 )
+                if final:
+                    # jogo já aconteceu — sem previsão: "—" nas duas colunas (M/E/V e Prob.),
+                    # não "0/0/0" + barra vazia (parecia buraco de render)
+                    mev = "<td class='num'>—</td><td class='num'>—</td>"
+                else:
+                    ph, pd_, pa = _pct(r["P_mandante"]), _pct(r["P_empate"]), _pct(r["P_visitante"])
+                    mev = (
+                        f"<td class='num'>{ph}/{pd_}/{pa}</td>"
+                        f"<td><span class='bar'><i class='h' style='width:{ph}%'></i>"
+                        f"<i class='d' style='width:{pd_}%'></i><i class='a' style='width:{pa}%'></i></span></td>"
+                    )
                 parts.append(
                     f"<tr class='{cls}'><td class='num'>{_esc(r['jogo'])}</td><td>{_esc(r['data'])}</td>"
                     f"<td class='num'>{_esc(r['grupo'])}</td><td>{_esc(r['mandante'])}</td>"
                     f"<td class='num score'>{_esc(score)}</td><td>{_esc(r['visitante'])}</td>"
-                    f"<td class='num'>{ph}/{pd_}/{pa}</td>"
-                    f"<td><span class='bar'><i class='h' style='width:{ph}%'></i>"
-                    f"<i class='d' style='width:{pd_}%'></i><i class='a' style='width:{pa}%'></i></span></td>"
+                    f"{mev}"
                     f"<td>{tag}</td></tr>"
                 )
         else:

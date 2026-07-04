@@ -57,7 +57,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-39](#eng-39) | P2 | scoring/estratégia | ✅ | Simulador de endgame é juiz e parte: gerador = modelo, cego à subestimação de empate em final |
 | [ENG-40](#eng-40) | P2 | knockout/cli | ✅ | Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra superada |
 | [ENG-41](#eng-41) | P1 | pipeline/model | ✅ | Jogos da edição contados em dobro no ajuste quando a base histórica já os contém (peso 7.0) |
-| [ENG-42](#eng-42) | P2 | pipeline/model | 🟡 | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
+| [ENG-42](#eng-42) | P2 | pipeline/model | ✅ | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
 | [ENG-43](#eng-43) | P3 | observabilidade | 🔴 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
 | [ENG-44](#eng-44) | P2 | model/backtest | 🔴 | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
 
@@ -1408,7 +1408,7 @@ casando (data, {mandante,visitante}) com os jogos disputados antes do append. Co
 
 ## ENG-42
 **Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots**
-· P2 · `pipeline`/`model` · 🟡 fazendo
+· P2 · `pipeline`/`model` · ✅ feito
 
 A realimentação com boost (`build_training_frame`) usa `f.home`/`f.away`, mas os jogos de
 mata-mata no `fixtures.csv` guardam **slots** (`W73`, `2D`), não nomes de seleção — então o filtro
@@ -1433,7 +1433,7 @@ filtro `.isin(edition.teams)` e entram com o boost, uma vez (o dedup do ENG-41 r
 base). Coberto por `test_build_training_frame_feeds_knockout_with_boost`. **Efeito:** favorita
 Argentina 24,8%→12,9%, Espanha 20,4%→29,1% — a virada expôs que o boost 6.0 nunca foi calibrado
 (ENG-44); a correção estrutural (unificar rotas) está certa, o valor do peso é a questão aberta.
-**Commit:** —
+**Commit:** 3c8a424
 
 ## ENG-44
 **`CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier**

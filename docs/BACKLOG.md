@@ -59,7 +59,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-41](#eng-41) | P1 | pipeline/model | ✅ | Jogos da edição contados em dobro no ajuste quando a base histórica já os contém (peso 7.0) |
 | [ENG-42](#eng-42) | P2 | pipeline/model | ✅ | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
 | [ENG-43](#eng-43) | P3 | observabilidade | 🔴 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
-| [ENG-44](#eng-44) | P2 | model/backtest | 🟡 | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
+| [ENG-44](#eng-44) | P2 | model/backtest | ✅ | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
 
 ---
 
@@ -1437,7 +1437,7 @@ Argentina 24,8%→12,9%, Espanha 20,4%→29,1% — a virada expôs que o boost 6
 
 ## ENG-44
 **`CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier**
-· P2 · `model`/`backtest` · 🟡 fazendo
+· P2 · `model`/`backtest` · ✅ feito
 
 `pipeline.CURRENT_EDITION_BOOST` (6.0) multiplica o peso dos jogos disputados da edição no ajuste.
 Foi fixado a olho quando só havia jogos de grupo e **nunca validado por backtest**. O ENG-42, ao
@@ -1465,7 +1465,7 @@ crescente** (1.0=0,4707 → 6.0=0,4876 → 12.0=0,5035) ⇒ boost superajusta. O
 `CURRENT_EDITION_BOOST` foi removida; a 2026 fixou `edition_boost = 1.0` no `scoring.toml`.
 Cobertura: `test_blend_track_boost_sweep` + os testes de `build_training_frame` passam boost
 explícito. Campeão calibrado: Argentina 22,7% / Espanha 19,7% (vs 12,9%/29,1% no 6.0).
-**Commit:** —
+**Commit:** 4a792de
 
 ## ENG-43
 **Nenhuma métrica vigia se o fit ingeriu os resultados recentes (staleness da base é silenciosa)**

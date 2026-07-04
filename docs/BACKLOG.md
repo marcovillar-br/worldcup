@@ -56,7 +56,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-38](#eng-38) | P2 | blend/backtest | ✅ | `blend_weight` fixado por prior (0,6), nunca otimizado com dado — sweep de Brier por peso |
 | [ENG-39](#eng-39) | P2 | scoring/estratégia | ✅ | Simulador de endgame é juiz e parte: gerador = modelo, cego à subestimação de empate em final |
 | [ENG-40](#eng-40) | P2 | knockout/cli | ✅ | Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra superada |
-| [ENG-41](#eng-41) | P1 | pipeline/model | 🟡 | Jogos da edição contados em dobro no ajuste quando a base histórica já os contém (peso 7.0) |
+| [ENG-41](#eng-41) | P1 | pipeline/model | ✅ | Jogos da edição contados em dobro no ajuste quando a base histórica já os contém (peso 7.0) |
 | [ENG-42](#eng-42) | P2 | pipeline/model | 🔴 | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
 | [ENG-43](#eng-43) | P3 | observabilidade | 🔴 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
 
@@ -1382,7 +1382,7 @@ inalterado, valor inválido levanta, parser dos 2 subcomandos. 162 verdes.
 
 ## ENG-41
 **Jogos da edição contados em dobro no ajuste quando a base histórica já os contém (peso 7.0)**
-· P1 · `pipeline`/`model` · 🟡 fazendo
+· P1 · `pipeline`/`model` · ✅ feito
 
 `pipeline.build_training_frame` concatena a base histórica **inteira** com os jogos disputados da
 edição, estes com `CURRENT_EDITION_BOOST` (6.0). O código assume **implicitamente** que a base não
@@ -1403,7 +1403,7 @@ placar da base descartado em favor do fixture; linhas de outros dias intactas; `
 **Resolução:** `build_training_frame` chama `_drop_edition_games`, que remove da base as linhas
 casando (data, {mandante,visitante}) com os jogos disputados antes do append. Coberto por
 `test_build_training_frame_no_double_count`. Efeito na edição 2026: favorita Argentina 31%→24,8%.
-**Commit:** —
+**Commit:** 70c1d83
 
 ## ENG-42
 **Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots**

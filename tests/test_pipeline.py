@@ -71,13 +71,31 @@ def test_final_ko_layers_real_outcomes():
             ko_outcome=winner,
         )
 
-    # decidido nos 90' → "—"/"—", avança o vencedor real
-    assert _final_ko_layers(ko(76, "Brazil", "Japan", 2, 1, "Brazil"), {}) == ("—", "—", "Brasil")
+    # decidido nos 90' → "—"/"—", avança o vencedor real (do ko_outcome)
+    assert _final_ko_layers(ko(76, "Brazil", "Japan", 2, 1, "Brazil"), "Brazil", "Japan", {}) == (
+        "—",
+        "—",
+        "Brasil",
+    )
+    # decidido nos 90' SEM ko_outcome no fixture (fonte inconsistente) → avança quem fez mais gols
+    assert _final_ko_layers(ko(77, "France", "Sweden", 3, 0, None), "France", "Sweden", {}) == (
+        "—",
+        "—",
+        "França",
+    )
     # empate nos 90' + shootout capturado → "Vai aos pênaltis" + vencedor
     pen = ko(74, "Germany", "Paraguay", 1, 1, "Paraguay")
-    assert _final_ko_layers(pen, {74: "Paraguay"}) == ("Vai aos pênaltis", "Paraguai", "Paraguai")
+    assert _final_ko_layers(pen, "Germany", "Paraguay", {74: "Paraguay"}) == (
+        "Vai aos pênaltis",
+        "Paraguai",
+        "Paraguai",
+    )
     # empate nos 90' SEM shootout conhecido → prorrogação/pênaltis vazios, mas avança conhecido
-    assert _final_ko_layers(ko(75, "Netherlands", "Morocco", 1, 1, "Morocco"), {}) == ("", "", "Marrocos")
+    assert _final_ko_layers(ko(75, "Netherlands", "Morocco", 1, 1, "Morocco"), "Netherlands", "Morocco", {}) == (
+        "",
+        "",
+        "Marrocos",
+    )
 
 
 def test_edition_loads_shootouts():

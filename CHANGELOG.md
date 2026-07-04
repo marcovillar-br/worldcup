@@ -22,6 +22,12 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (Argentina 12,9% / Espanha 29,1%). Cobertura: `test_blend_track_boost_sweep`.
 
 ### Corrigido
+- **`Avança` em branco em jogo de KO decidido no tempo normal** (`_final_ko_layers`): a fonte
+  preenche `ko_outcome` de forma inconsistente em jogos de 90' (J77 França 3×0 Suécia vinha vazio),
+  e o display só lia esse campo — deixava o `Avança` em branco mesmo com placar decisivo, enquanto
+  o bracket derivava o vencedor do placar. Agora, decidido no tempo normal sem `ko_outcome` ⇒
+  avança quem fez mais gols (mesma lógica do bracket); empate segue exigindo shootout para não
+  afirmar prorrogação sob incerteza. Cobertura: caso do J77 em `test_final_ko_layers_real_outcomes`.
 - **Jogos já disputados mostravam `0/0/0` (HTML) e `//` (MD) nas colunas de probabilidade**
   (`render`): jogo `FINAL` não tem previsão de 1×2 (já aconteceu) e sai do pipeline com `P_*`
   vazios; o HTML coagia vazio→0 (`_pct`), exibindo `0/0/0` + barra vazia — parecia "0% de tudo" /

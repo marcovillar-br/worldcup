@@ -11,6 +11,16 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
+### Corrigido
+- **Double-count dos jogos da edição no ajuste do modelo** (ENG-41): quando a base histórica já
+  contém a Copa em andamento (acontece ao rodar `fetch-data` no meio do torneio — martj42 traz o
+  torneio vivo), os jogos de grupo entravam **duas vezes** no treino (peso 1.0 pela base + boost
+  6.0 pelo `fixtures.csv` ⇒ 7.0 efetivo), inflando o peso dos resultados recentes e distorcendo as
+  probabilidades. `pipeline.build_training_frame` agora **remove da base** os jogos que já entram
+  via fixtures (casa por data + par não-ordenado de seleções; o resultado autoritativo é o do
+  fixture). Efeito na edição 2026: favorita ao título de Argentina 31%→24,8% (número correto).
+  Regressão coberta por `test_build_training_frame_no_double_count`.
+
 ### Alterado
 - **`--pool-behind` agora gera EMPATE na final por default; zebra vira opção** (ENG-40):
   `predict`/`sync-results --pool-behind [empate|zebra]` (sem valor ⇒ `empate`).

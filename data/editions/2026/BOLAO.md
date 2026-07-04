@@ -135,6 +135,20 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
+- 2026-07-04 (tarde)
+  — **Bug de realimentação corrigido: o modelo não estava aprendendo com o mata-mata (ENG-41).**
+  A `historical_results.csv` estava congelada em 25/06 e os resultados de KO só chegam ao ajuste
+  por ela (os jogos de KO no `fixtures.csv` guardam slots `W##`, escapando do boost 6.0 que os
+  jogos de grupo levam). Efeito: o modelo palpitava o mata-mata **sem ter ingerido nenhum
+  resultado do mata-mata**. Ao atualizar a base + corrigir o **double-count** dos jogos de grupo
+  (entravam a peso 7.0 = base 1.0 + fixture 6.0), a favorita ao título caiu **Argentina 31%→24,8%**
+  (número honesto; era inflado por só enxergar a fase de grupos) e 3 palpites futuros mudaram
+  (**J96, J99, e a final J104: Argentina→Espanha**). Palpites de hoje (J89/J90) e de grupo
+  **inalterados**. Também: **J88 adicionado ao `shootouts.csv`** (Egito nos pênaltis, fonte
+  canônica) — o relatório agora mostra prorrogação/pênaltis do jogo. Aberto ENG-42 (unificar os
+  dois caminhos de realimentação; KO a peso 1.0) e ENG-43 (métrica que vigie ingestão de
+  resultados recentes — hoje o silêncio da staleness não acende vermelho nenhum).
+
 - 2026-07-04
   — **16-avos J86–88 sincronizados; eficiência 91,9%.** Entraram J86 Argentina 3×2 Cabo Verde,
   J87 Colômbia 1×0 Gana, J88 Austrália 1×1 Egito (pênaltis, Egito avança) — o tool acertou

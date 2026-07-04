@@ -84,6 +84,52 @@ def test_edition_loads_shootouts():
     from worldcup.edition import load_edition
 
     sh = load_edition(2026).shootouts
-    # capturado de fontes verificadas (ESPN/Sky/Al Jazeera): J74 Paraguai, J75 Marrocos a pênaltis
+    # capturado de fontes verificadas: J74 Paraguai, J75 Marrocos, J88 Egito a pênaltis
     assert sh.get(74) == "Paraguay"
     assert sh.get(75) == "Morocco"
+    assert sh.get(88) == "Egypt"
+
+
+def test_build_training_frame_no_double_count():
+    """Jogos da edição presentes na base histórica (fetch-data no meio da Copa) não são contados em
+    dobro: entram uma vez só, com o boost — não também a peso 1.0 pela base."""
+    import pandas as pd
+
+    from worldcup.pipeline import CURRENT_EDITION_BOOST, build_training_frame
+
+    ed = load_edition(2026).as_of("2026-06-20")  # alguns jogos de grupo já disputados
+    played = next(f for f in ed.fixtures if f.played and f.home in ed.teams and f.away in ed.teams)
+
+    # base histórica que JÁ contém o jogo da edição (mesmo par/dia) + uma linha de enchimento
+    historical = pd.DataFrame(
+        [
+            {
+                "date": pd.Timestamp(played.date),
+                "home_team": played.home,
+                "away_team": played.away,
+                "home_score": 9,  # placar "errado" na base: deve ser descartado em favor do fixture
+                "away_score": 9,
+                "tournament": "FIFA World Cup",
+                "neutral": played.neutral,
+            },
+            {
+                "date": pd.Timestamp("2000-01-01"),
+                "home_team": played.home,
+                "away_team": played.away,
+                "home_score": 0,
+                "away_score": 0,
+                "tournament": "Friendly",
+                "neutral": True,
+            },
+        ]
+    )
+    train = build_training_frame(ed, historical)
+
+    key = train.apply(lambda r: (str(r["date"])[:10], frozenset((r["home_team"], r["away_team"]))), axis=1)
+    match_key = (str(played.date)[:10], frozenset((played.home, played.away)))
+    matches = train[key == match_key]
+    assert len(matches) == 1  # uma única cópia, não duas
+    assert matches.iloc[0]["weight_mult"] == CURRENT_EDITION_BOOST  # a do fixture (boost), não a base
+    assert matches.iloc[0]["home_score"] == played.home_goals  # placar autoritativo é o do fixture
+    # a linha de enchimento (dia diferente) permanece intacta
+    assert (train["tournament"] == "Friendly").sum() == 1

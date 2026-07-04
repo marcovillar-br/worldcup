@@ -56,6 +56,9 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-38](#eng-38) | P2 | blend/backtest | ✅ | `blend_weight` fixado por prior (0,6), nunca otimizado com dado — sweep de Brier por peso |
 | [ENG-39](#eng-39) | P2 | scoring/estratégia | ✅ | Simulador de endgame é juiz e parte: gerador = modelo, cego à subestimação de empate em final |
 | [ENG-40](#eng-40) | P2 | knockout/cli | ✅ | Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra superada |
+| [ENG-41](#eng-41) | P1 | pipeline/model | 🟡 | Jogos da edição contados em dobro no ajuste quando a base histórica já os contém (peso 7.0) |
+| [ENG-42](#eng-42) | P2 | pipeline/model | 🔴 | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
+| [ENG-43](#eng-43) | P3 | observabilidade | 🔴 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
 
 ---
 
@@ -1376,3 +1379,70 @@ em `predict` e `sync-results` (sem valor ⇒ `empate`). Verificado ponta-a-ponta
 fiel. Testes: empate força a melhor diagonal, camadas/avanço idênticos ao fiel, `None`
 inalterado, valor inválido levanta, parser dos 2 subcomandos. 162 verdes.
 **Commit:** f04c73b
+
+## ENG-41
+**Jogos da edição contados em dobro no ajuste quando a base histórica já os contém (peso 7.0)**
+· P1 · `pipeline`/`model` · 🟡 fazendo
+
+`pipeline.build_training_frame` concatena a base histórica **inteira** com os jogos disputados da
+edição, estes com `CURRENT_EDITION_BOOST` (6.0). O código assume **implicitamente** que a base não
+contém a edição corrente — mas `fetch-data` baixa o martj42, que traz o torneio **em andamento**.
+Quando a base é atualizada no meio da Copa, cada jogo de grupo disputado entra **duas vezes**: uma
+pela base (peso 1.0) e outra pelo boost (6.0) ⇒ peso efetivo 7.0. Isso infla o peso dos resultados
+recentes e distorce as probabilidades (o argmax dos palpites é robusto, então o sintoma é
+silencioso — só aparece nas probabilidades de campeão, que não têm gabarito diário). Não há
+filtro nem dedup; nenhum teste cobria a composição da base.
+
+**Refs:** `pipeline.build_training_frame`, `pipeline.CURRENT_EDITION_BOOST`,
+`fetch_data.load_historical`.
+**Correção proposta:** antes de concatenar, remover da base os jogos que já entram via fixtures
+(casar por data + par não-ordenado de seleções; o resultado autoritativo da edição é o do
+`fixtures.csv`). Teste de regressão que falharia com o double-count.
+**Aceite:** jogo da edição presente na base entra **uma vez só**, com o boost (não também a 1.0);
+placar da base descartado em favor do fixture; linhas de outros dias intactas; `pytest` verde.
+**Resolução:** `build_training_frame` chama `_drop_edition_games`, que remove da base as linhas
+casando (data, {mandante,visitante}) com os jogos disputados antes do append. Coberto por
+`test_build_training_frame_no_double_count`. Efeito na edição 2026: favorita Argentina 31%→24,8%.
+**Commit:** —
+
+## ENG-42
+**Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots**
+· P2 · `pipeline`/`model` · 🔴 todo
+
+A realimentação com boost (`build_training_frame`) usa `f.home`/`f.away`, mas os jogos de
+mata-mata no `fixtures.csv` guardam **slots** (`W73`, `2D`), não nomes de seleção — então o filtro
+`.isin(edition.teams)` os descarta e eles **não recebem o boost 6.0**. Na prática os resultados de
+KO só chegam ao modelo pela `historical_results.csv` (peso 1.0), e **só se ela estiver atualizada**.
+Consequências: (a) resultados de KO — os mais recentes e de maior peso de fase — entram
+subponderados frente aos de grupo; (b) a realimentação de KO fica **refém da atualidade da base
+histórica** (ver ENG-41: base congelada ⇒ modelo cego ao mata-mata inteiro). São **dois caminhos
+de realimentação com comportamentos diferentes**, o que já produziu falha silenciosa.
+
+**Refs:** `pipeline.build_training_frame` (filtro `.isin(edition.teams)` que barra os slots),
+`sync`/`format_engine` (onde o bracket resolve slot→seleção), `edition.Fixture`.
+**Correção proposta:** resolver os slots dos jogos de KO **disputados** para os nomes reais das
+seleções (o bracket já sabe quem jogou) e alimentá-los pelo mesmo caminho com boost — unificando as
+duas rotas de realimentação. Alternativa: derivar os nomes do próprio `ko_outcome`/resultado real.
+**Aceite:** jogo de KO disputado entra no treino com `CURRENT_EDITION_BOOST` (nomes reais),
+uma única vez; teste afirmando que um resultado de KO disputado está no frame de treino com o
+boost; `pytest` verde.
+**Commit:** —
+
+## ENG-43
+**Nenhuma métrica vigia se o fit ingeriu os resultados recentes (staleness da base é silenciosa)**
+· P3 · `observabilidade` · 🔴 todo
+
+Não há nenhum sinal que acenda vermelho quando a base de treino está desatualizada ou quando um
+resultado recente **não** entrou no ajuste. `blend-track` mede Brier do blend; `efficiency.py` mede
+usuário-vs-teto — nenhum vigia "o fit ingeriu os N últimos jogos disputados?". A staleness que
+motivou ENG-41/42 passou despercebida por semanas justamente por ser silenciosa (o caminho de
+grupo funcionava, mascarando o de KO quebrado).
+
+**Refs:** `pipeline.build_training_frame`, `status.build_status` (candidato natural a exibir o
+sinal no briefing de start-of-day), `backtest`/`blend-track`.
+**Correção proposta:** um check barato — comparar o conjunto de jogos disputados da edição com o
+que efetivamente entrou no frame de treino (com boost) e alertar os ausentes; expor no
+`worldcup status` (ex.: "⚠️ N jogos disputados fora do ajuste") e/ou como aviso no `predict`.
+**Aceite:** rodar `status`/`predict` com um resultado disputado ausente do treino emite alerta
+identificando os jogos; sem ausências, silêncio; teste cobrindo os dois casos; `pytest` verde.
+**Commit:** —

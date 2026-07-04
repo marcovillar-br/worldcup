@@ -50,7 +50,15 @@ def _pct_round(*probs: float) -> list[int]:
 
 
 def build_training_frame(edition: Edition, historical: pd.DataFrame) -> pd.DataFrame:
-    """Histórico + jogos já disputados da edição (com peso alto) para o ajuste do modelo."""
+    """Histórico + jogos já disputados da edição (com peso alto) para o ajuste do modelo.
+
+    Os jogos da edição corrente entram **uma única vez**, com `CURRENT_EDITION_BOOST`. Se a base
+    histórica já contém esses mesmos jogos (acontece quando `fetch-data` é rodado no meio da Copa —
+    martj42 traz o torneio em andamento), eles são **removidos da base** antes do append, senão
+    seriam contados em dobro (peso 1.0 na base + boost via fixtures → 7.0 efetivo), inflando o peso
+    dos resultados recentes e distorcendo o ajuste. A chave de casamento é (data, {mandante,
+    visitante}) — o resultado real da edição é sempre o do `fixtures.csv`.
+    """
     rows = []
     for f in edition.fixtures:
         if f.played:
@@ -71,9 +79,27 @@ def build_training_frame(edition: Edition, historical: pd.DataFrame) -> pd.DataF
     extra = pd.DataFrame(rows)
     # só faz sentido somar jogos de grupo (times reais); KO com nomes reais também vale
     extra = extra[extra["home_team"].isin(edition.teams) & extra["away_team"].isin(edition.teams)]
-    base = historical.copy()
+    base = _drop_edition_games(historical, extra)
     base["weight_mult"] = 1.0
     return pd.concat([base, extra], ignore_index=True)
+
+
+def _drop_edition_games(historical: pd.DataFrame, edition_games: pd.DataFrame) -> pd.DataFrame:
+    """Remove de `historical` os jogos que já entram via fixtures (evita double-count — ver acima).
+
+    Casa por (data, par não-ordenado de seleções); o resultado autoritativo da edição é o do fixture.
+    """
+    if historical.empty or edition_games.empty:
+        return historical.copy()
+
+    def _key(dates: pd.Series, home: pd.Series, away: pd.Series) -> pd.Series:
+        d = pd.to_datetime(dates).dt.strftime("%Y-%m-%d")
+        pair = [frozenset((h, a)) for h, a in zip(home, away, strict=True)]
+        return pd.Series(list(zip(d, pair, strict=True)), index=dates.index)
+
+    edition_keys = set(_key(edition_games["date"], edition_games["home_team"], edition_games["away_team"]))
+    base_keys = _key(historical["date"], historical["home_team"], historical["away_team"])
+    return historical[~base_keys.isin(edition_keys)].copy()
 
 
 @dataclass

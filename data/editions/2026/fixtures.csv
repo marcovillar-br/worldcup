@@ -84,9 +84,9 @@ match_id,stage,group,date,home,away,neutral,third_groups,home_goals,away_goals,k
 83,R32,,2026-07-02,2K,2L,True,,2,1,Portugal
 84,R32,,2026-07-02,1H,2J,True,,3,0,
 85,R32,,2026-07-02,1B,3rd,True,E|F|G|I|J,2,0,Switzerland
-86,R32,,2026-07-03,1J,2H,True,,,,
-87,R32,,2026-07-03,1K,3rd,True,D|E|I|J|L,,,
-88,R32,,2026-07-03,2D,2G,True,,,,
+86,R32,,2026-07-03,1J,2H,True,,3,2,Argentina
+87,R32,,2026-07-03,1K,3rd,True,D|E|I|J|L,1,0,Colombia
+88,R32,,2026-07-03,2D,2G,True,,1,1,Egypt
 89,R16,,2026-07-04,W73,W75,True,,,,
 90,R16,,2026-07-04,W74,W77,True,,,,
 91,R16,,2026-07-05,W76,W78,True,,,,

@@ -12,16 +12,14 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-03)
+## Estado atual (atualizado em 2026-07-04)
 
-- **85 de 104 jogos disputados (J1–J85).** No dia 02/07 à noite fecharam **J83 Portugal 2×1
-  Croácia** (tool palpitou 2×0 — acertou lado e mando) e **J85 Suíça 2×0 Argélia** (tool cravou
-  2×0), sincronizados pela fonte pública em 03/07. **Standing (03/07): 325 pts, 17º** (líder
-  **373**) · **eficiência 90,3%** (teto as-of do tool 360;
-  `efficiency.py --my-points 325 --leader 373 --compare-archive`). +30 pts e subiu 21º→17º. Líder
-  **ACIMA** do teto de novo (373 > 360) ⇒ variância de exatos no KO, não estratégia superior
-  (mesmo padrão das entradas anteriores). Hoje 03/07: 16-avos J86 Argentina×Cabo Verde (2×0),
-  J87 Colômbia×Gana (2×0), J88 Austrália×Egito (0×1, zebra fiel — avanço 42%).
+- **88 de 104 jogos disputados (J1–J88).** No dia 03/07 fecharam os 16-avos **J86 Argentina 3×2
+  Cabo Verde** (tool palpitou 2×0 — acertou lado/avanço), **J87 Colômbia 1×0 Gana** (tool 2×0 —
+  lado/avanço certos) e **J88 Austrália 1×1 Egito** (Egito nos pênaltis — tool cravou a zebra do
+  avanço). Sincronizados pela fonte pública em 04/07. **Standing (03/07): 325 pts, 17º** (líder
+  **373**; pendente atualização pós-J86–88). Hoje 04/07: 16-avos **J89 Canadá×Marrocos** (1×2,
+  Marrocos avança) e **J90 Paraguai×França** (0×2, França avança).
 - **Config em uso (desde 02/07 à tarde): `risk 0.5` + `blend_weight 0.8`** (era 0,6; subido com
   dado — `blend-track --sweep`, ENG-38: Brier monotônico decrescente em w, 0,4420 modelo-puro →
   0,4100 em w=1,0; 0,8 captura o grosso sem abraçar o extremo em n=49). `odds.csv` com **65 jogos**
@@ -136,6 +134,17 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   ENG-32 foi agregada em R32/R16, onde a regra segue valendo.
 
 ## Histórico
+
+- 2026-07-04
+  — **16-avos J86–88 sincronizados; eficiência 91,9%.** Entraram J86 Argentina 3×2 Cabo Verde,
+  J87 Colômbia 1×0 Gana, J88 Austrália 1×1 Egito (pênaltis, Egito avança) — o tool acertou
+  lado/avanço nos três. **Standing: 351 pts, 15º** (líder **409**) ·
+  `efficiency.py --my-points 351 --leader 409 --compare-archive`: teto as-of do tool **382**,
+  **eficiência 91,9%**. Líder **ACIMA** do teto (409 > 382) ⇒ variância de exatos no KO, não
+  estratégia superior (mesmo padrão recorrente). Gap parcialmente ruído de reconstrução (28 jogos
+  sem snapshot real; no verificável a reconstrução ficou +5 acima do arquivo). Bônus de KO de J74,
+  J75, J88 ainda fora do teto (sem shootout na fonte). Hoje: J89 Canadá×Marrocos (1×2), J90
+  Paraguai×França (0×2).
 
 - 2026-07-02 (noite)
   — **ENG-40 fechado: `predict --pool-behind` agora executa a regra de endgame v2.** O flag ganhou

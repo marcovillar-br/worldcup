@@ -45,9 +45,10 @@ seção do SPEC ou o módulo de `src/worldcup/` que materializa o conceito.
   taxa de 90' × 30/90 (a ET tem ~1/3 do tempo) e escolhe o desfecho mais provável
   (= E[pts]; ENG-29). Bônus +3 (×peso).
 - **Shootout / disputa de pênaltis** — cobranças que definem o vencedor de um jogo de KO empatado
-  após prorrogação. 3ª camada de palpite (bônus +3 ×peso). Dados em `shootouts.csv`
-  (`match_id,winner`): do martj42 (ingestão) ou do arquivo da edição
-  (`Edition.shootouts`, captura manual sob latência).
+  após prorrogação. 3ª camada de palpite (bônus +3 ×peso). Dois arquivos homônimos: o
+  `shootouts.csv` do **martj42** (`date,home_team,away_team,winner`, mesclado na ingestão como
+  `penalty_winner`) e o **da edição** (`match_id,winner` → `Edition.shootouts`, captura manual
+  sob latência, só para exibir o desfecho real de KO disputado).
 - **Pontos esperados (E[pts])** — média ponderada dos pontos de um palpite sobre todos os placares
   possíveis (pela matriz do modelo). O objetivo que o produto maximiza.
 - **Risk (risco / ousadia)** — knob de **estratégia** (não da régua do app): `best_prediction`
@@ -91,7 +92,8 @@ seção do SPEC ou o módulo de `src/worldcup/` que materializa o conceito.
   (o modelo é cego a escalação/lesão/motivação, que o mercado precifica). Pipeline: devig → log
   opinion pool → rescale (`blend`; ENG-19, SPEC §3.5).
 - **Odds decimais** — cotação de mercado por resultado (mandante/empate/visitante); em `odds.csv`
-  como `match_id,home,draw,away`.
+  como `match_id,home,draw,away`, mais as colunas opcionais `total_line,over,under` (mercado de
+  over/under — ENG-35).
 - **Vig / margem / devig** — a **margem** (overround) é o lucro embutido da casa, que faz as
   probabilidades implícitas somarem >100%. **Des-vigar** (`devig`) remove essa margem e devolve
   probabilidades calibradas.
@@ -100,7 +102,8 @@ seção do SPEC ou o módulo de `src/worldcup/` que materializa o conceito.
 - **Rescale / 1×2-alvo** — reescalar a matriz de placares para bater com o 1×2-alvo do blend,
   **preservando** a forma condicional dos placares (`rescale_matrix`).
 - **blend_weight (w)** — peso do mercado no blend (0 = só modelo; 1 = só mercado). A edição 2026 usa
-  **0.6** (prior de princípio: odds de fechamento são bem calibradas).
+  **0.8** — prior 0.6 de princípio (odds de fechamento são bem calibradas) elevado **com dado**
+  via `blend-track --sweep` (ENG-38: Brier monotônico decrescente em w).
 - **Pinnacle** — casa de aposta de referência (odds "afiadas"), fonte preferida via
   **The Odds API**.
 
@@ -117,10 +120,12 @@ seção do SPEC ou o módulo de `src/worldcup/` que materializa o conceito.
 - **blend-track** — comando que acumula o Brier blend-vs-modelo nos jogos disputados com odds e roda
   o monitor de empates; o veredito vai pro `BOLAO.md`.
 - **Eficiência (da campanha)** — quanto dos pontos que o tool renderia o apostador capturou:
-  `eficiência = seus_pontos / teto`, onde o **teto** é a soma dos pontos do palpite **as-of**
-  (o que o tool mostrava na manhã de cada jogo) contra os resultados reais. Calculada por
-  `scripts/efficiency.py` (flag `--my-points`); é **aproximada** (±~1/jogo), porque a base do
-  Sistema I depende da probabilidade interna do app, que não observamos ([ENG-24]).
+  `eficiência = seus_pontos / teto`, onde o **teto** é a soma dos pontos do palpite que o tool
+  mostrava na manhã de cada jogo, contra os resultados reais. O teto de cada jogo é **congelado**
+  na 1ª medição em `ceiling.csv` (ENG-34), preferindo o snapshot real de `history/` e caindo na
+  reconstrução as-of só sem arquivo — divergência posterior vira **drift reportado**, não recálculo.
+  Calculada por `scripts/efficiency.py` (flag `--my-points`); é **aproximada** (±~1/jogo), porque a
+  base do Sistema I depende da probabilidade interna do app, que não observamos ([ENG-24]).
 
 ## Simulação e formato
 
@@ -144,8 +149,9 @@ seção do SPEC ou o módulo de `src/worldcup/` que materializa o conceito.
   Resolvidos por resultados reais.
 - **match_id** — numeração **interna** dos jogos (1–104), referenciada pelos slots `W##`/`L##`.
   **Não** é o número oficial da FIFA — ao cruzar, guie-se pelos **nomes** das seleções.
-- **Realimentação (feedback)** — reinjetar os resultados reais no treino (peso alto) e no
-  chaveamento à medida que a Copa avança; só os jogos pendentes são repalpitados (SPEC §8).
+- **Realimentação (feedback)** — reinjetar os resultados reais no treino (peso `edition_boost`;
+  a 2026 usa 1.0, sem boost — ENG-44) e no chaveamento à medida que a Copa avança; só os jogos
+  pendentes são repalpitados (SPEC §8).
 - **sync-results / record** — realimentação **automática** (baixa todos os placares e repalpita) vs.
   **manual** (registra um placar específico; `--ko-winner` p/ mata-mata empatado).
 - **FINAL / PREVISTO** — estado de cada linha na saída: jogo já disputado

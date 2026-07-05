@@ -78,8 +78,9 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   blend só de 1×2.
 - `format_engine.py` — simulação genérica: standings, Monte Carlo, chaveamento determinístico.
 - `backtest.py` — valida o modelo nas 4 Copas passadas (`backtest`) e o blend prospectivamente na
-  edição viva (`blend-track`): `multiclass_brier`, `reliability_draw`/`pooled_draw_calibration` +
-  monitor de regime de empates (z-score). Treina só com jogos anteriores a cada Copa. Sweeps as-of
+  edição viva (`blend-track`): `multiclass_brier`, `reliability_curve` (campo
+  `reliability_draw` do resultado), `pooled_draw_calibration` + monitor de regime de empates
+  (z-score). Treina só com jogos anteriores a cada Copa. Sweeps as-of
   de calibração: `blend-track --sweep` (blend_weight, ENG-38) e `blend-track --boost-sweep`
   (`edition_boost`, ENG-44) — Brier out-of-sample por valor, só jogos de grupo.
 - `sync.py` — resolve o bracket só com resultados reais e preenche `fixtures.csv`.

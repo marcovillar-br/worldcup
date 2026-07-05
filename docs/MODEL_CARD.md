@@ -24,7 +24,9 @@ limites — para uma validação de modelo. Números reproduzidos das fontes can
   torneio (Copa 1,0 … amistoso 0,5); **mando** do anfitrião; regularização **ridge 0,10**; recorte
   de treino **≥ 2006-01-01**; mínimo **10 jogos** por seleção; filtra seleções não-FIFA.
 - **Blend opcional (ENG-19):** quando há `odds.csv`, funde a matriz com o mercado (des-vig → pool
-  logarítmico → reescala), peso `blend_weight` (2026 = **0,6**). Sem odds ⇒ só o modelo.
+  logarítmico → reescala; com totals registrados, também tilting da taxa total à linha de
+  over/under — ENG-35), peso `blend_weight` (2026 = **0,8**, prior 0,6 elevado com dado via
+  `blend-track --sweep`, ENG-38). Sem odds ⇒ só o modelo.
 - **Referência:** Dixon & Coles (1997), *Modelling Association Football Scores…*,
   Applied Statistics 46(2).
 

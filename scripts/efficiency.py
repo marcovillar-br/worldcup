@@ -26,10 +26,11 @@ Limitações:
   - Fase de grupos: bônus de placar exatos; base aproximada (acima).
   - Mata-mata: pontua o placar dos **90'** já com o **peso de fase** do app (R32–SF ×2, final ×4) e
     **os bônus de prorrogação/pênaltis** (+3/+3 ×peso), reconstruindo o desfecho da fonte: placar dos
-    90' (results) + `shootouts` — empate-90'-sem-shootout ⇒ decidido na prorrogação (ENG-27). Só
-    pontua onde a fonte (martj42) **já confirma** o jogo; jogos empatados nos 90' ainda não chegados à
-    fonte (latência, ENG-15) são pulados e listados (não se infere ET vs pênaltis sem o dado). O
-    *placar* da prorrogação não existe na fonte — mas o bolão também não o pontua (só o desfecho).
+    90' (results) + `shootouts` — empate-90'-sem-shootout ⇒ decidido na prorrogação (ENG-27). O
+    bônus só entra onde a fonte (martj42) **já confirma** o jogo; num jogo empatado nos 90' ainda não
+    chegado à fonte (latência, ENG-15), o 90' pontua normalmente e **só o bônus de ET/pênaltis fica
+    de fora** do teto (listado; não se infere ET vs pênaltis sem o dado). O *placar* da prorrogação
+    não existe na fonte — mas o bolão também não o pontua (só o desfecho).
 
 `--compare-archive`: além do as-of, pontua os snapshots **reais** arquivados em `history/`
 (`<data>.csv`, sem sufixo `.reconstruido`) e lista os jogos onde a reconstrução diverge do que

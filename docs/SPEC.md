@@ -26,7 +26,7 @@ flowchart TD
     E -->|"edition.py — Pydantic v2"| ED["Edition validada"]
 
     HIST --> FIT["model.py · DixonColesModel.fit<br/>verossimilhança ponderada (§3)"]
-    REAL["resultados reais já disputados<br/>(peso alto no treino)"] -.-> FIT
+    REAL["resultados reais já disputados<br/>(peso `edition_boost` no treino)"] -.-> FIT
     FIT --> MAT["score_matrix(home, away, neutral)<br/>matriz P(i,j) de placares"]
 
     MAT --> SIM["format_engine.py · Monte Carlo<br/>standings + chaveamento (§7)"]
@@ -46,8 +46,8 @@ flowchart TD
 ```
 
 **Realimentação (linha tracejada):** durante a Copa, `sync-results` baixa os placares reais e os
-reinjeta no treino (peso alto) e no chaveamento (fixa o que já foi decidido); só os jogos que faltam
-são repalpitados. Ver §8.
+reinjeta no treino (peso `edition_boost`, §3.2) e no chaveamento (fixa o que já foi decidido); só
+os jogos que faltam são repalpitados. Ver §8.
 
 ---
 
@@ -150,8 +150,11 @@ com peso `w_k = decaimento_k · torneio_k · multiplicador_k`:
   League 0,75; Gold Cup e torneios não listados 0,70; amistoso = 0,5 (tabela canônica em
   `model._TOURNAMENT_WEIGHTS`/`_DEFAULT_TOURNAMENT_WEIGHT`)
   (`model.tournament_weight`).
-- **Multiplicador** (realimentação): jogos já disputados da própria Copa entram com peso extra
-  (`CURRENT_EDITION_BOOST = 6.0`) para reajustar as forças à forma real no torneio.
+- **Multiplicador** (realimentação): jogos já disputados da própria Copa entram com o peso
+  `edition_boost` do `scoring.toml` da edição (default `1.0` = pesa como jogo histórico). O boost
+  antigo em código (`CURRENT_EDITION_BOOST = 6.0`) foi removido no ENG-42/44: o sweep as-of
+  (`blend-track --boost-sweep`) mostrou Brier **monotônico crescente** em boost — boostar a forma
+  recente superajusta e piora a previsão. **A edição 2026 usa `1.0` (sem boost).**
 
 A **regularização** funciona como **prior fraco**: puxa ataque/defesa para 0 (média da liga). Para
 seleções com poucos jogos isso evita estimativas absurdas (regressão à média) — o efeito dos
@@ -236,11 +239,13 @@ confrontos de KO via `sync.resolve_live_bracket` para casar as odds com os times
 ENG-28); a simulação de campeão/avanço (§7) segue só com o modelo (odds em geral só existem para a
 rodada iminente). Sem odds ou `w=0` ⇒ matriz intacta (degradação graciosa). **Calibração de `w`:** o
 LOO-CV histórico multi-Copa é inviável (não há odds de seleção 2010–2018 grátis/legais), então
-adota-se um **prior de princípio** `w≈0,6` (odds de fechamento são quase-otimamente calibradas) e
-valida-se **prospectivamente** na própria Copa 2026 — `backtest.prospective_blend_report` compara o
+partiu-se de um **prior de princípio** `w≈0,6` (odds de fechamento são quase-otimamente calibradas),
+validado **prospectivamente** na própria Copa 2026 — `backtest.prospective_blend_report` compara o
 Brier multiclasse do blend vs. o do modelo-puro (as-of) nos jogos já disputados com odds (CLI
 `blend-track`); com totals registrados, o mesmo comando também acompanha o
-**Brier binário do over/under** (modelo vs. blend). Ver ENG-19/ENG-35 no backlog.
+**Brier binário do over/under** (modelo vs. blend). Com dado vivo, `blend-track --sweep` (ENG-38)
+varreu `w` 0,0..1,0 nos jogos de grupo disputados: Brier monotônico decrescente em `w` — **a edição
+2026 subiu para `w = 0,8`** (fixado no `scoring.toml`). Ver ENG-19/ENG-35/ENG-38 no backlog.
 
 ---
 
@@ -287,7 +292,7 @@ Essa é a régua **fiel do app** e **não depende de `risk`** — o risco mora n
 | 0.15 | 7 | 7 |
 | 0.10 | 9 | 9 |
 | 0.05 | 11 | 11 |
-| ≤ ~0.026 | 13 (teto) | 13 |
+| ≤ ~0.030 | 13 (teto) | 13 |
 
 > Nota: a forma `(1/p)^γ` antiga **não** reproduzia o app (em `p=0.5` dava 2, o app dá 3); a
 > calibração log-linear acima ajusta os pontos observados dentro de ±0.5. Coeficiente em
@@ -415,7 +420,13 @@ Cada jogo eliminatório tem 3 palpites independentes. A partir da matriz e de
 `cond_home = P(mandante) / (P(mandante)+P(visitante))` (prob. condicional de vencer um jogo
 decidido):
 
-- **Camada 1 — placar dos 90'**: mesmo `best_prediction` da §5 (pode ser empate).
+- **Camada 1 — placar dos 90'**: mesmo `best_prediction` da §5, mas com `forbid_draw=True`
+  (ENG-32): a otimização exclui a diagonal e o palpite dos 90' **nunca é empate** — palpitar
+  vitória cobre os slots de vencedor/saldo e domina o empate em E[pts] no Sistema I. Exceção:
+  o modo endgame `pool_behind="empate"` (ENG-39/40) força o melhor **empate** por E[pts] nos 90'
+  do jogo de peso máximo (final), mantendo as camadas 2–3 e o avanço fiéis; `pool_behind="zebra"`
+  (ENG-36, superado) vira o lado azarão nas 3 camadas. Só quando o usuário está atrás no bolão
+  (`predict --pool-behind`, default do flag `empate`).
 - **Camada 2 — prorrogação** (ENG-29): modela a prorrogação (30 min) como **Poisson independente**
   com taxa = taxa de 90' × 30/90 por lado (as taxas saem dos gols esperados da matriz) e escolhe o
   desfecho **mais provável** entre `mandante vence` / `empate → vai aos pênaltis` /
@@ -511,7 +522,8 @@ Dois caminhos preenchem `home_goals/away_goals` (e `ko_outcome`) em `fixtures.cs
   vencedores, com pênaltis via `shootouts.csv`) e preenche cada confronto resolvido.
 - **`record`**: ajuste manual de um jogo (com `--ko-winner` para empate em mata-mata).
 
-No `predict` seguinte: os jogos disputados (a) entram no treino com peso alto (§3.2), (b) **fixam**
+No `predict` seguinte: os jogos disputados (a) entram no treino com peso `edition_boost` (§3.2),
+(b) **fixam**
 a classificação/chaveamento reais em vez de simular, e (c) saem como `FINAL`; só os jogos restantes
 recebem palpite.
 

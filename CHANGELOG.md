@@ -44,6 +44,21 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (Argentina 12,9% / Espanha 29,1%). Cobertura: `test_blend_track_boost_sweep`.
 
 ### Corrigido
+- **Auditoria documental completa** (2026-07-05): varredura doc↔código de todos os documentos
+  (README, AGENTS, SPEC, C4, MODEL_CARD, DATA, GLOSSARIO, PRD, skills) contra a implementação —
+  ~25 divergências, todas de doc defasado (nenhum código errado), concentradas em 4 causas-raiz:
+  ENG-44 (`edition_boost`: SPEC/skill/GLOSSARIO/PRD ainda citavam `CURRENT_EDITION_BOOST = 6.0`/
+  "peso alto"; hoje 1.0, sem boost), ENG-38 (`blend_weight` 2026: MODEL_CARD/GLOSSARIO/SPEC ainda
+  em 0,6; vivo é 0,8), ENG-32 (SPEC §6 dizia que o 90' de KO "pode ser empate"; é `forbid_draw`),
+  ENG-34/45 (definição de teto pré-congelamento em README/GLOSSARIO/PRD/skill, sem `ceiling.csv`/
+  `regulation.csv`). Também: C4 ganhou o componente `status` (ENG-31) e as arestas reais
+  `pipeline→sync`/`backtest→knockout` (+ lista de omitidas corrigida), a Dinâmica do C4 agora
+  mostra a realimentação e a ordem real simula→blend (blend só no palpite, por jogo), o README
+  documenta os flags que faltavam do catálogo canônico (`--ko-winner`, `--no-predict`, `--seed`,
+  `--source-url`, `--cutoff`, `--blend-weight`, `--reset-ceiling`), o PRD ganhou RF-19 (`status`/
+  `ws`) e a menção a `--pool-behind`/totals, e a skill/`efficiency.py` corrigem "jogos empatados
+  sem shootout são pulados" (o 90' pontua; só o bônus de ET/pênaltis fica de fora — e vem do
+  martj42, não do `shootouts.csv` da edição).
 - **Teto de KO congelava da reconstrução, não do snapshot real** (ENG-46, extensão do ENG-34): a
   hierarquia do teto congelado prefere o snapshot de `history/`, mas `archive_scores` pulava o
   mata-mata — então KO (peso ×2/×4, onde a fidelidade mais importa) congelava sempre da

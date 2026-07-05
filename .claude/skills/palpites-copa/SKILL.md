@@ -67,11 +67,11 @@ fixture antes de registrar** e mapeie o placar ditado para ela — senão grava 
 busca o placar na internet): **confirme em ≥2 fontes independentes antes de `record`** (ESPN,
 FIFA, Yahoo, Olympics, etc.) — placar **e** ordem mandante×visitante. **Nunca** registre a partir
 de uma única busca/resumo. (Isso **não** se aplica ao `sync-results`: a fonte canônica dele já é
-a referência.) O resultado realimenta o ajuste do modelo (peso alto nos jogos disputados), então
-um placar errado/invertido **contamina o refit inteiro**: favoritos ao título, regime de empates
-e o chaveamento do mata-mata. Já aconteceu (2026-06-27): J64 gravado como `Noruega 4×1 França` de
-uma fonte só — o correto era França 4×1; o erro mudava o favorito e o palpite de jogos futuros
-(J78). Se as fontes divergirem, **não registre** — pergunte ao usuário.
+a referência.) O resultado realimenta o ajuste do modelo (e o placar real congela o chaveamento),
+então um placar errado/invertido **contamina o refit inteiro**: favoritos ao título, regime de
+empates e o chaveamento do mata-mata. Já aconteceu (2026-06-27): J64 gravado como
+`Noruega 4×1 França` de uma fonte só — o correto era França 4×1; o erro mudava o favorito e o
+palpite de jogos futuros (J78). Se as fontes divergirem, **não registre** — pergunte ao usuário.
 Para mata-mata empatado nos 90'/prorrogação, acrescente `--ko-winner "<Seleção em inglês>"`
 (ex.: `--ko-winner Brazil`). Nomes canônicos em inglês — veja `data/editions/2026/groups.csv`.
 
@@ -92,7 +92,8 @@ uv run worldcup blend-track --edition 2026
 ```bash
 uv run worldcup predict --edition 2026
 ```
-Isso reajusta o modelo (dando peso alto aos jogos já registrados), refaz a simulação e grava
+Isso reajusta o modelo (incorporando os jogos já registrados; peso `edition_boost` — a 2026 usa
+1.0, sem boost, ENG-44), refaz a simulação e grava
 `out/palpites-2026.csv` e `out/palpites-2026.md`. Jogos já disputados saem como `FINAL`; só os
 que faltam recebem palpite. Com `odds.csv`, o palpite já sai blendado a `blend_weight`.
 
@@ -126,11 +127,15 @@ usuário** (input dele, não derivável) — pergunte se não souber:
 ```bash
 uv run python scripts/efficiency.py --edition 2026 --my-points <PTS> [--leader <PTS>] --compare-archive
 ```
-Para cada jogo disputado, reconstrói o palpite **as-of** (o que o tool mostrava na manhã do jogo)
-e o pontua pelo Sistema I contra o real → o **teto** que seguir o tool à risca renderia. No
-mata-mata o placar dos 90' entra com o **peso de fase** (R32–SF ×2, final ×4) e o bônus de
-prorrogação/pênaltis é somado quando a fonte (`shootouts.csv`) confirma o desfecho (ENG-27);
-jogos empatados nos 90' sem shootout na fonte são pulados. `eficiência = seus_pontos / teto`.
+Para cada jogo disputado, pontua pelo Sistema I contra o real o palpite que o tool mostrava na
+manhã do jogo → o **teto** que seguir o tool à risca renderia. O teto por jogo é **congelado**
+na 1ª medição em `ceiling.csv` (ENG-34): snapshot real de `history/` primeiro, reconstrução as-of
+só sem arquivo (`--reset-ceiling` recongela, ex.: após fix de scoring). No mata-mata o placar dos
+90' entra com o **peso de fase** (R32–SF ×2, final ×4), contra o tempo normal (`regulation.csv`,
+ENG-45) se houve gol na ET; o bônus de prorrogação/pênaltis é somado quando a base **martj42**
+(`penalty_winner`; não o `shootouts.csv` da edição) confirma o desfecho (ENG-27) — jogo empatado
+nos 90' sem shootout na fonte pontua o 90' e só fica sem esse bônus.
+`eficiência = seus_pontos / teto`.
 
 O script também imprime um **teto teórico (oráculo)** — cravar o placar exato de todo jogo — e
 duas capturas complementares: `tool / oráculo` (qualidade do modelo+blend) e `seus_pontos /

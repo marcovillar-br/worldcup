@@ -81,8 +81,10 @@ mantém atualizado.
   ≥3) +1 empilha; prorrogação +3 e pênaltis +3 no mata-mata. *(`scoring.toml [sistema_i]`)*
 - **RF-05** — Aplicar **peso por fase** (Equilíbrio gradual: grupos 1×, mata-mata 2×, final 4×) ao
   sinalizar onde arriscar mais decide o ranking. *(`scoring.toml [phase_weights]`)*
-- **RF-06** — Para o **mata-mata**, prever em 3 camadas — placar dos 90', prorrogação e pênaltis — e
-  **quem avança**. *(`knockout.predict_knockout`; SPEC §6)*
+- **RF-06** — Para o **mata-mata**, prever em 3 camadas — placar dos 90' (sem empate,
+  `forbid_draw` — ENG-32), prorrogação e pênaltis — e **quem avança**; modo endgame opcional
+  `--pool-behind [empate|zebra]` no jogo de peso máximo quando o usuário está atrás no bolão
+  (ENG-36/39/40). *(`knockout.predict_knockout`; SPEC §6)*
 - **RF-07** — Simular o torneio (**Monte Carlo**, 5000 sims default) para produzir **standings**,
   **chaveamento determinístico** e **P(título)** por seleção. *(`format_engine`; SPEC §7)*
 
@@ -93,14 +95,17 @@ mantém atualizado.
   sob latência — ENG-30) e repalpitar. *(cli `sync-results` → `sync`)*
 - **RF-09** — Registrar um placar **manualmente** (ajuste pontual/correção), com vencedor de
   mata-mata via `--ko-winner`. *(cli `record`)*
-- **RF-10** — Ao realimentar, **fixar** o que já aconteceu (resultado entra no treino com peso alto
-  e congela o chaveamento) e repalpitar **apenas** os jogos pendentes. *(SPEC §8)*
+- **RF-10** — Ao realimentar, **fixar** o que já aconteceu (resultado entra no treino com o peso
+  `edition_boost` da edição — a 2026 usa 1.0, sem boost, calibrado no ENG-44 — e congela o
+  chaveamento) e repalpitar **apenas** os jogos pendentes. *(SPEC §8)*
 
 ### 6.3 Blend com mercado (opcional)
 - **RF-11** — Quando houver `odds.csv`, **combinar** a matriz do modelo com as odds de mercado:
   **des-vigar** (tirar a margem) → **log opinion pool** (média geométrica ponderada, peso
-  `blend_weight`) → **rescale** da matriz ao 1×2-alvo. Aplicado só nos jogos com odds; sem odds ou
-  `blend_weight=0` ⇒ matriz do modelo intacta. *(`blend`; SPEC §3.5)*
+  `blend_weight`) → **rescale** da matriz ao 1×2-alvo; com **totals** registrados
+  (`total_line,over,under`), também **tilting** da taxa total de gols à linha de over/under,
+  iterado com o rescale (ENG-35). Aplicado só nos jogos com odds; sem odds ou `blend_weight=0` ⇒
+  matriz do modelo intacta. *(`blend`; SPEC §3.5)*
 - **RF-12** — Atualizar/mesclar as odds a partir de uma fonte de mercado, **preservando** os jogos
   já disputados. *(`scripts/fetch_odds.py`)*
 
@@ -110,6 +115,9 @@ mantém atualizado.
 - **RF-14** — **Medir o ganho do blend**: Brier do blend vs. modelo-puro nos jogos disputados com
   odds, e **monitorar o regime de empates** (observado vs esperado, z-score). *(cli `blend-track`;
   ENG-19/ENG-22)*
+- **RF-19** — **Briefing read-only** de start-of-day: estado da campanha (disputados/total, fase,
+  jogos de hoje, próximos palpites, standing, pendências, staleness do ajuste) numa saída só, sem
+  mutar nada. *(cli `status`, alias `ws`; ENG-31/ENG-43)*
 
 ### 6.5 Saídas, histórico e dados
 - **RF-15** — Gerar as saídas em **CSV** (canônico/diffável), **Markdown** (pronto pra copiar no
@@ -149,7 +157,7 @@ mantém atualizado.
 | `groups.csv` | `group,team` (nomes canônicos em inglês) | sim |
 | `fixtures.csv` | Os 104 jogos + **chaveamento por slots** + colunas de resultado | sim |
 | `scoring.toml` | Sistema de pontos, pesos de fase, `blend_weight`, `risk` | sim |
-| `odds.csv` | **Opcional**: `match_id,home,draw,away` em odds decimais | não (gitignored, ToS) |
+| `odds.csv` | **Opcional**: `match_id,home,draw,away` (+ `total_line,over,under` opcionais) | não (gitignored, ToS) |
 | `historical_results.csv` | Base de treino normalizada (martj42) | não (cache) |
 
 Detalhe canônico dos contratos: [`SPEC.md`](SPEC.md) §contratos de dados e
@@ -161,10 +169,11 @@ Detalhe canônico dos contratos: [`SPEC.md`](SPEC.md) §contratos de dados e
   (a métrica que importa).
 - **M2 — Acurácia preditiva**: **Brier multiclasse** do modelo/blend nos jogos disputados (quanto
   menor, melhor); meta operacional: **blend ≤ modelo-puro** (Δ positivo no `blend-track`).
-- **M3 — Eficiência do palpite**: pontos colhidos vs. o teto do modelo (palpites as-of renderiam
-  quanto?). *(`scripts/efficiency.py`: `eficiência = seus_pontos / teto`, teto por reconstrução
-  as-of; estimativa ±~1/jogo — a base do Sistema I usa a probabilidade interna do app, inobservável,
-  ENG-24.)*
+- **M3 — Eficiência do palpite**: pontos colhidos vs. o teto do modelo (seguir o tool à risca
+  renderia quanto?). *(`scripts/efficiency.py`: `eficiência = seus_pontos / teto`; o teto de cada
+  jogo é **congelado** na 1ª medição em `ceiling.csv` — snapshot real de `history/` primeiro,
+  reconstrução as-of como fallback (ENG-34); estimativa ±~1/jogo — a base do Sistema I usa a
+  probabilidade interna do app, inobservável, ENG-24.)*
 - **M4 — Calibração**: regime de empates observado vs esperado dentro do ruído
   (sem viés sistemático).
 

@@ -21,7 +21,7 @@ em 2030 basta adicionar uma nova pasta.
 ```bash
 uv sync                                   # cria o ambiente a partir do lockfile
 uv run worldcup fetch-data                # baixa e normaliza o histórico (data/historical_results.csv)
-uv run worldcup predict --edition 2026    # gera out/palpites-2026.csv e .md
+uv run worldcup predict --edition 2026    # gera out/palpites-2026.{csv,md,html}
 ```
 
 Outros comandos:
@@ -31,6 +31,7 @@ uv run worldcup status --edition 2026         # briefing read-only do estado (st
 uv run worldcup sync-results --edition 2026   # baixa os resultados reais da internet e repalpita
 uv run worldcup predict --edition 2026 --archive   # +snapshot versionado do dia (history/)
 uv run worldcup record --edition 2026 --match <id> --home 2 --away 1   # registra um placar manualmente
+uv run worldcup record --edition 2026 --match <id> --home 1 --away 1 --ko-winner Brazil   # KO empatado nos 90'
 uv run worldcup backtest --edition 2022       # valida o modelo numa Copa passada
 uv run worldcup blend-track --edition 2026     # Brier blend vs modelo (ENG-19) + monitor de empates (ENG-22)
 uv run worldcup blend-track --edition 2026 --sweep   # varre blend_weight 0.0..1.0 e mostra o Brier de cada peso (ENG-38)
@@ -38,6 +39,13 @@ uv run worldcup blend-track --edition 2026 --boost-sweep   # varre o peso dos jo
 uv run pytest        # testes
 uv run ruff check .  # lint
 ```
+
+Flags menos usados (todos com default sensato — só mexa se souber por quê): `predict`/
+`sync-results` aceitam `--sims N` (simulações Monte Carlo, default 5000), `--seed` (default 12345),
+`--risk R` (sobrescreve o `risk` da edição) e `--pool-behind [empate|zebra]` (modo endgame, ver
+seção do bolão); `sync-results` tem ainda `--no-predict` (só sincroniza) e `--source-url`;
+`fetch-data` tem `--cutoff` e `--source-url`; `backtest` tem `--sims` (default 2000); `blend-track`
+tem `--blend-weight W` (avalia um peso arbitrário fora do sweep).
 
 Flag global `-v`/`--verbose` (antes do subcomando) desce o nível de log para `INFO` e mostra os
 avisos informativos da biblioteca em `stderr` — ex.: quais seleções o `min_matches` descartou no
@@ -122,7 +130,8 @@ de 2022 (só com jogos anteriores). Com régua de pontos **corrigida**
 (bônus hierárquicos, não somados), subir risco **não** melhora pontos confiavelmente: no backtest
 2022 o conservador (`risk=0.0`) faz mais que agressivo (`1.0`), fiel (`0.5`) fica no meio —
 resultado ruidoso de uma Copa. Alavanca de ranking é **acurácia** (blend de odds), não ousadia;
-default `0.5` (maximiza pontos esperados) é recomendado.
+a edição 2026 fixa `risk = 0.5` no `scoring.toml` (fiel, maximiza pontos esperados). ⚠️ O default
+do campo **ausente** é `0.6`, não `0.5` — fixe o valor explicitamente em cada edição.
 
 **Eficiência da sua campanha** — quanto dos pontos que o tool renderia você capturou:
 
@@ -130,14 +139,18 @@ default `0.5` (maximiza pontos esperados) é recomendado.
 uv run python scripts/efficiency.py --edition 2026 --my-points 143 --leader 173 [--compare-archive]
 ```
 
-Para cada jogo já disputado, reconstrói o palpite **as-of** (o que o tool mostrava na manhã do jogo)
-e o pontua contra o resultado real — a soma é o **teto** que seguir o tool à risca renderia;
-`eficiência = seus_pontos / teto`. `--compare-archive` confronta com os snapshots reais
-de `history/` e lista onde a reconstrução diverge (quanto do gap é ruído de reconstrução vs.
-dias sem snapshot arquivado). Cobre a fase de grupos com pontuação exata; no mata-mata pontua
-os 90' **com o peso de fase** (R32–SF ×2, final ×4) e soma os bônus de prorrogação/pênaltis
-(±3 ×peso) quando a fonte (`shootouts.csv`) confirma o desfecho; jogos empatados nos 90' ainda
-sem shootout na fonte são pulados (ENG-27).
+Para cada jogo já disputado, pontua contra o resultado real o palpite que o tool mostrava na manhã
+do jogo — a soma é o **teto** que seguir o tool à risca renderia; `eficiência = seus_pontos / teto`.
+O teto de cada jogo é **congelado** na primeira medição em `ceiling.csv` (ENG-34), preferindo o
+snapshot real de `history/` e caindo na reconstrução as-of só sem arquivo — assim o número não
+oscila entre rodagens; `--reset-ceiling` recongela do zero (ex.: após um fix de scoring).
+`--compare-archive` confronta com os snapshots reais de `history/` e lista onde a reconstrução
+diverge (quanto do gap é ruído de reconstrução vs. dias sem snapshot arquivado). Cobre a fase de
+grupos com pontuação exata; no mata-mata pontua os 90' **com o peso de fase** (R32–SF ×2, final ×4)
+— contra o placar do tempo normal (`regulation.csv`, ENG-45) quando houve gol na prorrogação — e
+soma os bônus de prorrogação/pênaltis (+3 ×peso) quando a base martj42 (`penalty_winner`) confirma
+o desfecho; em jogo empatado nos 90' ainda sem shootout na fonte, só esse bônus fica de fora do
+teto (ENG-27).
 
 **Endgame de bolão (ENG-36)** — bolão é jogo **diferencial**: seguir o E[pts]-máximo pontua junto
 com o pelotão (que aglomera no favorito) e **preserva** sua posição; ranking só muda quando o

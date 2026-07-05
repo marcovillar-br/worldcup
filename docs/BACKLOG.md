@@ -49,7 +49,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-31](#eng-31) | P3 | cli | ✅ | `worldcup status`: briefing read-only de start-of-day (rehidrata contexto em 1 saída) |
 | [ENG-32](#eng-32) | P3 | scoring/knockout | ✅ | Palpite de 90' no KO tende a 0×0 (empate→pênaltis) e zera quando o favorito vence nos 90' — é E[pts]-ótimo ou artefato? |
 | [ENG-33](#eng-33) | P1 | cli/history | ✅ | Re-arquivar depois de registrar resultados sobrescreve o snapshot do dia e perde os palpites da manhã |
-| [ENG-34](#eng-34) | P2 | efficiency | 🟡 | Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada |
+| [ENG-34](#eng-34) | P2 | efficiency | ✅ | Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário mudar nada |
 | [ENG-35](#eng-35) | P2 | blend/odds | ✅ | Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo; mercado de over/under não é usado |
 | [ENG-36](#eng-36) | P2 | scoring/estratégia | ✅ | Modo endgame consciente de bolão: otimizar P(top-k) contra o pelotão nos jogos de peso ×2/×4, não E[pts] |
 | [ENG-37](#eng-37) | P3 | processo/docs | ✅ | Padrão de largura de linha nos `.md`: régua definida (100 caracteres) + scripts on-demand |
@@ -1138,7 +1138,7 @@ AGENTS (`history/`), CHANGELOG.
 
 ## ENG-34
 **Teto reconstruído do `efficiency.py` não é estável entre rodagens — eficiência muda sem o usuário
-mudar nada** · P2 · `scripts/efficiency.py` · 🟡 fazendo
+mudar nada** · P2 · `scripts/efficiency.py` · ✅ feito
 
 O teto por jogo sai de `efficiency.asof_scores`: re-roda o modelo
 `as_of(data)` **com os arquivos de hoje**
@@ -1178,7 +1178,7 @@ Efeito: 2026 com 60/90 jogos vindo do snapshot real ⇒ teto 392→**361**, efic
 correta p/ quem segue o tool; a reconstrução inflava). Limitação restante: `archive_scores` ainda é
 só de grupo, então jogos de **KO** congelam da reconstrução (fidelidade menor — extensão futura).
 Testes: `reconcile_ceiling` (freeze/drift/preferência/asof) + round-trip do cache. 176 verdes.
-**Commit:** —
+**Commit:** c0d49bf
 
 ## ENG-35
 **Blend só corrige o 1×2 — a forma do placar (totals) fica 100% modelo** · P2 · `blend`/`odds` · ✅

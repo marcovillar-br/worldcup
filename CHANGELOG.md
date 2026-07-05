@@ -22,6 +22,12 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (Argentina 12,9% / Espanha 29,1%). Cobertura: `test_blend_track_boost_sweep`.
 
 ### Corrigido
+- **`blend_weight_sweep`/`blend-track` exigiam a base histórica mesmo sem odds** (`backtest`): o
+  `_collect_blend_games` avaliava `load_historical()` como argumento **antes** de filtrar por odds,
+  então uma edição sem `odds.csv` estourava `FileNotFoundError` quando o `historical_results.csv`
+  (gerado, gitignored) não existia — quebrando o CI (`test_blend_weight_sweep_empty_without_odds`,
+  vermelho desde 02/07: passava só localmente, com o CSV presente). Agora retorna cedo (`[]`) quando
+  não há odds — sem mercado, nenhum jogo entra no blend e a base não é necessária.
 - **Teto do tool inflado em KO decidido por gol na prorrogação** (ENG-45, `efficiency.py`): o
   placar gravado em `fixtures.csv` inclui a ET (convenção martj42), mas o bolão pontua o slot de
   90' contra o **tempo normal**. O `efficiency.py` pontuava o palpite de 90' contra o placar-com-ET

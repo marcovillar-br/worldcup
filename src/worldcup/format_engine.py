@@ -201,7 +201,7 @@ def monte_carlo(
                 rank_counts[g][s.team][pos] += 1
             winners[g] = st[0].team
             runners[g] = st[1].team
-            for s in st[:2]:
+            for s in st[: spec.advance_per_group]:
                 advanced[s.team] += 1
             if spec.best_thirds and len(st) >= 3:
                 thirds.append((g, st[2]))

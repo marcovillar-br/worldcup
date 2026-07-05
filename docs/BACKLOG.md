@@ -40,7 +40,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-22](#eng-22) | P3 | backtest | ✅ | Monitor de regime de empates na edição viva (tilt só se estatisticamente significativo) |
 | [ENG-23](#eng-23) | P1 | scoring | ✅ | Bônus de placar somados em vez de hierárquicos (inflam pontos, enviesam contra empate) |
 | [ENG-24](#eng-24) | P2 | scoring | ⚪ | Base (1–13) usa a probabilidade interna do app (inobservável) ⇒ eficiência só aproximada |
-| [ENG-25](#eng-25) | P3 | format_engine | 🔴 | Tabela oficial completa (495 combinações) da alocação de terceiros (Annex C) |
+| [ENG-25](#eng-25) | P3 | format_engine | ⚪ | Tabela oficial completa (495 combinações) da alocação de terceiros (Annex C) |
 | [ENG-26](#eng-26) | P2 | scoring | ⚪ | Recalibrar `base_log_coeff` (7,55→~8,4) com telas reais de jogo; ordem de arredondamento na fase ×2 |
 | [ENG-27](#eng-27) | P2 | scoring/efficiency | ✅ | Peso de fase (×2/×4) nunca aplicado ⇒ teto de mata-mata subcontado, eficiência infla no KO |
 | [ENG-28](#eng-28) | P2 | blend/odds | ✅ | `fetch_odds` só casa jogos de grupo ⇒ blend DESLIGADO em todo o mata-mata (peso 2×/4×) |
@@ -727,7 +727,7 @@ automática das probabilidades do app.
 
 ## ENG-25
 **Tabela oficial completa (495 combinações) da alocação de terceiros (Annex C)** · P3 ·
-`format_engine` · 🔴 todo
+`format_engine` · ⚪ descartado
 
 O casamento por restrição do `_assign_thirds` (backtracking) aproxima o Annex C da FIFA,
 mas **não é único**: para uma dada combinação dos 8 grupos cujos terceiros se classificam podem
@@ -751,6 +751,19 @@ nas ramificações do Monte Carlo (hoje aproximadas pelo backtracking).
 FIFA; teste com ≥3 combinações conhecidas (inclui a row 67 de 2026).
 **Fonte:** Wikipedia "2026 FIFA World Cup knockout stage" + documento oficial FIFA (Annex). Trabalho
 sobretudo de **transcrição confiável** da tabela.
+**Descartado (2026-07-05).** A fonte existe e é bem estruturada
+(Wikipedia `Template:2026 FIFA World Cup third-place table`, 495 linhas inline; colunas =
+grupos-vencedores; a row 67 confere com o override atual). Mas o item é **transcrição de dado que
+não dá para verificar** com as ferramentas disponíveis: o WebFetch **resume** via modelo pequeno
+(não reproduz 495 linhas verbatim de forma garantida) e não há segunda fonte independente para o
+cross-check de ≥2 fontes que o projeto exige. Invariantes estruturais (cada linha é permutação dos 8
+grupos; um terceiro nunca enfrenta o vencedor do próprio grupo) pegam erros grosseiros mas **não**
+uma troca sutil — e uma tabela silenciosamente errada é **pior** que a aproximação honesta de hoje
+(contaminaria os brackets do Monte Carlo com confiança). Custo/benefício: **P3, zero impacto na
+2026** — o override `third_allocation` já crava a combinação realizada; a tabela completa só serve a
+edições futuras e ramos hipotéticos do Monte Carlo. **Desbloqueio:** uma fonte **machine-readable**
+oficial (CSV/JSON) — aí o mecanismo (ingestão + `_assign_thirds` consulta a tabela, validado por
+invariantes + linhas conhecidas) é uma mudança pequena e verificável. Reabrir se ela aparecer.
 
 ## ENG-26
 **Recalibrar `base_log_coeff` (7,55→~8,4) com telas reais de jogo; investigar ordem

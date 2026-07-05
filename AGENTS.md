@@ -159,6 +159,14 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   **gitignored**, porque é regenerável sob demanda por `predict --as-of AAAA-MM-DD` — que
   reaproveita `Edition.as_of()` (descarta resultados a partir da data), grava no `history/`
   **sem tocar em `out/`** e, com a data de hoje, reproduz o run real (consistência verificável).
+- `ceiling.csv` — **cache do teto por jogo** do `scripts/efficiency.py` (ENG-34; rastreado):
+  `match_id,pts,palpite,real,source`. **Congela** o teto do tool na 1ª medição de cada jogo — sem
+  ele, a reconstrução as-of re-roda o modelo a cada rodagem (base/odds/código atuais) e o teto (logo
+  a "eficiência") oscila **sem o usuário mexer em nada**, quase forçando conclusões de execução
+  erradas (BOLAO.md 2026-07-01). Fonte por jogo na 1ª medição: (1) snapshot real de `history/`
+  (`source=archive`, imutável) quando existe; senão (2) reconstrução (`source=asof`). Rodagens
+  seguintes reusam o congelado; divergência da reconstrução viva (só p/ `asof`) vira **drift
+  reportado**, não substituição. `--reset-ceiling` recongela do zero (ex.: após um fix de scoring).
 
 ## Convenções e cuidados
 

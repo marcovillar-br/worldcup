@@ -22,6 +22,17 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (Argentina 12,9% / Espanha 29,1%). Cobertura: `test_blend_track_boost_sweep`.
 
 ### Corrigido
+- **Teto do `efficiency.py` instável entre rodagens** (ENG-34): o headline (teto/eficiência) vinha
+  da reconstrução as-of, que re-roda o modelo com base/odds/código **atuais** — então o teto de um
+  jogo **já medido** mudava a cada rodagem e a "eficiência" oscilava sem o usuário mexer em nada
+  (2026-07-01: o mesmo dia deu 103,4% de manhã e 88,0% à noite, só pelo refit). Novo `ceiling.csv`
+  (`match_id,pts,palpite,real,source`, rastreado) **congela** o teto por jogo na 1ª medição,
+  preferindo o snapshot real de `history/` (`source=archive`) e caindo na reconstrução
+  (`source=asof`) só onde não há snapshot; rodagens seguintes reusam o congelado e **reportam
+  drift** (dos congelados `asof`) em vez de sobrescrever. `--reset-ceiling` recongela do zero.
+  Efeito imediato: com 60 dos 90 jogos vindo do snapshot real, o teto caiu 392→**361** e a
+  eficiência foi a ~100% — a leitura correta para quem segue o tool toda manhã (a reconstrução
+  inflava o teto). Cobertura: `reconcile_ceiling` + round-trip do cache em `test_efficiency`.
 - **`blend_weight_sweep`/`blend-track` exigiam a base histórica mesmo sem odds** (`backtest`): o
   `_collect_blend_games` avaliava `load_historical()` como argumento **antes** de filtrar por odds,
   então uma edição sem `odds.csv` estourava `FileNotFoundError` quando o `historical_results.csv`

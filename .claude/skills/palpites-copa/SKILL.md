@@ -151,6 +151,10 @@ para avaliar a jogada do usuário — serve para dimensionar "quanto teto ainda 
    alcançaria; ele pegou variância de exatos a favor (regride), não estratégia superior.
 4. Recomende manter o **arquivo da manhã completo** (`predict --archive` todo dia) — só assim a
    eficiência fica exata (seus pontos vs `scored(palpite arquivado)`, sem reconstrução).
+5. **Teto congelado (ENG-34)**: o teto por jogo é **congelado na 1ª medição** em `ceiling.csv`
+   (rastreado) — o headline não muda mais retroativamente entre rodagens. Se código/odds/base
+   mudarem depois (ex.: um fix de scoring), o script **reporta drift** dos jogos afetados sem
+   sobrescrever; para recongelar na medição atual, rode com `--reset-ceiling`.
 
 Registre o veredito (eficiência, teto, posição) no **Histórico** do `BOLAO.md`.
 

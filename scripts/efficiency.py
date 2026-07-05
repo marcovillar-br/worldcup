@@ -233,6 +233,75 @@ def archive_scores(edition: Edition) -> dict[int, float]:
     return out
 
 
+def _ceiling_path(edition: Edition) -> Path:
+    return edition.directory / "ceiling.csv"
+
+
+def load_ceiling(path: Path) -> dict[int, dict]:
+    """Cache do teto por jogo **congelado na 1ª medição** (ENG-34): `{match_id: {pts, palpite, real,
+    source}}`. Ausente ⇒ vazio (semeia na 1ª rodada).
+
+    Estabiliza o headline: sem ele, a cada rodagem o teto de um jogo **já medido** muda (a
+    reconstrução as-of re-roda o modelo com base/odds/código atuais), fazendo a "eficiência" oscilar
+    sem o usuário mexer em nada — e quase forçando conclusões de execução erradas (ver BOLAO.md
+    2026-07-01).
+    """
+    if not path.exists():
+        return {}
+    out: dict[int, dict] = {}
+    with path.open(newline="") as fh:
+        for row in csv.DictReader(fh):
+            out[int(row["match_id"])] = {
+                "pts": float(row["pts"]),
+                "palpite": row.get("palpite", ""),
+                "real": row.get("real", ""),
+                "source": row.get("source", "asof"),
+            }
+    return out
+
+
+def save_ceiling(path: Path, entries: dict[int, dict]) -> None:
+    """Grava o cache do teto (rastreado). Congelado por jogo — só cresce; jogos já medidos não mudam."""
+    with path.open("w", newline="") as fh:
+        w = csv.writer(fh)
+        w.writerow(["match_id", "pts", "palpite", "real", "source"])
+        for mid in sorted(entries):
+            e = entries[mid]
+            w.writerow([mid, f"{e['pts']:.4f}", e["palpite"], e["real"], e["source"]])
+
+
+def reconcile_ceiling(
+    recon: dict[int, dict], archive: dict[int, float], cache: dict[int, dict]
+) -> tuple[dict[int, float], dict[int, dict], list[tuple[int, float, float]]]:
+    """Teto headline **estável** por jogo (ENG-34): congela na 1ª medição e reusa depois.
+
+    Hierarquia de fonte na 1ª vez que um jogo é medido: (1) snapshot **real** de `history/`
+    (`archive`, imutável) quando existe; senão (2) a reconstrução as-of (`recon`). O valor entra no
+    cache e as rodagens seguintes o reusam — o número não muda retroativamente. Quando a reconstrução
+    **viva** diverge do congelado, isso vira **drift reportado** (não substitui em silêncio).
+
+    Devolve `(headline_pts, cache_atualizado, drift)`, com `drift = [(match_id, congelado, vivo)]`.
+    """
+    headline: dict[int, float] = {}
+    updated = {mid: dict(e) for mid, e in cache.items()}
+    drift: list[tuple[int, float, float]] = []
+    for mid, s in recon.items():
+        if mid in cache:
+            frozen = cache[mid]["pts"]
+            headline[mid] = frozen
+            # Drift só faz sentido para congelados de RECONSTRUÇÃO (`asof`): aí uma diferença viva
+            # indica que código/odds/base mudaram desde a 1ª medição. Congelados de `archive` (snapshot
+            # real) divergem da reconstrução por natureza — é o ruído de reconstrução, não drift
+            # temporal (fica no --compare-archive, não aqui).
+            if cache[mid]["source"] == "asof" and abs(s["pts"] - frozen) > 1e-6:
+                drift.append((mid, frozen, s["pts"]))
+        else:
+            pts, source = (archive[mid], "archive") if mid in archive else (s["pts"], "asof")
+            headline[mid] = pts
+            updated[mid] = {"pts": pts, "palpite": s["palpite"], "real": s["real"], "source": source}
+    return headline, updated, drift
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Eficiência da campanha: pontos reais vs teto do tool (as-of)")
     p.add_argument("--edition", type=int, default=2026)
@@ -240,11 +309,23 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--leader", type=float, default=None, help="pontos do líder do grupo (contexto)")
     p.add_argument("--sims", type=int, default=2000, help="sims do Monte Carlo (só resolve o bracket de mata-mata)")
     p.add_argument("--compare-archive", action="store_true", help="compara com os snapshots reais arquivados")
+    p.add_argument(
+        "--reset-ceiling",
+        action="store_true",
+        help="descarta o cache de teto congelado (ceiling.csv) e recongela na medição atual (ENG-34)",
+    )
     args = p.parse_args(argv)
 
     edition = load_edition(args.edition)
     scores = asof_scores(edition, args.sims)
-    archive = archive_scores(edition) if args.compare_archive else {}
+    archive = archive_scores(edition)  # ENG-34: fonte imutável preferida ao congelar (e p/ --compare-archive)
+
+    # ENG-34: teto headline congelado por jogo — estável entre rodagens (base/odds/código novos não
+    # mudam o teto de um jogo já medido; divergências viram drift reportado, não substituição muda).
+    cache = {} if args.reset_ceiling else load_ceiling(_ceiling_path(edition))
+    headline, updated_cache, drift = reconcile_ceiling(scores, archive, cache)
+    save_ceiling(_ceiling_path(edition), updated_cache)
+    seeded = len(updated_cache) - len(cache)
 
     has_ko = any(s["ko"] for s in scores.values())
     hdr = f"{'J':>3} {'fase':6} {'palp':5} {'real':5} {'pts':>4}"
@@ -256,8 +337,9 @@ def main(argv: list[str] | None = None) -> int:
     diverged = []
     for mid in sorted(scores):
         s = scores[mid]
-        total += s["pts"]
-        line = f"{mid:>3} {s['stage']:6} {s['palpite']:5} {s['real']:5} {s['pts']:>4.0f}"
+        total += headline[mid]  # ENG-34: headline usa o teto CONGELADO, não a reconstrução volátil
+        drift_mark = " ~" if any(m == mid for m, _f, _l in drift) else ""
+        line = f"{mid:>3} {s['stage']:6} {s['palpite']:5} {s['real']:5} {headline[mid]:>4.0f}{drift_mark}"
         if args.compare_archive:
             a = archive.get(mid)
             if a is None:
@@ -287,6 +369,18 @@ def main(argv: list[str] | None = None) -> int:
     print(f"\nJogos pontuados: {len(scores)}")
     cfg = f"risk {edition.scoring.risk} + blend {edition.scoring.blend_weight}"
     print(f"Teto do tool (as-of, {cfg}): {total:.0f} pts ({total / len(scores):.2f}/jogo)")
+    n_arch = sum(1 for e in updated_cache.values() if e["source"] == "archive")
+    seed_note = f" (+{seeded} semeado{'s' if seeded != 1 else ''} nesta rodada)" if seeded else ""
+    reset_note = " [--reset-ceiling: recongelado do zero]" if args.reset_ceiling else ""
+    print(
+        f"   ↳ ENG-34: teto CONGELADO por jogo em ceiling.csv — {len(updated_cache)} no cache "
+        f"({n_arch} de snapshot real, {len(updated_cache) - n_arch} reconstruídos){seed_note}{reset_note}"
+    )
+    if drift:
+        print(f"   ⚠️  DRIFT em {len(drift)} jogo(s): a reconstrução viva mudou vs o congelado (headline usa o")
+        print("       CONGELADO). Causa: base/odds/código mudaram desde a 1ª medição. Recongele com --reset-ceiling.")
+        for mid, frozen, live in sorted(drift):
+            print(f"       J{mid}: congelado {frozen:.0f} → vivo {live:.0f} ({live - frozen:+.0f})")
     print(f"Teto teórico (oráculo, cravar todo placar): {oracle:.0f} pts ({oracle / len(scores):.2f}/jogo)")
     print(f"   captura do tool sobre o teórico: {100.0 * total / oracle:.1f}%  (qualidade do modelo+blend;")
     print("   o resto é ruído irredutível do futebol — inatingível por qualquer estratégia, não execução)")

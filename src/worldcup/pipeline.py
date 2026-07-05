@@ -114,6 +114,26 @@ def _drop_edition_games(historical: pd.DataFrame, edition_games: pd.DataFrame) -
     return historical[~base_keys.isin(edition_keys)].copy()
 
 
+def ingestion_gaps(edition: Edition) -> list[int]:
+    """`match_id`s de jogos **disputados** que NÃO entram no ajuste do modelo (ENG-43).
+
+    Um jogo disputado só alimenta o fit se, após resolver os slots de KO (`resolve_live_bracket`),
+    **ambos** os times estão em `edition.teams` — o **mesmo critério** do filtro `.isin(edition.teams)`
+    em `build_training_frame`. Se um KO disputado não resolve (slot órfão), ele é descartado do ajuste
+    **em silêncio** — a staleness que motivou ENG-41/42 (o caminho de grupo funcionava, mascarando o
+    de KO quebrado, por semanas). Vazio = base em dia. Barato: só resultados reais, sem histórico.
+    """
+    from .sync import resolve_live_bracket
+
+    ko = resolve_live_bracket(edition)
+    teams = set(edition.teams)
+    return [
+        f.match_id
+        for f in edition.fixtures
+        if f.played and not all(t in teams for t in ko.get(f.match_id, (f.home, f.away)))
+    ]
+
+
 @dataclass
 class PredictionRun:
     rows: list[dict]

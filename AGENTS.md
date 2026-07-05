@@ -83,14 +83,17 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   de calibração: `blend-track --sweep` (blend_weight, ENG-38) e `blend-track --boost-sweep`
   (`edition_boost`, ENG-44) — Brier out-of-sample por valor, só jogos de grupo.
 - `sync.py` — resolve o bracket só com resultados reais e preenche `fixtures.csv`.
-- `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites.
+- `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites. `ingestion_gaps(edition)`
+  (ENG-43) lista jogos disputados que **não** entram no ajuste (slot de KO não resolvido ⇒ filtrado
+  pelo `.isin(edition.teams)` de `build_training_frame`) — `predict` e `status` avisam se ≠ vazio.
 - `render.py` — camada de **apresentação** (funções puras): `render_markdown`/`render_html` +
   `CSV_COLUMNS`. Geram texto a partir do `PredictionRun` (não do CSV); HTML autocontido e
   print-friendly. Sem I/O.
 - `status.py` — briefing read-only de start-of-day (ENG-31): funções puras `build_status`/
   `format_status` montam uma foto compacta do estado (disputados/total, fase, jogos de hoje,
-  próximos palpites, standing, pendências) a partir da edição + último `out/` + linha de standing do
-  `BOLAO.md`. **Não muta nada** ("ver" separado de "fazer").
+  próximos palpites, standing, pendências, **alerta de staleness do ajuste** — ENG-43) a partir da
+  edição + último `out/` + linha de standing do `BOLAO.md`. **Não muta nada** ("ver" separado de
+  "fazer").
 - `cli.py` — argparse; entrypoint `worldcup` (+ alias `ws` = `worldcup status`, via `main_status`).
   **Só orquestra**: parsing, escrita em disco
   (`save_outputs`/`archive_outputs`, que chamam o `render`), o subcomando `status` (read-only) e a

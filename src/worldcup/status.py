@@ -62,6 +62,7 @@ class StatusReport:
     overdue: list[int] = field(default_factory=list)  # não disputados com date < hoje
     has_picks: bool = True  # existe out/ para resolver nomes/palpites
     stale: bool = False  # out/ atrás dos fixtures (faltou predict)
+    fit_gaps: list[int] = field(default_factory=list)  # disputados fora do ajuste do modelo (ENG-43)
 
 
 def _label(edition: Edition, match_id: int, home: str, away: str, picks: dict[int, dict[str, str]]) -> str:
@@ -88,6 +89,7 @@ def build_status(
     standing: str | None,
     *,
     upcoming_n: int = 6,
+    fit_gaps: list[int] | None = None,
 ) -> StatusReport:
     """Monta o `StatusReport` a partir da edição, do último `out/` (picks por match_id) e da data.
 
@@ -142,6 +144,7 @@ def build_status(
         overdue=overdue,
         has_picks=has_picks,
         stale=stale,
+        fit_gaps=fit_gaps or [],
     )
 
 
@@ -157,6 +160,10 @@ def format_status(r: StatusReport) -> str:
         "─" * width,
         f"{r.played}/{r.total} jogos · {r.stage} · risk {r.risk:g} · blend {r.blend_weight:g}",
     ]
+
+    if r.fit_gaps:  # ENG-43: staleness da base — resultado disputado que não entrou no ajuste
+        ids = ", ".join(f"J{m}" for m in r.fit_gaps)
+        lines.append(f"⚠️  {len(r.fit_gaps)} disputado(s) FORA do ajuste: {ids} (bracket de KO não resolvido)")
 
     # alinhamento dos rótulos de jogo (hoje + próximos juntos)
     labels = [g.label for g in r.today_games] + [g.label for g in r.upcoming]

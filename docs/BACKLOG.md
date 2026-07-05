@@ -60,7 +60,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-42](#eng-42) | P2 | pipeline/model | ✅ | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
 | [ENG-43](#eng-43) | P3 | observabilidade | 🔴 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
 | [ENG-44](#eng-44) | P2 | model/backtest | ✅ | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
-| [ENG-45](#eng-45) | P2 | efficiency/scoring | 🟡 | KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar errado (teto infla) |
+| [ENG-45](#eng-45) | P2 | efficiency/scoring | ✅ | KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar errado (teto infla) |
 
 ---
 
@@ -1489,7 +1489,7 @@ identificando os jogos; sem ausências, silêncio; teste cobrindo os dois casos;
 
 ## ENG-45
 **KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar
-errado** · P2 · `efficiency`/`scoring` · 🟡 fazendo
+errado** · P2 · `efficiency`/`scoring` · ✅ feito
 
 A convenção martj42/`fixtures.csv` grava o **placar final com prorrogação** nos jogos de KO. Para
 os decididos por **gol na prorrogação** (não pênaltis), o `home_goals`/`away_goals` gravado inclui
@@ -1536,4 +1536,4 @@ modelo segue no placar gravado. **Captura futura** de outros jogos gol-na-ET é 
 como os shootouts sob latência. Testes: `test_load_regulation`,
 `test_as_of_drops_future_regulation`, `test_regulation_90_*`,
 `test_eng45_et_goal_scored_against_90_and_gets_bonus`. 171 testes verdes.
-**Commit:** —
+**Commit:** 43006e7

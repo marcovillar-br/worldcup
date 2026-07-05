@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from worldcup.edition import _load_odds, _load_shootouts, _load_totals, load_edition
+from worldcup.edition import _load_odds, _load_regulation, _load_shootouts, _load_totals, load_edition
 
 
 def test_as_of_clears_results_from_cutoff_onward():
@@ -83,6 +83,24 @@ def test_load_shootouts(tmp_path):
     sh = _load_shootouts(path)
     assert sh == {74: "Paraguay", 75: "Morocco"}  # 88 (sem vencedor) ignorado
     assert _load_shootouts(tmp_path / "nope.csv") == {}
+
+
+def test_load_regulation(tmp_path):
+    # ENG-45: match_id,reg_home,reg_away (placar dos 90'); linhas sem os dois placares ignoradas
+    path = tmp_path / "regulation.csv"
+    path.write_text("match_id,reg_home,reg_away\n82,2,2\n99,,\n")
+    reg = _load_regulation(path)
+    assert reg == {82: (2, 2)}  # 99 (placar incompleto) ignorado
+    assert _load_regulation(tmp_path / "nope.csv") == {}
+
+
+def test_as_of_drops_future_regulation():
+    # ENG-45: o placar de 90' de um jogo a partir do corte some (ainda não acontecera na manhã)
+    ed = load_edition(2026).model_copy(update={"regulation": {82: (2, 2)}})
+    f82 = next(f for f in ed.fixtures if f.match_id == 82)
+    view = ed.as_of(f82.date)  # corte no próprio dia do J82 ⇒ deve descartá-lo
+    assert 82 not in view.regulation
+    assert ed.regulation == {82: (2, 2)}  # original intacto
 
 
 def test_2026_blend_weight_prior():

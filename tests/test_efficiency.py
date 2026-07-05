@@ -4,8 +4,9 @@ from __future__ import annotations
 
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
-from worldcup.edition import ScoringConfig
+from worldcup.edition import Fixture, ScoringConfig
 from worldcup.scoring import Scorer
 
 _SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "efficiency.py"
@@ -49,6 +50,35 @@ def test_actual_ko_outcome_latency_skips():
         None,
         None,
     )
+
+
+def _fx(mid: int, hg: int | None, ag: int | None) -> Fixture:
+    return Fixture(match_id=mid, stage="R32", date="2026-07-01", home="1G", away="3rd", home_goals=hg, away_goals=ag)
+
+
+def test_regulation_90_prefers_reg_score_for_et_goal():
+    # ENG-45: KO decidido por gol na ET → o gravado (3x2) inclui a prorrogação; o slot de 90' usa o 90' (2x2)
+    ed = SimpleNamespace(regulation={82: (2, 2)})
+    assert efficiency.regulation_90(ed, _fx(82, 3, 2)) == (2, 2)
+
+
+def test_regulation_90_falls_back_to_recorded():
+    ed = SimpleNamespace(regulation={})
+    assert efficiency.regulation_90(ed, _fx(76, 2, 1)) == (2, 1)  # sem entrada ⇒ o gravado É o 90'
+    assert efficiency.regulation_90(ed, _fx(91, None, None)) is None  # não disputado
+
+
+def test_eng45_et_goal_scored_against_90_and_gets_bonus():
+    # Regressão ENG-45: o placar de 90' (2x2) faz o jogo cair no caminho de ET (empate nos 90'),
+    # resolvendo o bônus; com o placar GRAVADO (3x2) a lógica antiga o tratava como decidido nos 90'.
+    reg90 = efficiency.regulation_90(SimpleNamespace(regulation={82: (2, 2)}), _fx(82, 3, 2))
+    pens = {("2026-07-01", frozenset({"Belgium", "Senegal"})): ""}  # na fonte, sem shootout ⇒ ET
+    assert efficiency._actual_ko_outcome(reg90[0], reg90[1], "2026-07-01", "Belgium", "Belgium", "Senegal", pens) == (
+        "home",
+        None,
+    )
+    # contraste (o bug): usar o gravado 3x2 ⇒ "decidido nos 90'", nenhum bônus de ET e slot pontuado errado
+    assert efficiency._actual_ko_outcome(3, 2, "2026-07-01", "Belgium", "Belgium", "Senegal", pens) == (None, None)
 
 
 def test_weighted_ko_bonus_is_doubled_in_r32():

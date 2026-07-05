@@ -138,6 +138,14 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   (regra `confirmar-placares-multiplas-fontes`). Versionado (fato público, durável); linhas sem
   vencedor são ignoradas. `Edition.as_of()` descarta os shootouts de jogos a partir da data
   (consistência).
+- `regulation.csv` — **opcional** (ENG-45): `match_id,reg_home,reg_away`
+  (placar do **tempo normal**, 90'). Só para KO decididos por **gol na prorrogação**, em que o
+  placar gravado em `fixtures.csv` inclui a ET e difere do 90' (ex.: J82 gravado `3×2`, mas `2×2`
+  nos 90'). O bolão pontua o slot de 90' contra o tempo normal, então `efficiency.py` usa este
+  placar (`Edition.regulation`, via `regulation_90`) — senão o teto infla (creditaria o exato/saldo
+  do placar-com-ET). Pênaltis puros **não** entram (o gravado já é o 90', empate preservado —
+  `shootouts.csv` cuida do desfecho). **Captura manual** sob a mesma regra de ≥2 fontes; versionado;
+  `Edition.as_of()` descarta as entradas de jogos a partir da data.
 - `BOLAO.md` — **memória de campanha** do bolão (agnóstica a ferramenta): decisões vivas que não
   são rederiváveis de dados/código (`risk` escolhido, situação no ranking, regras do bolão).
   **Leia no início da sessão e atualize quando uma decisão de campanha acontecer.**

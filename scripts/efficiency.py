@@ -81,6 +81,19 @@ def _penalty_lookup(historical) -> dict[tuple[str, frozenset[str]], str]:
     return pens
 
 
+def regulation_90(edition: Edition, fixture) -> tuple[int, int] | None:
+    """Placar dos **90'** pelo qual o slot de 90' do bolão é julgado (ENG-45).
+
+    Num KO decidido por **gol na prorrogação**, o placar gravado em `fixtures.csv` inclui a ET e
+    difere do tempo normal — o bolão pontua o 90', então usamos o placar de `regulation.csv`
+    (`Edition.regulation`) quando presente. Caso contrário, o gravado **é** o 90' (jogo resolvido
+    nos 90' ou pênaltis puros com empate preservado). `None` se o jogo não foi disputado.
+    """
+    if fixture.home_goals is None or fixture.away_goals is None:
+        return None
+    return edition.regulation.get(fixture.match_id, (fixture.home_goals, fixture.away_goals))
+
+
 def _actual_ko_outcome(
     hg: int,
     ag: int,
@@ -142,9 +155,9 @@ def asof_scores(edition: Edition, sims: int) -> dict[int, dict]:
 
         for f in todays:
             real = by_id[f.match_id]  # da edição completa: tem o resultado real
-            if real.home_goals is None or real.away_goals is None:
+            actual = regulation_90(edition, real)  # ENG-45: placar dos 90' (≠ gravado se gol na ET)
+            if actual is None:
                 continue
-            actual = (real.home_goals, real.away_goals)
             home: str | None
             away: str | None
             if f.is_group:

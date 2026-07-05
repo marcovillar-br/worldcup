@@ -585,8 +585,13 @@ para cá._
   nos jogos decididos **nos pênaltis** — os únicos determináveis da fonte (`shootouts.csv`, mesclado
   como `penalty_winner` em `fetch_data`). O martj42 **não traz a fase** nem separa 90' de
   prorrogação, então jogos decididos **dentro** da prorrogação não são identificáveis e **não**
-  recebem o bônus de ET (subestimativa pequena e conhecida; a edição **viva** não tem esse problema
-  — `sync` resolve o bracket real com os shootouts).
+  recebem o bônus de ET (subestimativa pequena e conhecida, **só nas Copas passadas**).
+- **Placar de 90' de KO decidido por gol na prorrogação (ENG-45)**: o placar gravado em
+  `fixtures.csv` inclui a ET (convenção martj42), mas o bolão pontua o slot de 90' contra o **tempo
+  normal**. Na edição **viva**, `regulation.csv` (`match_id,reg_home,reg_away`) guarda o 90' desses
+  jogos e o `efficiency.py` o usa (via `regulation_90`) — sem ele, o teto do tool infla (creditaria
+  exato/saldo do placar-com-ET). Pênaltis puros não precisam de entrada (empate preservado no
+  gravado; `shootouts.csv` cuida do desfecho). Captura manual sob a regra de ≥2 fontes.
 
 ### 9.3 Ideias futuras
 

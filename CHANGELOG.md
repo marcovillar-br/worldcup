@@ -22,6 +22,17 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (Argentina 12,9% / Espanha 29,1%). Cobertura: `test_blend_track_boost_sweep`.
 
 ### Corrigido
+- **Teto do tool inflado em KO decidido por gol na prorrogação** (ENG-45, `efficiency.py`): o
+  placar gravado em `fixtures.csv` inclui a ET (convenção martj42), mas o bolão pontua o slot de
+  90' contra o **tempo normal**. O `efficiency.py` pontuava o palpite de 90' contra o placar-com-ET
+  — ex.: **J82 Bélgica gravado 3×2, mas 2×2 nos 90'** — creditando **12 pts** a um palpite `2×1`
+  que, contra o `2×2` real dos 90', dá **0**; o "teto do tool" subia indevidamente (na 2026,
+  404→392). Novo arquivo opcional `regulation.csv` (`match_id,reg_home,reg_away`, versionado)
+  guarda o 90' desses jogos; `Edition.regulation` + `efficiency.regulation_90` o usam para o slot
+  de 90' (e o jogo cai no caminho de ET, recebendo o bônus quando a fonte confirma). Só gol-na-ET
+  precisa de entrada — pênaltis puros já preservam o empate. Cobertura: `test_load_regulation`,
+  `test_as_of_drops_future_regulation`, `test_regulation_90_*`,
+  `test_eng45_et_goal_scored_against_90_and_gets_bonus`.
 - **`Avança` em branco em jogo de KO decidido no tempo normal** (`_final_ko_layers`): a fonte
   preenche `ko_outcome` de forma inconsistente em jogos de 90' (J77 França 3×0 Suécia vinha vazio),
   e o display só lia esse campo — deixava o `Avança` em branco mesmo com placar decisivo, enquanto

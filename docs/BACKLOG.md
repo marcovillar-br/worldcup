@@ -60,6 +60,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-42](#eng-42) | P2 | pipeline/model | ✅ | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
 | [ENG-43](#eng-43) | P3 | observabilidade | 🔴 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
 | [ENG-44](#eng-44) | P2 | model/backtest | ✅ | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
+| [ENG-45](#eng-45) | P2 | efficiency/scoring | ✅ | KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar errado (teto infla) |
 
 ---
 
@@ -1485,3 +1486,54 @@ que efetivamente entrou no frame de treino (com boost) e alertar os ausentes; ex
 **Aceite:** rodar `status`/`predict` com um resultado disputado ausente do treino emite alerta
 identificando os jogos; sem ausências, silêncio; teste cobrindo os dois casos; `pytest` verde.
 **Commit:** —
+
+## ENG-45
+**KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar
+errado** · P2 · `efficiency`/`scoring` · ✅ feito
+
+A convenção martj42/`fixtures.csv` grava o **placar final com prorrogação** nos jogos de KO. Para
+os decididos por **gol na prorrogação** (não pênaltis), o `home_goals`/`away_goals` gravado inclui
+o(s) gol(s) da ET e **difere do placar real dos 90'**. Mas no app o slot *"placar dos 90'"* é
+julgado contra o placar do **tempo normal**. Consequências no lado da **medição**:
+1. `efficiency.asof_scores`, o oráculo e o `backtest` pontuam o palpite de 90' contra o placar
+   **com ET** ⇒ **super-creditam**. Caso concreto: **J82 Bélgica gravado 3×2, mas 2×2 nos 90'**
+   (pênalti... gol de Tielemans na ET, 125'). O `asof_scores` credita **12 pts** a um palpite 2×1
+   que, contra o 2×2 real dos 90', daria **~0** — o "teto do tool" fica inflado nesses jogos.
+2. `efficiency._actual_ko_outcome` trata `home != away` como *decidido nos 90' → (None, None)*,
+   então um jogo de gol-na-ET **não recebe o bônus de ET** E é tratado como tempo normal — erro
+   duplo (base errada + bônus perdido).
+3. Distinto dos jogos de **pênaltis puros** (empate nos 90', `home == away` preservado), que **são**
+   tratados via `shootouts.csv`. A lacuna é **específica de gol na prorrogação** — e contradiz a
+   nota do ENG-27 *"a edição viva não sofre disso"*, que só vale para o subcaso de pênaltis.
+
+**Raiz (dado):** nada em `fixtures`/`shootouts` distingue um jogo de gol-na-ET de um resolvido nos
+90' — ambos têm `home != away`. Falta um sinal (placar de 90' separado, ou flag `aet`) para pontuar
+o slot de 90' corretamente. Verificado no backtest do ENG-32 (`scratchpad/eng32_backtest.py`, com
+override manual de J82→2×2): sem o override, o mesmo jogo pontua 12 em vez de 0.
+
+**Refs:** `efficiency.asof_scores`, `efficiency._actual_ko_outcome`, `backtest` (teto de KO),
+schema de `Edition.fixtures` (`home_goals`/`away_goals`/`ko_outcome`), `shootouts.csv`, ENG-27
+(limitação aceita), SPEC §9.2.
+**Correção proposta:** (a) registrar o **placar dos 90'** separado do placar-com-ET nos KO decididos
+na prorrogação — coluna opcional no fixture (`reg_home`/`reg_away`) ou flag `aet` + placar de 90',
+captura manual sob a regra `confirmar-placares-multiplas-fontes`; (b) `efficiency`/`backtest` usam o
+placar de 90' quando presente e reconhecem a ET (base **e** bônus corretos); (c) sem o dado, ao
+menos **não** conceder exato/saldo em jogo marcado `aet`.
+**Aceite:** um KO decidido por gol na prorrogação (J82) é pontuado contra o placar de 90' (2×2) e
+recebe o bônus de ET; teste de regressão que **falha** com a lógica atual (usa 3×2 e trata como
+90'); `pytest` verde.
+**Resolução (via arquivo companheiro).** Novo `regulation.csv` (`match_id,reg_home,reg_away`,
+opcional, versionado) guarda o placar de **90'** dos KO decididos por gol na ET — escolhido em vez
+de coluna no `fixtures.csv` para **não** tocar o caminho de escrita do `sync.write_fixtures_atomic`
+(mesmo padrão do `shootouts.csv`). `edition._load_regulation` → `Edition.regulation`; `as_of`
+descarta entradas futuras. `efficiency.regulation_90(edition, fixture)` devolve o 90' (reg quando
+presente, senão o gravado); `asof_scores` passa a pontuar o slot de 90' e o oráculo contra ele, e o
+jogo cai no caminho de ET (`_actual_ko_outcome` inalterado — recebe o 90' já corrigido). **J82**
+(gravado 3×2, 90' 2×2) semeado; o teto do tool as-of da 2026 caiu **404→392** (−12, o super-crédito)
+e a eficiência subiu de 89,9%→92,6%. O `backtest` das Copas passadas **não** muda (o martj42 não
+separa 90'/ET — limitação aceita, SPEC §9.2). Escopo: só a **medição** (efficiency); o ajuste do
+modelo segue no placar gravado. **Captura futura** de outros jogos gol-na-ET é manual (≥2 fontes),
+como os shootouts sob latência. Testes: `test_load_regulation`,
+`test_as_of_drops_future_regulation`, `test_regulation_90_*`,
+`test_eng45_et_goal_scored_against_90_and_gets_bonus`. 171 testes verdes.
+**Commit:** 43006e7

@@ -12,8 +12,17 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-04)
+## Estado atual (atualizado em 2026-07-05)
 
+- **90 de 104 jogos disputados (J1–J90).** Em 04/07 fecharam os últimos 16-avos **J89
+  Canadá×Marrocos** e **J90 Paraguai×França** (sincronizados pela fonte pública em 05/07).
+  **Standing (03/07): 325 pts, 17º** (líder **373**; pendente atualização pós-J86–90). Hoje 05/07
+  abrem as **oitavas**:
+  **J91 Brasil 2×1 Noruega** (Brasil avança) e **J92 México 1×2 Inglaterra** (Inglaterra avança).
+  Candidatos a campeão: **Argentina 22,6%**, Espanha 18,6%, França 14,6%, Brasil 11,4%, Inglaterra
+  9,2%.
+  `odds.csv` com **69 jogos** (fetch de 05/07: +1 novo, 6 atualizados). Config: `risk 0.5` +
+  `blend 0.8`.
 - **88 de 104 jogos disputados (J1–J88).** No dia 03/07 fecharam os 16-avos **J86 Argentina 3×2
   Cabo Verde** (tool palpitou 2×0 — acertou lado/avanço), **J87 Colômbia 1×0 Gana** (tool 2×0 —
   lado/avanço certos) e **J88 Austrália 1×1 Egito** (Egito nos pênaltis — tool cravou a zebra do
@@ -135,6 +144,25 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
+- 2026-07-05
+  — **Eficiência (90 jogos): 89,9% do teto do tool** (seus 363 / teto 404, as-of risk 0.5 + blend
+  0.8). Teto teórico (oráculo) 933; captura do tool sobre o teórico 43,3% (resto é ruído
+  irredutível). **Líder 421 está ACIMA do teto do tool (404)** — nem seguir o tool à risca o
+  alcançaria hoje; pegou variância de exatos a favor (regride), não estratégia superior. Gap ao teto
+  parcialmente **ruído de reconstrução**: no subconjunto arquivado (60 jogos) o as-of reconstruído
+  (204) fica +31 acima do snapshot real (173); 30 jogos (todo R32/R16 recente, J73–J90) sem snapshot
+  → teto não verificável. Execução sólida, sem erro sistemático. Manter `predict --archive` toda
+  manhã torna a métrica exata.
+  — **ENG-32 revalidado com dado vivo (não muda nada) + ENG-45 aberto.** Hipótese: os 0-pts recentes
+  no KO (J74/J75/J88, empates nos 90') seriam vazamento do `forbid_draw`. Backtest as-of nos 18
+  jogos de KO da edição (`scratchpad/eng32_backtest.py`): **ΔE[pts] ex-ante permitir-empate vs
+  forbid = +0,8 total (+0,04/jogo)** — idêntico ao veredito histórico do ENG-32 (64 jogos,
+  +0,04/jogo). O
+  realizado deu +34 a favor de permitir empate, MAS vem de só **2 jogos divergentes** (J75, J88) que
+  por acaso empataram — variância pura, não sinal. **Veredito: manter `forbid_draw`; os 0-pts são
+  variância + teto estruturalmente baixo do KO (coin-flips), não jogada errada.** Achado colateral
+  real: J82 gravado 3×2 mas 2×2 nos 90' (gol na ET) — a eficiência pontua o palpite de 90' contra o
+  placar-com-ET e **infla o teto** (credita 12 onde daria ~0). Registrado como **ENG-45** (P2).
 - 2026-07-04 (noite, +tarde)
   — **ENG-44: `edition_boost` calibrado → fixado em 1.0 (sem boost); campeão volta a equilibrar.**
   O sweep `blend-track --boost-sweep` (novo) deu Brier as-of **monotônico crescente** em boost

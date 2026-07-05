@@ -108,6 +108,11 @@ class Edition(BaseModel):
     # vencedores de disputas de pênaltis por jogo de KO (match_id -> seleção canônica), capturados
     # à mão quando a fonte oficial ainda não tem (latência). De shootouts.csv se existir (ENG-30).
     shootouts: dict[int, str] = Field(default_factory=dict)
+    # placar dos **90'** (tempo normal) de jogos de KO decididos por **gol na prorrogação** — nesses,
+    # o placar gravado em fixtures inclui a ET e difere do 90' (ENG-45). O bolão pontua o slot de 90'
+    # contra o tempo normal, então guardamos o 90' aqui (match_id -> (mandante, visitante)). De
+    # regulation.csv se existir. Jogos de pênaltis puros NÃO precisam de entrada (o gravado já é o 90').
+    regulation: dict[int, tuple[int, int]] = Field(default_factory=dict)
 
     model_config = {"arbitrary_types_allowed": True}
 
@@ -146,7 +151,8 @@ class Edition(BaseModel):
         ]
         future = {f.match_id for f in self.fixtures if f.date >= cutoff}
         shootouts = {mid: w for mid, w in self.shootouts.items() if mid not in future}
-        return self.model_copy(update={"fixtures": fixtures, "shootouts": shootouts})
+        regulation = {mid: s for mid, s in self.regulation.items() if mid not in future}
+        return self.model_copy(update={"fixtures": fixtures, "shootouts": shootouts, "regulation": regulation})
 
     # ---- validação estrutural ----
     @model_validator(mode="after")
@@ -275,6 +281,28 @@ def _load_shootouts(path: Path) -> dict[int, str]:
     return out
 
 
+def _load_regulation(path: Path) -> dict[int, tuple[int, int]]:
+    """Lê `regulation.csv` (opcional): `match_id,reg_home,reg_away` — o placar dos **90'** de um KO
+    decidido por **gol na prorrogação** (ENG-45). Ausente ⇒ vazio.
+
+    Só precisa de entrada para jogos em que o placar gravado em `fixtures.csv` **inclui a ET** e
+    difere do tempo normal (ex.: 3×2 no fim, mas 2×2 nos 90'). Pênaltis puros não entram (lá o
+    gravado já é o 90', empate preservado — `shootouts.csv` cuida do desfecho). Linhas sem os dois
+    placares são ignoradas. **Captura manual** sob a regra de confirmar placar em ≥2 fontes.
+    """
+    if not path.exists():
+        return {}
+    out: dict[int, tuple[int, int]] = {}
+    with path.open(newline="") as fh:
+        for row in csv.DictReader(fh):
+            rh = (row.get("reg_home") or "").strip()
+            ra = (row.get("reg_away") or "").strip()
+            if not rh or not ra:
+                continue
+            out[int(row["match_id"])] = (int(rh), int(ra))
+    return out
+
+
 def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
     """Carrega e valida a edição `year` a partir de `data/editions/<year>/`."""
     directory = base_dir / str(year)
@@ -288,6 +316,7 @@ def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
     odds = _load_odds(directory / "odds.csv")
     totals = _load_totals(directory / "odds.csv")
     shootouts = _load_shootouts(directory / "shootouts.csv")
+    regulation = _load_regulation(directory / "regulation.csv")
     return Edition(
         spec=spec,
         groups=groups,
@@ -297,4 +326,5 @@ def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
         odds=odds,
         totals=totals,
         shootouts=shootouts,
+        regulation=regulation,
     )

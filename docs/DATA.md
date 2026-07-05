@@ -55,6 +55,7 @@ termos próprios, tratados aqui.
 | Specs de edição (`tournament.toml`, `groups.csv`, `fixtures.csv`, `scoring.toml`) | **Sim** | Autorais; definem a edição |
 | `odds.csv` (odds **reais** coletadas) | **Não** (`.gitignore`) | ToS não permite redistribuir odds em repo público (§6); vive só local |
 | `shootouts.csv` (vencedores de pênaltis da edição, ENG-30) | **Sim** | Fato público e durável; captura manual da edição viva sob latência da fonte, verificada em ≥2 fontes. Distinto do `shootouts.csv` baixado do martj42 (ingestão, embutido no `historical_results.csv` gitignored) |
+| `regulation.csv` (placar de 90' de KO decidido na prorrogação, ENG-45) | **Sim** | Fato público e durável; captura manual (`match_id,reg_home,reg_away`) só quando o placar gravado inclui gol na ET e difere do 90'. Verificada em ≥2 fontes; usada pelo `efficiency.py` para pontuar o slot de 90' contra o tempo normal |
 | `history/<data>.{csv,md}` (runs **reais**) | **Sim** | Snapshots imutáveis e não-reproduzíveis |
 | `data/historical_results.csv` (cache de treino) | **Não** (`.gitignore`) | Regenerável por `fetch-data` |
 | `out/`, `*.reconstruido.*`, caches | **Não** | Regeneráveis |

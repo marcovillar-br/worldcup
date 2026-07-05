@@ -307,7 +307,13 @@ def _collect_blend_games(edition: Edition) -> list[tuple[Fixture, np.ndarray]]:
     Só grupo: no mata-mata a convenção martj42 registra o placar **com prorrogação**, o que torna o
     desfecho de 90' (o que as odds 1×2 precificam) ambíguo em jogo decidido na ET — incluir esses
     jogos corromperia o Brier em silêncio.
+
+    Sem odds na edição, nenhum jogo entra no blend ⇒ retorna cedo, **sem** carregar a base histórica
+    (o report/sweep de blend não precisa dela quando não há mercado — e evita exigir o
+    `historical_results.csv` gitignored onde ele não existe, p.ex. no CI).
     """
+    if not edition.odds:
+        return []
     return [
         (f, mat)
         for f, mat in _as_of_group_matrices(edition, load_historical())

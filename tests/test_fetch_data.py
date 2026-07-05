@@ -40,6 +40,18 @@ def test_download_text_raises_networkerror_after_retries(monkeypatch):
     assert len(calls) == 3  # tentativa inicial + 2 retries
 
 
+@pytest.mark.parametrize("url", ["file:///etc/passwd", "ftp://host/x", "gopher://host", "/etc/passwd"])
+def test_download_text_rejects_non_http_scheme(url, monkeypatch):
+    """Só http/https: file://, ftp:// e afins são barrados antes de qualquer I/O de rede."""
+
+    def must_not_open(req, timeout):  # pragma: no cover - não deve ser chamado
+        raise AssertionError("urlopen não deveria ser chamado para esquema não-HTTP")
+
+    monkeypatch.setattr(fetch_data.urllib.request, "urlopen", must_not_open)
+    with pytest.raises(NetworkError, match=r"[Ee]squema"):
+        _download_text(url, timeout=1)
+
+
 def test_download_text_retries_then_succeeds(monkeypatch):
     state = {"n": 0}
 

@@ -20,6 +20,16 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   ajuste; base em dia ⇒ silêncio. Cobertura: `ingestion_gaps` (saudável + KO não resolvido) e o
   alerta no `format_status`.
 
+### Segurança
+- **Allowlist de esquema de URL no downloader** (auditoria de segurança, 2026-07-05):
+  `fetch_data._download_text` só aceita `http`/`https`. A URL vem da flag `--source-url`, e o
+  `urllib` também abre `file://`/`ftp://` — apontar o downloader para `file:///…` leria arquivo
+  local. Não era explorável (a URL é sempre digitada pelo próprio usuário, nunca vem de terceiro),
+  mas o esquema é barrado antes de qualquer I/O como defesa em profundidade. Restante da auditoria:
+  **nenhuma vulnerabilidade explorável** — HTML gerado escapa todo valor dinâmico (`render._esc`),
+  segredos (`.env`/`odds.csv`/key) fora do git e nunca em argv/log, `--edition` é `int` (sem
+  traversal), sem `eval`/`exec`/`pickle`/`shell=True`.
+
 ### Removido
 - **Código morto** (auditoria de limpeza, 2026-07-05): `DixonColesModel.outcome_probs`
   (duplicava a lógica de `scoring.outcome_probs_from_matrix` — todos os chamadores usam a versão

@@ -58,7 +58,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-40](#eng-40) | P2 | knockout/cli | ✅ | Expor a política `empate-final` (ENG-39) no `predict` — `--pool-behind` ainda gera a zebra superada |
 | [ENG-41](#eng-41) | P1 | pipeline/model | ✅ | Jogos da edição contados em dobro no ajuste quando a base histórica já os contém (peso 7.0) |
 | [ENG-42](#eng-42) | P2 | pipeline/model | ✅ | Resultados de KO alimentam o fit sem o boost (peso 1.0 via base), pois o fixture guarda slots |
-| [ENG-43](#eng-43) | P3 | observabilidade | 🟡 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
+| [ENG-43](#eng-43) | P3 | observabilidade | ✅ | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
 | [ENG-44](#eng-44) | P2 | model/backtest | ✅ | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
 | [ENG-45](#eng-45) | P2 | efficiency/scoring | ✅ | KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar errado (teto infla) |
 | [ENG-46](#eng-46) | P3 | efficiency/pipeline | ✅ | `archive_scores` é só de grupo ⇒ teto de KO congela da reconstrução (menos fiel que o snapshot real) |
@@ -1484,7 +1484,7 @@ explícito. Campeão calibrado: Argentina 22,7% / Espanha 19,7% (vs 12,9%/29,1% 
 
 ## ENG-43
 **Nenhuma métrica vigia se o fit ingeriu os resultados recentes (staleness da base é silenciosa)**
-· P3 · `observabilidade` · 🟡 fazendo
+· P3 · `observabilidade` · ✅ feito
 
 Não há nenhum sinal que acenda vermelho quando a base de treino está desatualizada ou quando um
 resultado recente **não** entrou no ajuste. `blend-track` mede Brier do blend; `efficiency.py` mede
@@ -1506,7 +1506,7 @@ não entram no fit — mesmo critério do filtro `.isin(edition.teams)` de `buil
 (`fit_gaps`), e `format_status` emite uma linha ⚠️ logo abaixo dos stats. Base em dia ⇒ silêncio
 (verificado: `ingestion_gaps` na 2026 = `[]`). Testes: `ingestion_gaps` saudável + KO não resolvido
 (monkeypatch do bracket) e o alerta/silêncio no `format_status`. 183 verdes.
-**Commit:** —
+**Commit:** e49038f
 
 ## ENG-45
 **KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar

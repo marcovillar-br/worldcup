@@ -163,6 +163,21 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   variância + teto estruturalmente baixo do KO (coin-flips), não jogada errada.** Achado colateral
   real: J82 gravado 3×2 mas 2×2 nos 90' (gol na ET) — a eficiência pontua o palpite de 90' contra o
   placar-com-ET e **infla o teto** (credita 12 onde daria ~0). Registrado como **ENG-45** (P2).
+  — **Eficiência CORRIGIDA para ~100% (não 89,9%) — o teto estava inflado, não a sua jogada.** Os
+  fixes de hoje removeram o inchaço do teto: ENG-45 (J82: 404→392) e sobretudo ENG-34, que **congela
+  o teto por jogo** preferindo o **snapshot real** da manhã (o que o tool de fato mostrou) à
+  reconstrução volátil — teto foi a **361**, e seus **363 ≈ o teto**. Confirma o que a skill já
+  alertava: como você ajusta os palpites toda manhã (= segue o tool), o "gap" era **ruído de
+  reconstrução**, não execução. **Sem mudança de estratégia:** `risk 0.5` + `blend 0.8` +
+  `forbid_draw` seguem (ENG-32 revalidado). O líder (421) continua acima do teto — variância de
+  exatos a favor dele, que regride.
+  — **Ferramentas novas que ajudam a campanha daqui pra frente:** (a) **teto estável** (ENG-34): a
+  eficiência não oscila mais entre rodagens (o mesmo dia já deu 103% e 88% só pelo refit); mudança
+  vira **drift reportado**, não silenciosa. (b) **vigia de staleness** (ENG-43): `predict`/`status`
+  avisam se um resultado disputado não entrou no ajuste (a falha que já mordeu em jun/2026). (c) o
+  teto de KO passa a usar o snapshot real a partir das **quartas** (ENG-46). Backlog de eng. zerado
+  (ENG-25 descartado: tabela de 495 combinações não-verificável com as ferramentas; sem impacto na
+  2026 — o override já crava a combinação realizada).
 - 2026-07-04 (noite, +tarde)
   — **ENG-44: `edition_boost` calibrado → fixado em 1.0 (sem boost); campeão volta a equilibrar.**
   O sweep `blend-track --boost-sweep` (novo) deu Brier as-of **monotônico crescente** em boost

@@ -81,6 +81,51 @@ def test_eng45_et_goal_scored_against_90_and_gets_bonus():
     assert efficiency._actual_ko_outcome(3, 2, "2026-07-01", "Belgium", "Belgium", "Senegal", pens) == (None, None)
 
 
+def _recon(pts: float, palpite: str = "2x1", real: str = "2x1") -> dict:
+    return {"pts": pts, "palpite": palpite, "real": real}
+
+
+def test_reconcile_ceiling_freezes_measured_game():
+    # ENG-34: jogo já no cache (asof) não re-pontua no headline mesmo se a reconstrução viva mudar
+    cache = {5: {"pts": 10.0, "palpite": "1x0", "real": "1x0", "source": "asof"}}
+    headline, updated, drift = efficiency.reconcile_ceiling({5: _recon(7.0)}, {}, cache)
+    assert headline[5] == 10.0  # congelado, não os 7 vivos
+    assert updated[5]["pts"] == 10.0  # cache inalterado
+    assert drift == [(5, 10.0, 7.0)]  # divergência reportada (asof) — headline usa o congelado
+
+
+def test_reconcile_ceiling_prefers_archive_at_first_measurement():
+    # 1ª medição de um jogo com snapshot real ⇒ congela o valor do archive, não a reconstrução
+    headline, updated, drift = efficiency.reconcile_ceiling({6: _recon(8.0)}, {6: 12.0}, {})
+    assert headline[6] == 12.0
+    assert updated[6]["source"] == "archive"
+    assert drift == []
+
+
+def test_reconcile_ceiling_asof_when_no_archive():
+    # sem snapshot real ⇒ congela a reconstrução as-of
+    headline, updated, _ = efficiency.reconcile_ceiling({7: _recon(8.0)}, {}, {})
+    assert headline[7] == 8.0
+    assert updated[7]["source"] == "asof"
+
+
+def test_reconcile_ceiling_no_drift_for_archive_source():
+    # congelado de archive diverge da reconstrução por NATUREZA (ruído) — não é drift temporal
+    cache = {5: {"pts": 12.0, "palpite": "2x0", "real": "3x0", "source": "archive"}}
+    headline, _updated, drift = efficiency.reconcile_ceiling({5: _recon(8.0)}, {}, cache)
+    assert headline[5] == 12.0
+    assert drift == []  # fonte archive não gera drift (fica no --compare-archive)
+
+
+def test_ceiling_cache_roundtrip(tmp_path):
+    path = tmp_path / "ceiling.csv"
+    entries = {5: {"pts": 10.0, "palpite": "1x0", "real": "1x0", "source": "asof"}}
+    efficiency.save_ceiling(path, entries)
+    loaded = efficiency.load_ceiling(path)
+    assert loaded == entries
+    assert efficiency.load_ceiling(tmp_path / "nope.csv") == {}
+
+
 def test_weighted_ko_bonus_is_doubled_in_r32():
     # o bônus de KO também leva o peso de fase: pênaltis acertados = +3/+3 unit → ×2 = +12 no R32
     s = Scorer(ScoringConfig(system="sistema_i", risk=0.5))

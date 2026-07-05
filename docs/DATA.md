@@ -57,6 +57,7 @@ termos próprios, tratados aqui.
 | `shootouts.csv` (vencedores de pênaltis da edição, ENG-30) | **Sim** | Fato público e durável; captura manual da edição viva sob latência da fonte, verificada em ≥2 fontes. Distinto do `shootouts.csv` baixado do martj42 (ingestão, embutido no `historical_results.csv` gitignored) |
 | `regulation.csv` (placar de 90' de KO decidido na prorrogação, ENG-45) | **Sim** | Fato público e durável; captura manual (`match_id,reg_home,reg_away`) só quando o placar gravado inclui gol na ET e difere do 90'. Verificada em ≥2 fontes; usada pelo `efficiency.py` para pontuar o slot de 90' contra o tempo normal |
 | `history/<data>.{csv,md}` (runs **reais**) | **Sim** | Snapshots imutáveis e não-reproduzíveis |
+| `ceiling.csv` (cache do teto do `efficiency.py`, ENG-34) | **Sim** | Congela o teto por jogo na 1ª medição p/ a eficiência não oscilar entre rodagens; medição de campanha durável (como o `history/`) |
 | `data/historical_results.csv` (cache de treino) | **Não** (`.gitignore`) | Regenerável por `fetch-data` |
 | `out/`, `*.reconstruido.*`, caches | **Não** | Regeneráveis |
 | Chave da The Odds API | **Nunca** | Segredo — vive no `.env` |

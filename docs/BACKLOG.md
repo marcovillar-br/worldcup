@@ -61,7 +61,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-43](#eng-43) | P3 | observabilidade | 🔴 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
 | [ENG-44](#eng-44) | P2 | model/backtest | ✅ | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
 | [ENG-45](#eng-45) | P2 | efficiency/scoring | ✅ | KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar errado (teto infla) |
-| [ENG-46](#eng-46) | P3 | efficiency/pipeline | 🟡 | `archive_scores` é só de grupo ⇒ teto de KO congela da reconstrução (menos fiel que o snapshot real) |
+| [ENG-46](#eng-46) | P3 | efficiency/pipeline | ✅ | `archive_scores` é só de grupo ⇒ teto de KO congela da reconstrução (menos fiel que o snapshot real) |
 
 ---
 
@@ -1554,7 +1554,7 @@ como os shootouts sob latência. Testes: `test_load_regulation`,
 
 ## ENG-46
 **`archive_scores` só de grupo ⇒ teto de KO congela da reconstrução, não do snapshot real** · P3 ·
-`efficiency`/`pipeline` · 🟡 fazendo
+`efficiency`/`pipeline` · ✅ feito
 
 Extensão do ENG-34: no teto congelado, a hierarquia prefere o snapshot real de `history/`
 (`archive_scores`), mas `archive_scores` **pulava** o mata-mata (`if not f.is_group: continue`) —
@@ -1585,4 +1585,4 @@ disputados.
 **Aceite:** um KO de snapshot novo formato é pontuado pelo palpite arquivado (placar de 90' + bônus)
 e vira `source=archive` no `ceiling.csv`; KO de formato antigo é pulado; testes de
 `_parse_ko_layers` e `_archive_ko_points`. `pytest` verde (179).
-**Commit:** —
+**Commit:** 108bdfe

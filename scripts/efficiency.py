@@ -209,8 +209,51 @@ def _train(edition: Edition, historical):
     return build_training_frame(edition, historical)
 
 
-def archive_scores(edition: Edition) -> dict[int, float]:
-    """Pontua os snapshots REAIS arquivados (history/<data>.csv) — o que o tool de fato mostrou."""
+def _parse_ko_layers(prorrogacao: str, penaltis: str, home_disp: str, away_disp: str) -> tuple[str | None, str | None]:
+    """Inverso de `pipeline._ko_layer_text`: string renderizada → vocabulário do `Scorer` (ENG-46).
+
+    `prorrogacao` = nome do mandante/visitante (venceu na ET) ou "Vai aos pênaltis" (empate → pênaltis);
+    `penaltis` = nome do vencedor da disputa. Devolve `(extra_time, penalty_winner)` em `home`/`away`/
+    `penalties`. `—`/vazio ⇒ `(None, None)` (não deveria ocorrer num snapshot PREVISTO).
+    """
+    et: str | None
+    if prorrogacao == home_disp:
+        et = "home"
+    elif prorrogacao == away_disp:
+        et = "away"
+    elif prorrogacao.strip() and prorrogacao.strip() != "—":
+        et = "penalties"  # "Vai aos pênaltis"
+    else:
+        et = None
+    pen = "home" if penaltis == home_disp else ("away" if penaltis == away_disp else None)
+    return et, pen
+
+
+def _archive_ko_points(
+    row: dict, real90: tuple[int, int], act_et: str | None, act_pen: str | None, w: float, scorer: Scorer
+) -> float:
+    """Pontos de um jogo de KO a partir do snapshot **novo formato** (ENG-46): placar dos 90'
+    (palpite arquivado vs `real90`, base pelo 1×2 do 90' do snapshot) ×peso + bônus de ET/pênaltis
+    (camadas do snapshot vs o desfecho real já resolvido no `asof`)."""
+    pred = _parse_score(row["palpite"])
+    probs = (_pct(row["P_mandante"]), _pct(row["P_empate"]), _pct(row["P_visitante"]))
+    pts = scorer.weighted_points(pred, real90, probs, w)
+    if act_et is not None:
+        et_pred, pen_pred = _parse_ko_layers(row["prorrogacao"], row["penaltis"], row["mandante"], row["visitante"])
+        if et_pred is not None:
+            pts += scorer.knockout_bonus(et_pred, pen_pred, act_et, act_pen) * w
+    return pts
+
+
+def archive_scores(edition: Edition, asof: dict[int, dict] | None = None) -> dict[int, float]:
+    """Pontua os snapshots REAIS arquivados (history/<data>.csv) — o que o tool de fato mostrou.
+
+    Grupos: base+placar do palpite arquivado vs resultado real. Mata-mata (ENG-46): idem no placar dos
+    90' (vs `regulation_90`) com o peso de fase + o bônus de ET/pênaltis, **reusando o desfecho real
+    já computado no `asof`** (`act_et`/`act_pen`) — só o palpite (placar e camadas) vem do snapshot.
+    Só funciona em snapshot **novo formato** (P_empate/P_visitante do 90' preenchidos); KO de snapshot
+    antigo (P_* = P(avança), sem 1×2 do 90') é pulado — congela da reconstrução, como antes.
+    """
     scorer = Scorer(edition.scoring)
     hist = edition.directory / "history"
     out: dict[int, float] = {}
@@ -224,12 +267,20 @@ def archive_scores(edition: Edition) -> dict[int, float]:
             row = next((r for r in csv.DictReader(fh) if int(r["jogo"]) == f.match_id), None)
         if not row or row["status"] != "PREVISTO" or not row["P_mandante"].strip():
             continue  # naquele snapshot o jogo já era FINAL (run pós-jogo) — não serve
-        if not f.is_group:
-            continue  # bônus de mata-mata fora de escopo
-        pred = _parse_score(row["palpite"])
-        probs = (_pct(row["P_mandante"]), _pct(row["P_empate"]), _pct(row["P_visitante"]))
-        w = edition.scoring.weight(f.stage)  # ENG-27 (no-op nos grupos ×1; coerente se um dia incluir KO)
-        out[f.match_id] = scorer.weighted_points(pred, (f.home_goals, f.away_goals), probs, w)
+        w = edition.scoring.weight(f.stage)  # ENG-27: peso de fase (×1 grupo; ×2/×4 no KO)
+        if f.is_group:
+            pred = _parse_score(row["palpite"])
+            probs = (_pct(row["P_mandante"]), _pct(row["P_empate"]), _pct(row["P_visitante"]))
+            out[f.match_id] = scorer.weighted_points(pred, (f.home_goals, f.away_goals), probs, w)
+            continue
+        # Mata-mata (ENG-46): exige 1×2 do 90' no snapshot (novo formato) e o desfecho real do asof
+        if not row["P_empate"].strip() or not row["P_visitante"].strip():
+            continue  # snapshot antigo (P_* = P(avança)) — sem 1×2 do 90' p/ a base; pula
+        real90 = regulation_90(edition, f)
+        if asof is None or f.match_id not in asof or real90 is None:
+            continue
+        s = asof[f.match_id]
+        out[f.match_id] = _archive_ko_points(row, real90, s.get("act_et"), s.get("act_pen"), w, scorer)
     return out
 
 
@@ -318,7 +369,7 @@ def main(argv: list[str] | None = None) -> int:
 
     edition = load_edition(args.edition)
     scores = asof_scores(edition, args.sims)
-    archive = archive_scores(edition)  # ENG-34: fonte imutável preferida ao congelar (e p/ --compare-archive)
+    archive = archive_scores(edition, scores)  # ENG-34/46: fonte imutável preferida (grupos + KO novo formato)
 
     # ENG-34: teto headline congelado por jogo — estável entre rodagens (base/odds/código novos não
     # mudam o teto de um jogo já medido; divergências viram drift reportado, não substituição muda).

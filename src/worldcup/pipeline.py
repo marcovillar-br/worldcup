@@ -18,7 +18,7 @@ from .fetch_data import load_historical
 from .format_engine import MatrixCache, deterministic_bracket, monte_carlo
 from .knockout import predict_knockout
 from .model import DixonColesModel, FitConfig
-from .scoring import Scorer
+from .scoring import Scorer, outcome_probs_from_matrix
 from .teams import display
 
 if TYPE_CHECKING:
@@ -249,9 +249,16 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345, pool_behind: st
                 mode = pool_behind if pool_behind and max_weight else None
                 kp = predict_knockout(home, away, mat, scorer, pool_behind=mode)
                 et, pen = _ko_layer_text(kp, display(home), display(away))
+                # P_* = 1×2 do **90'** (como nos grupos), não mais P(avança) — uniformiza a semântica
+                # e deixa o snapshot carregar o 1×2 do 90' que o `efficiency.py` precisa p/ pontuar a
+                # base do palpite de 90' do KO a partir do snapshot real (ENG-46). O avanço fica em
+                # `avanca` (nome). Colunas P_* de KO são CSV-only (não exibidas nem lidas no ramo KO).
+                ph, pd_, pa = _pct_round(*outcome_probs_from_matrix(mat))
                 row.update(
                     palpite=kp.scoreline,
-                    P_mandante=f"{kp.p_advance_home * 100:.0f}%",  # P(mandante avança)
+                    P_mandante=f"{ph}%",
+                    P_empate=f"{pd_}%",
+                    P_visitante=f"{pa}%",
                     prorrogacao=et,
                     penaltis=pen,
                     avanca=display(kp.advancer),

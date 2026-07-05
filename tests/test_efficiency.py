@@ -126,6 +126,54 @@ def test_ceiling_cache_roundtrip(tmp_path):
     assert efficiency.load_ceiling(tmp_path / "nope.csv") == {}
 
 
+def test_parse_ko_layers():
+    # ENG-46: inverso de pipeline._ko_layer_text (string renderizada → vocabulário do Scorer)
+    assert efficiency._parse_ko_layers("Brasil", "Brasil", "Brasil", "Noruega") == ("home", "home")
+    assert efficiency._parse_ko_layers("Noruega", "Noruega", "Brasil", "Noruega") == ("away", "away")
+    assert efficiency._parse_ko_layers("Vai aos pênaltis", "Brasil", "Brasil", "Noruega") == ("penalties", "home")
+    assert efficiency._parse_ko_layers("—", "", "Brasil", "Noruega") == (None, None)
+
+
+def test_archive_ko_points_scoreline_plus_bonus():
+    # ENG-46: pontua o palpite de 90' do snapshot vs o placar real dos 90' + o bônus de ET (do asof).
+    # Palpite 1x1 (empate nos 90'), real 1x1 nos 90', foi aos pênaltis e o tool cravou o vencedor:
+    # base+exato do empate ×2 (R32) + bônus +3 ida pênaltis +3 vencedor, ×2.
+    s = Scorer(ScoringConfig(system="sistema_i", risk=0.5))
+    row = {
+        "palpite": "1x1",
+        "P_mandante": "30%",
+        "P_empate": "40%",
+        "P_visitante": "30%",
+        "prorrogacao": "Vai aos pênaltis",
+        "penaltis": "Brasil",
+        "mandante": "Brasil",
+        "visitante": "Noruega",
+    }
+    pts_hit = efficiency._archive_ko_points(row, (1, 1), "penalties", "home", 2.0, s)
+    pts_no_bonus = efficiency._archive_ko_points(row, (1, 1), None, None, 2.0, s)
+    assert pts_hit == pts_no_bonus + s.knockout_bonus("penalties", "home", "penalties", "home") * 2.0
+    assert pts_hit > pts_no_bonus  # o bônus de ET/pênaltis entra
+
+
+def test_archive_ko_points_uses_90_score_not_recorded():
+    # o palpite é pontuado contra o placar dos 90' passado (real90), não o placar-com-ET
+    s = Scorer(ScoringConfig(system="sistema_i", risk=0.5))
+    row = {
+        "palpite": "2x1",
+        "P_mandante": "50%",
+        "P_empate": "25%",
+        "P_visitante": "25%",
+        "prorrogacao": "—",
+        "penaltis": "—",
+        "mandante": "Bélgica",
+        "visitante": "Senegal",
+    }
+    # contra 2x2 (empate nos 90') o palpite 2x1 erra o resultado; contra 3x2 acertaria o vencedor
+    assert efficiency._archive_ko_points(row, (2, 2), None, None, 2.0, s) < efficiency._archive_ko_points(
+        row, (3, 2), None, None, 2.0, s
+    )
+
+
 def test_weighted_ko_bonus_is_doubled_in_r32():
     # o bônus de KO também leva o peso de fase: pênaltis acertados = +3/+3 unit → ×2 = +12 no R32
     s = Scorer(ScoringConfig(system="sistema_i", risk=0.5))

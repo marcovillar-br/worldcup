@@ -61,6 +61,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-43](#eng-43) | P3 | observabilidade | 🔴 | Nenhuma métrica vigia se o modelo ingeriu os resultados recentes (staleness da base é silenciosa) |
 | [ENG-44](#eng-44) | P2 | model/backtest | ✅ | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
 | [ENG-45](#eng-45) | P2 | efficiency/scoring | ✅ | KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar errado (teto infla) |
+| [ENG-46](#eng-46) | P3 | efficiency/pipeline | ✅ | `archive_scores` é só de grupo ⇒ teto de KO congela da reconstrução (menos fiel que o snapshot real) |
 
 ---
 
@@ -1550,3 +1551,38 @@ como os shootouts sob latência. Testes: `test_load_regulation`,
 `test_as_of_drops_future_regulation`, `test_regulation_90_*`,
 `test_eng45_et_goal_scored_against_90_and_gets_bonus`. 171 testes verdes.
 **Commit:** 43006e7
+
+## ENG-46
+**`archive_scores` só de grupo ⇒ teto de KO congela da reconstrução, não do snapshot real** · P3 ·
+`efficiency`/`pipeline` · ✅ feito
+
+Extensão do ENG-34: no teto congelado, a hierarquia prefere o snapshot real de `history/`
+(`archive_scores`), mas `archive_scores` **pulava** o mata-mata (`if not f.is_group: continue`) —
+então todo jogo de KO congelava da **reconstrução** (menos fiel: o placar de 90' reconstruído
+diverge do que o tool mostrou naquela manhã; ver os +31 de ruído do `--compare-archive`). Como o KO
+carrega o peso de fase **×2/×4**, é onde a fidelidade mais importa.
+
+Dois blockers levantados na investigação (2026-07-05): (a) o snapshot guardava, para KO,
+`P_mandante = P(avança)` com `P_empate`/`P_visitante` **vazios** — **sem o 1×2 do 90'** que a base
+do palpite de 90' exige; (b) o palpite de ET/pênaltis vive como **string renderizada** no snapshot.
+
+**Refs:** `efficiency.archive_scores`, `efficiency.reconcile_ceiling` (ENG-34),
+`pipeline.run` (ramo de KO), `pipeline._ko_layer_text`, `efficiency.regulation_90` (ENG-45).
+**Resolução.** (1) `pipeline` passa a gravar o **1×2 do 90'** (de `outcome_probs_from_matrix`) em
+`P_mandante`/`P_empate`/`P_visitante` do KO — uniformiza a semântica (P_* = 1×2 do 90' p/ todos) e é
+seguro (essas colunas de KO são CSV-only: não exibidas nem lidas no ramo KO; o avanço fica em
+`avanca`). (2) `archive_scores(edition, asof)` pontua o KO de snapshot **novo formato**
+(`P_empate`/`P_visitante` preenchidos): placar de 90' (palpite arquivado vs `regulation_90`, base
+pelo 1×2 do snapshot) ×peso + bônus de ET/pênaltis, **reusando o desfecho real do `asof`**
+(`act_et`/`act_pen`) — só o palpite vem do snapshot. `_parse_ko_layers` inverte o
+`_ko_layer_text` (robusto: usa os nomes de exibição do próprio snapshot). `_archive_ko_points`
+(puro) isola a pontuação, testável.
+**Limitação honesta:** só ajuda KO **arquivado a partir de agora** — snapshots passados de KO
+(R32/R16 já jogados) têm o formato antigo e **não** têm o 1×2 do 90', então continuam congelando da
+reconstrução. Para a 2026, beneficia QF em diante (os jogos de maior peso). O snapshot de 05/07 foi
+re-arquivado no novo formato (91–104 PREVISTO), então os R16 de hoje já entram por `archive` quando
+disputados.
+**Aceite:** um KO de snapshot novo formato é pontuado pelo palpite arquivado (placar de 90' + bônus)
+e vira `source=archive` no `ceiling.csv`; KO de formato antigo é pulado; testes de
+`_parse_ko_layers` e `_archive_ko_points`. `pytest` verde (179).
+**Commit:** 108bdfe

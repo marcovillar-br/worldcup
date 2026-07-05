@@ -11,6 +11,7 @@ from __future__ import annotations
 import logging
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from io import StringIO
 from pathlib import Path
@@ -60,7 +61,15 @@ def _require_columns(df: pd.DataFrame, expected: list[str], source: str) -> None
 
 
 def _download_text(url: str, timeout: int, retries: int = 1) -> str:
-    """Baixa o texto de uma URL, com 1 retry, traduzindo falha de rede em `NetworkError`."""
+    """Baixa o texto de uma URL, com 1 retry, traduzindo falha de rede em `NetworkError`.
+
+    Só aceita `http`/`https`: bloqueia `file://` (leitura de arquivo local), `ftp://` e afins que o
+    `urllib` suporta — a URL vem da flag `--source-url` (ver `cli`), então restringir o esquema é
+    defesa em profundidade contra apontar o downloader para um recurso não-HTTP.
+    """
+    scheme = urllib.parse.urlparse(url).scheme.lower()
+    if scheme not in ("http", "https"):
+        raise NetworkError(f"Esquema de URL não suportado: {scheme or '(vazio)'!r} em {url}. Use http/https.")
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 worldcup"})
     last_err: Exception | None = None
     for attempt in range(retries + 1):

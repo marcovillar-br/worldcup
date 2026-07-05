@@ -125,12 +125,6 @@ class Edition(BaseModel):
     def hosts(self) -> list[str]:
         return self.spec.hosts
 
-    def team_group(self, team: str) -> str | None:
-        for g, ts in self.groups.items():
-            if team in ts:
-                return g
-        return None
-
     def group_fixtures(self) -> list[Fixture]:
         return [f for f in self.fixtures if f.is_group]
 

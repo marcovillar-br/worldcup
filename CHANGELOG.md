@@ -20,7 +20,20 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   ajuste; base em dia ⇒ silêncio. Cobertura: `ingestion_gaps` (saudável + KO não resolvido) e o
   alerta no `format_status`.
 
+### Removido
+- **Código morto** (auditoria de limpeza, 2026-07-05): `DixonColesModel.outcome_probs`
+  (duplicava a lógica de `scoring.outcome_probs_from_matrix` — todos os chamadores usam a versão
+  do `scoring`; implementação paralela era risco de divergência) e `Edition.team_group` (zero usos
+  em código, testes e docs). Mantidos de propósito: `backtest.pooled_draw_calibration` (sem
+  chamador em código, mas é a ferramenta citada como evidência do ENG-18 em `docs/SPEC.md`,
+  `docs/MODEL_CARD.md` e `AGENTS.md` — removê-la tornaria o veredito irreprodutível) e os scripts
+  de análise documentados (`eng36_pool_sim.py`, `build_presentation.py`).
+
 ### Alterado
+- **`advance_per_group` agora é lido pelo motor de simulação**: o campo do `tournament.toml` era
+  validado mas nunca usado — `format_engine.simulate` fixava top-2 (`st[:2]`) no contador de
+  `advance_prob`. Passa a usar `spec.advance_per_group` (comportamento idêntico na 2026, que usa
+  2); os slots `1A`/`2A` do chaveamento seguem vindo do `fixtures.csv`, como antes.
 - **`edition_boost` calibrado com dado e virou config por edição** (ENG-44): o peso dos jogos
   disputados da edição no ajuste era a constante de código `CURRENT_EDITION_BOOST = 6.0`, nunca
   validada. Novo `blend-track --boost-sweep` mede o Brier as-of do modelo por valor de boost; na

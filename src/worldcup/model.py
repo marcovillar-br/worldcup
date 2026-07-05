@@ -237,16 +237,6 @@ class DixonColesModel:
         mat = np.clip(mat, 0, None)
         return mat / mat.sum()
 
-    def outcome_probs(
-        self, home: str, away: str, neutral: bool = True, host_away: bool = False
-    ) -> tuple[float, float, float]:
-        """(P(vitória mandante), P(empate), P(vitória visitante))."""
-        m = self.score_matrix(home, away, neutral, host_away=host_away)
-        p_home = float(np.tril(m, -1).sum())
-        p_draw = float(np.trace(m))
-        p_away = float(np.triu(m, 1).sum())
-        return p_home, p_draw, p_away
-
 
 def _tau(x: np.ndarray, y: np.ndarray, lam: np.ndarray, mu: np.ndarray, rho: float) -> np.ndarray:
     """Correção Dixon–Coles para dependência em placares baixos (vetorizada)."""

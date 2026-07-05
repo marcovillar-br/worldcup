@@ -112,3 +112,17 @@ def test_format_always_asks_for_user_points():
     out = format_status(r)
     assert "PRECISA DE VOCÊ" in out
     assert "efficiency.py" in out
+
+
+def test_status_flags_fit_gaps():
+    # ENG-43: jogos disputados fora do ajuste aparecem como alerta de staleness no briefing
+    ed = _edition([_fx(1, "2026-06-11", "Mexico", "South Africa", hg=2, ag=0)])
+    out = format_status(build_status(ed, {}, "2026-07-05", None, fit_gaps=[99, 100]))
+    assert "FORA do ajuste" in out
+    assert "J99" in out
+    assert "J100" in out
+
+
+def test_status_silent_without_fit_gaps():
+    ed = _edition([_fx(1, "2026-06-11", "Mexico", "South Africa", hg=2, ag=0)])
+    assert "FORA do ajuste" not in format_status(build_status(ed, {}, "2026-07-05", None))

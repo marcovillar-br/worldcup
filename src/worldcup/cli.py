@@ -24,7 +24,7 @@ from pathlib import Path
 
 from .edition import EDITIONS_DIR, load_edition
 from .fetch_data import DEFAULT_CUTOFF, DEFAULT_URL, DataSourceError, NetworkError, fetch
-from .pipeline import PredictionRun, run
+from .pipeline import PredictionRun, ingestion_gaps, run
 from .render import CSV_COLUMNS, render_html, render_markdown
 
 OUT_DIR = Path(__file__).resolve().parent.parent.parent / "out"
@@ -166,6 +166,14 @@ def cmd_predict(args: argparse.Namespace) -> int:
         print(f"\n🗄️  Snapshot reconstruído: {a_csv}")
         return 0
 
+    gaps = ingestion_gaps(edition)
+    if gaps:  # ENG-43: resultado disputado que não entrou no ajuste (slot de KO não resolvido)
+        ids = ", ".join(f"J{m}" for m in gaps)
+        print(
+            f"⚠️  {len(gaps)} jogo(s) disputado(s) FORA do ajuste do modelo: {ids} — a base pode estar "
+            "stale (bracket de KO não resolvido). Verifique o fixtures antes de confiar no palpite."
+        )
+
     print(f"⚙️  Gerando palpites de {edition.spec.name} ({args.sims} simulações)...")
     if args.pool_behind == "empate":
         print(
@@ -272,7 +280,9 @@ def cmd_status(args: argparse.Namespace) -> int:
     except ValueError:
         print(f"❌ --date inválido: {today!r}. Use AAAA-MM-DD.", file=sys.stderr)
         return 1
-    report = build_status(edition, _load_picks(args.edition), today, _read_standing(args.edition))
+    report = build_status(
+        edition, _load_picks(args.edition), today, _read_standing(args.edition), fit_gaps=ingestion_gaps(edition)
+    )
     print(format_status(report))
     return 0
 

@@ -173,3 +173,19 @@ def test_build_training_frame_feeds_knockout_with_boost():
     match = train[key == (str(played_ko.date)[:10], frozenset((home, away)))]
     assert len(match) == 1  # entra pelos nomes reais, uma vez
     assert match.iloc[0]["weight_mult"] == 5.0  # entra no frame boostado (não filtrado como slot órfão)
+
+
+def test_ingestion_gaps_healthy_edition_is_empty():
+    # ENG-43: na 2026 real o bracket resolve todo KO disputado ⇒ nenhum jogo fica fora do ajuste
+    assert pipeline.ingestion_gaps(load_edition(2026)) == []
+
+
+def test_ingestion_gaps_flags_unresolved_ko(monkeypatch):
+    # bracket vazio ⇒ nenhum KO resolve ⇒ os KO disputados caem fora do ajuste; grupos (times reais) não
+    ed = load_edition(2026)
+    monkeypatch.setattr("worldcup.sync.resolve_live_bracket", lambda e: {})
+    gaps = set(pipeline.ingestion_gaps(ed))
+    played_ko = {f.match_id for f in ed.fixtures if f.played and not f.is_group}
+    played_group = {f.match_id for f in ed.fixtures if f.played and f.is_group}
+    assert gaps == played_ko  # todo KO disputado vira gap
+    assert not (gaps & played_group)  # nenhum grupo vira gap

@@ -11,6 +11,15 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
+### Adicionado
+- **Vigia de staleness do ajuste** (ENG-43): `pipeline.ingestion_gaps(edition)` lista jogos
+  **disputados** que não entraram no ajuste do modelo — quando um KO disputado não resolve os slots
+  (`resolve_live_bracket`), ele era filtrado pelo `.isin(edition.teams)` de `build_training_frame`
+  **em silêncio** (a falha que segurou ENG-41/42 por semanas: o caminho de grupo mascarava o de KO
+  quebrado). Agora `worldcup predict` e `worldcup status` **avisam** identificando os jogos fora do
+  ajuste; base em dia ⇒ silêncio. Cobertura: `ingestion_gaps` (saudável + KO não resolvido) e o
+  alerta no `format_status`.
+
 ### Alterado
 - **`edition_boost` calibrado com dado e virou config por edição** (ENG-44): o peso dos jogos
   disputados da edição no ajuste era a constante de código `CURRENT_EDITION_BOOST = 6.0`, nunca

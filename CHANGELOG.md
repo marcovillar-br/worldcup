@@ -135,6 +135,23 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   via fixtures (casa por data + par não-ordenado de seleções; o resultado autoritativo é o do
   fixture). Efeito na edição 2026: favorita ao título de Argentina 31%→24,8% (número correto).
   Regressão coberta por `test_build_training_frame_no_double_count`.
+- **Apresentação do projeto defasada** (`build_presentation.py`, 2026-07-05): conteúdo curado
+  parado em 28/06 (fase de grupos) e o blend ainda citava "peso 0,6" — mesma classe de drift da
+  auditoria documental, agora no deck. Atualizado para 05/07 (90/104 jogos, 363 pts acumulados,
+  ~100% de eficiência, favoritos ao título recalibrados, peso do blend 0,8, jogos a observar do
+  mata-mata em andamento, contagem de melhorias de engenharia 23→43). `docs/apresentacao.html`
+  (cópia versionada) e `out/apresentacao.html` regenerados.
+- **Favoritos ao título repetidos nos slides 9 e 10** (`build_presentation.py`, 2026-07-05): o
+  painel "o que esperar" do slide 10 chamava `champ_bars()` sem argumento, reproduzindo
+  **idênticos** os mesmos 5 favoritos já mostrados no slide 9 logo antes — pré-existente (antes
+  mostrava um top-3 truncado dos mesmos números) e agravado ao atualizar os dados hoje. Trocado
+  pelo trajeto projetado do favorito até a final (QF/SF, com as probabilidades de cada jogo) —
+  informação nova, não a mesma repetida.
+- **Aba do navegador da apresentação sem ícone e com título genérico** (`build_presentation.py`):
+  sem favicon e `<title>` só "apresentação do projeto". Adicionado favicon SVG inline (data URI,
+  sem asset externo) com o ⚽ da marca do cabeçalho do deck (o `<title>` não repete o emoji, que
+  fica só no ícone da aba); título trocado para `worldcup - O palpite inteligente`, ecoando o
+  subtítulo do slide de capa.
 
 ### Alterado
 - **`--pool-behind` agora gera EMPATE na final por default; zebra vira opção** (ENG-40):

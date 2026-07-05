@@ -12,7 +12,7 @@ Características:
   - **Contadores animados** nos números de resultado; **modo impressão/PDF** (1 slide por página).
   - Visual **SVG-first** (vetorial, nítido em qualquer escala); sem imagens externas.
 
-Conteúdo curado (números "até 28/06/2026"); para atualizar, edite as constantes abaixo e rode de novo.
+Conteúdo curado (números "até 05/07/2026"); para atualizar, edite as constantes abaixo e rode de novo.
 
 Uso: `uv run python scripts/build_presentation.py [--out PATH] [--docs]`
   --out   destino do HTML (default: out/apresentacao.html, gitignored/regenerável)
@@ -31,7 +31,7 @@ DEFAULT_OUT = PROJECT_ROOT / "out" / "apresentacao.html"
 DOCS_OUT = PROJECT_ROOT / "docs" / "apresentacao.html"
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
-AS_OF = "28 jun 2026"
+AS_OF = "05 jul 2026"
 VERSION = "v0.2.0"
 
 
@@ -160,9 +160,9 @@ def bar_compare() -> str:
 
 
 def champ_bars(teams: list[tuple[str, int]] | None = None) -> str:
-    """Favoritos ao título (Monte Carlo, até 28/06 — fase de grupos encerrada)."""
+    """Favoritos ao título (Monte Carlo, até 05/07 — oitavas de final em andamento)."""
     if teams is None:
-        teams = [("Argentina", 30), ("Espanha", 20), ("França", 12), ("Brasil", 9), ("Portugal", 7)]
+        teams = [("Argentina", 23), ("Espanha", 19), ("França", 15), ("Brasil", 11), ("Inglaterra", 9)]
     out = ['<div class="champ">']
     for name, pct in teams:
         out.append(
@@ -320,7 +320,7 @@ def build_slides() -> list[Slide]:
         <div class="flow">
           <span class="fstep">odds da casa</span><span class="farr">→</span>
           <span class="fstep">tira a margem<small>(des-vig)</small></span><span class="farr">→</span>
-          <span class="fstep accent">funde com o modelo<small>(peso 0,6)</small></span><span class="farr">→</span>
+          <span class="fstep accent">funde com o modelo<small>(peso 0,8)</small></span><span class="farr">→</span>
           <span class="fstep">palpite mais preciso</span>
         </div>
         <p class="muted">Sem odds? O modelo roda sozinho — <b>degradação graciosa</b>. {_IC_REFRESH}</p>
@@ -373,11 +373,11 @@ def build_slides() -> list[Slide]:
             f"Resultados · campanha 2026 ({AS_OF})",
             f"""
       <div class="center">
-        <h2>A campanha 2026 — fase de grupos encerrada</h2>
+        <h2>A campanha 2026 — oitavas de final em andamento</h2>
         <div class="stats">
-          {stat("2", "2", "lugar de 60", suffix="º")}
-          {stat("235", "235", "pontos (72 de 104 jogos)")}
-          {stat("103", "103", "de eficiência*", suffix="%")}
+          {stat("90", "90", "de 104 jogos disputados")}
+          {stat("363", "363", "pontos acumulados")}
+          {stat("100", "100", "de eficiência*", suffix="%")}
         </div>
         <p class="muted">*eficiência ≈ quanto dos pontos que o tool renderia você capturou (segue o blend).</p>
         <div class="champwrap"><div class="cwtitle">{_IC_TROPHY} favoritos ao título</div>{champ_bars()}</div>
@@ -385,13 +385,13 @@ def build_slides() -> list[Slide]:
         )
     )
 
-    # 9b — balanço da fase de grupos + expectativa do mata-mata
+    # 9b — balanço da fase de grupos + mata-mata em andamento
     s.append(
         Slide(
             "Balanço · fase de grupos",
             f"""
       <div class="center">
-        <h2>72 jogos depois: o <span class="accent">mapa do mata-mata</span></h2>
+        <h2>72 jogos depois (28/06): o <span class="accent">mapa do mata-mata</span></h2>
         <div class="row2">
           <div class="panel">
             <div class="ptitle">{_IC_BALL} a fase de grupos</div>
@@ -405,11 +405,18 @@ def build_slides() -> list[Slide]:
               "zebra vale mais" na prática.</p>
           </div>
           <div class="panel">
-            <div class="ptitle">{_IC_TROPHY} o que esperar</div>
-            {champ_bars([("Argentina", 30), ("Espanha", 20), ("França", 12)])}
-            <p class="muted">final prevista: <b>Espanha × Argentina</b> → <b class="accent">Argentina</b> campeã.</p>
-            <p class="muted">jogos para ficar de olho: <b>Brasil × Japão</b>, Holanda × Marrocos (57%),
-              Costa do Marfim × Noruega (52%).</p>
+            <div class="ptitle">{_IC_TROPHY} o que esperar ({AS_OF})</div>
+            <div class="flow">
+              <span class="fstep accent">Argentina</span><span class="farr">→</span>
+              <span class="fstep">bate Colômbia<small>(QF, 45%)</small></span><span class="farr">→</span>
+              <span class="fstep">bate Brasil<small>(SF, 41%)</small></span><span class="farr">→</span>
+              <span class="fstep">disputa a final<small>× Espanha</small></span>
+            </div>
+            <p class="muted">favorita ao título no agregado (Monte Carlo, slide anterior):
+              <b class="accent">Argentina</b> — o caminho jogo a jogo acima é só um retrato, não
+              o mais provável somado.</p>
+            <p class="muted">jogos para ficar de olho: <b>Brasil × Inglaterra</b> (QF, quase par),
+              Portugal × Espanha (oitavas), EUA × Bélgica (oitavas).</p>
           </div>
         </div>
         <p class="muted">Agora cada jogo do mata-mata vale <b>2× / 4×</b> — é onde o bolão se decide.</p>
@@ -510,7 +517,7 @@ def build_slides() -> list[Slide]:
                     ]
                 )
             }
-        <p class="muted">Hoje: <b>23 melhorias de engenharia entregues</b>, cobertura de testes 86%,
+        <p class="muted">Hoje: <b>43 melhorias de engenharia entregues</b>, cobertura de testes 86%,
           CI em duas versões de Python. Rigor é consequência das lições, não enfeite.</p>
       </div>""",
         )
@@ -866,7 +873,10 @@ def render_presentation(slides: list[Slide]) -> str:
         "<!doctype html>\n"
         '<html lang="pt-BR"><head><meta charset="utf-8">\n'
         '<meta name="viewport" content="width=device-width, initial-scale=1">\n'
-        "<title>worldcup — apresentação do projeto</title>\n"
+        "<title>worldcup - O palpite inteligente</title>\n"
+        '<link rel="icon" href="data:image/svg+xml,'
+        "<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22>"
+        '<text y=%22.9em%22 font-size=%2290%22>%E2%9A%BD</text></svg>">\n'
         f"<style>{_CSS}</style>\n"
         "</head><body>\n"
         '<div class="stage">\n'

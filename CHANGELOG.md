@@ -22,6 +22,17 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (Argentina 12,9% / Espanha 29,1%). Cobertura: `test_blend_track_boost_sweep`.
 
 ### Corrigido
+- **Teto de KO congelava da reconstrução, não do snapshot real** (ENG-46, extensão do ENG-34): a
+  hierarquia do teto congelado prefere o snapshot de `history/`, mas `archive_scores` pulava o
+  mata-mata — então KO (peso ×2/×4, onde a fidelidade mais importa) congelava sempre da
+  reconstrução. Dois blockers: o snapshot guardava `P_mandante=P(avança)` (sem o 1×2 do **90'** que
+  a base exige) e o palpite de ET/pênaltis como string. Agora o `pipeline` grava o **1×2 do 90'** em
+  `P_mandante/P_empate/P_visitante` do KO (uniformiza a semântica; colunas CSV-only, sem regressão
+  de display) e `archive_scores(edition, asof)` pontua o KO de snapshot **novo formato** (placar 90'
+  vs `regulation_90` + bônus de ET/pênaltis, reusando o desfecho real do `asof`). `_parse_ko_layers`
+  inverte `_ko_layer_text`. **Limitação:** só ajuda KO arquivado **a partir de agora** (snapshots
+  antigos não têm o 1×2 do 90'); na 2026 beneficia QF em diante. Cobertura: `_parse_ko_layers` +
+  `_archive_ko_points` em `test_efficiency`.
 - **Teto do `efficiency.py` instável entre rodagens** (ENG-34): o headline (teto/eficiência) vinha
   da reconstrução as-of, que re-roda o modelo com base/odds/código **atuais** — então o teto de um
   jogo **já medido** mudava a cada rodagem e a "eficiência" oscilava sem o usuário mexer em nada

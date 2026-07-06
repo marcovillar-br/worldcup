@@ -31,7 +31,7 @@ DEFAULT_OUT = PROJECT_ROOT / "out" / "apresentacao.html"
 DOCS_OUT = PROJECT_ROOT / "docs" / "apresentacao.html"
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
-AS_OF = "05 jul 2026"
+AS_OF = "06 jul 2026"
 VERSION = "v0.2.0"
 
 
@@ -162,7 +162,7 @@ def bar_compare() -> str:
 def champ_bars(teams: list[tuple[str, int]] | None = None) -> str:
     """Favoritos ao título (Monte Carlo, até 05/07 — oitavas de final em andamento)."""
     if teams is None:
-        teams = [("Argentina", 23), ("Espanha", 19), ("França", 15), ("Brasil", 11), ("Inglaterra", 9)]
+        teams = [("Argentina", 23), ("Espanha", 19), ("Inglaterra", 15), ("França", 15), ("Marrocos", 8)]
     out = ['<div class="champ">']
     for name, pct in teams:
         out.append(
@@ -375,9 +375,9 @@ def build_slides() -> list[Slide]:
       <div class="center">
         <h2>A campanha 2026 — oitavas de final em andamento</h2>
         <div class="stats">
-          {stat("90", "90", "de 104 jogos disputados")}
-          {stat("363", "363", "pontos acumulados")}
-          {stat("100", "100", "de eficiência*", suffix="%")}
+          {stat("92", "92", "de 104 jogos disputados")}
+          {stat("375", "375", "pontos acumulados")}
+          {stat("100.5", "100.5", "de eficiência*", suffix="%")}
         </div>
         <p class="muted">*eficiência ≈ quanto dos pontos que o tool renderia você capturou (segue o blend).</p>
         <div class="champwrap"><div class="cwtitle">{_IC_TROPHY} favoritos ao título</div>{champ_bars()}</div>
@@ -409,14 +409,14 @@ def build_slides() -> list[Slide]:
             <div class="flow">
               <span class="fstep accent">Argentina</span><span class="farr">→</span>
               <span class="fstep">bate Colômbia<small>(QF, 45%)</small></span><span class="farr">→</span>
-              <span class="fstep">bate Brasil<small>(SF, 41%)</small></span><span class="farr">→</span>
+              <span class="fstep">bate Inglaterra<small>(SF, 41%)</small></span><span class="farr">→</span>
               <span class="fstep">disputa a final<small>× Espanha</small></span>
             </div>
             <p class="muted">favorita ao título no agregado (Monte Carlo, slide anterior):
               <b class="accent">Argentina</b> — o caminho jogo a jogo acima é só um retrato, não
               o mais provável somado.</p>
-            <p class="muted">jogos para ficar de olho: <b>Brasil × Inglaterra</b> (QF, quase par),
-              Portugal × Espanha (oitavas), EUA × Bélgica (oitavas).</p>
+            <p class="muted">jogos para ficar de olho: <b>Noruega × Inglaterra</b> (QF, 11/07),
+              Portugal × Espanha (oitavas, hoje), EUA × Bélgica (oitavas, hoje).</p>
           </div>
         </div>
         <p class="muted">Agora cada jogo do mata-mata vale <b>2× / 4×</b> — é onde o bolão se decide.</p>
@@ -436,9 +436,9 @@ def build_slides() -> list[Slide]:
             <div class="ptitle">{_IC_CHART} Erro de previsão (Brier · menor = melhor)</div>
             <div class="vs">
               <div class="vrow"><span>modelo puro</span><span class="vtrack"><i style="width:100%"
-                class="away"></i></span><b>0,442</b></div>
-              <div class="vrow"><span>com blend</span><span class="vtrack"><i style="width:95%"
-                class="home"></i></span><b class="accent">0,418</b></div>
+                class="away"></i></span><b>0,409</b></div>
+              <div class="vrow"><span>com blend</span><span class="vtrack"><i style="width:99%"
+                class="home"></i></span><b class="accent">0,407</b></div>
             </div>
             <p class="muted">49 jogos rastreados · o blend reduz o erro a cada rodada.</p>
           </div>
@@ -517,7 +517,7 @@ def build_slides() -> list[Slide]:
                     ]
                 )
             }
-        <p class="muted">Hoje: <b>43 melhorias de engenharia entregues</b>, cobertura de testes 86%,
+        <p class="muted">Hoje: <b>91 melhorias de engenharia entregues</b>, cobertura de testes 86%,
           CI em duas versões de Python. Rigor é consequência das lições, não enfeite.</p>
       </div>""",
         )

@@ -12,8 +12,17 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-06)
+## Estado atual (atualizado em 2026-07-07)
 
+- **94 de 104 jogos disputados (J1–J94).** Em 07/07 fecharam as últimas duas oitavas:
+  **J93 Portugal 0×1 Espanha** (tool acertou o lado, 1×2, mas não o placar exato) e
+  **J94 Estados Unidos 1×4 Bélgica** (tool tinha palpitado 2×1 EUA nos 90', mas o campo
+  "avança" — camada independente — já cravava Bélgica; confirmado). Hoje 07/07 jogam as duas
+  últimas oitavas: **J95 Argentina × Egito** (palpite 2×0, Argentina avança) e
+  **J96 Suíça × Colômbia** (palpite 1×2, Colômbia avança). Candidatos a campeão agora:
+  **Espanha 31,2%** (ultrapassou a Argentina), Argentina 22,4%, Inglaterra 14,2%, França 13,3%,
+  Marrocos 6,3%. `odds.csv` com **71 jogos** (fetch de 07/07: +1 novo, 4 atualizados). Config:
+  `risk 0.5` + `blend 0.8`.
 - **92 de 104 jogos disputados (J1–J92).** Em 06/07 fecharam as duas primeiras oitavas:
   **J91 Brasil 0×2 Noruega** (zebra — tool tinha palpitado 2×1 Brasil; **Brasil eliminado**) e
   **J92 México 2×3 Inglaterra** (tool acertou o lado, 1×2, mas não o placar exato). Hoje 06/07

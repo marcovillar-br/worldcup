@@ -91,8 +91,8 @@ match_id,stage,group,date,home,away,neutral,third_groups,home_goals,away_goals,k
 90,R16,,2026-07-04,W74,W77,True,,0,1,France
 91,R16,,2026-07-05,W76,W78,True,,0,2,Norway
 92,R16,,2026-07-05,W79,W80,True,,2,3,England
-93,R16,,2026-07-06,W83,W84,True,,,,
-94,R16,,2026-07-06,W81,W82,True,,,,
+93,R16,,2026-07-06,W83,W84,True,,0,1,Spain
+94,R16,,2026-07-06,W81,W82,True,,1,4,Belgium
 95,R16,,2026-07-07,W86,W88,True,,,,
 96,R16,,2026-07-07,W85,W87,True,,,,
 97,QF,,2026-07-09,W89,W90,True,,,,

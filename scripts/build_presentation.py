@@ -31,7 +31,7 @@ DEFAULT_OUT = PROJECT_ROOT / "out" / "apresentacao.html"
 DOCS_OUT = PROJECT_ROOT / "docs" / "apresentacao.html"
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
 
-AS_OF = "06 jul 2026"
+AS_OF = "07 jul 2026"
 VERSION = "v0.2.0"
 
 
@@ -162,7 +162,7 @@ def bar_compare() -> str:
 def champ_bars(teams: list[tuple[str, int]] | None = None) -> str:
     """Favoritos ao título (Monte Carlo, até 05/07 — oitavas de final em andamento)."""
     if teams is None:
-        teams = [("Argentina", 23), ("Espanha", 19), ("Inglaterra", 15), ("França", 15), ("Marrocos", 8)]
+        teams = [("Espanha", 31), ("Argentina", 22), ("Inglaterra", 14), ("França", 13), ("Marrocos", 6)]
     out = ['<div class="champ">']
     for name, pct in teams:
         out.append(
@@ -375,8 +375,8 @@ def build_slides() -> list[Slide]:
       <div class="center">
         <h2>A campanha 2026 — oitavas de final em andamento</h2>
         <div class="stats">
-          {stat("92", "92", "de 104 jogos disputados")}
-          {stat("375", "375", "pontos acumulados")}
+          {stat("94", "94", "de 104 jogos disputados")}
+          {stat("385", "385", "pontos acumulados")}
           {stat("100.5", "100.5", "de eficiência*", suffix="%")}
         </div>
         <p class="muted">*eficiência ≈ quanto dos pontos que o tool renderia você capturou (segue o blend).</p>
@@ -416,7 +416,7 @@ def build_slides() -> list[Slide]:
               <b class="accent">Argentina</b> — o caminho jogo a jogo acima é só um retrato, não
               o mais provável somado.</p>
             <p class="muted">jogos para ficar de olho: <b>Noruega × Inglaterra</b> (QF, 11/07),
-              Portugal × Espanha (oitavas, hoje), EUA × Bélgica (oitavas, hoje).</p>
+              Argentina × Egito (oitavas, hoje), Suíça × Colômbia (oitavas, hoje).</p>
           </div>
         </div>
         <p class="muted">Agora cada jogo do mata-mata vale <b>2× / 4×</b> — é onde o bolão se decide.</p>

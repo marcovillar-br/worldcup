@@ -22,7 +22,8 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   **J96 Suíça × Colômbia** (palpite 1×2, Colômbia avança). Candidatos a campeão agora:
   **Espanha 31,2%** (ultrapassou a Argentina), Argentina 22,4%, Inglaterra 14,2%, França 13,3%,
   Marrocos 6,3%. `odds.csv` com **71 jogos** (fetch de 07/07: +1 novo, 4 atualizados). Config:
-  `risk 0.5` + `blend 0.8`.
+  `risk 0.5` + `blend 0.8`. **Seus pontos (07/07): 385, 13º** — eficiência 100,5% do teto do tool
+  (383); líder **443** segue acima do teto (variância de exatos no KO, não estratégia melhor).
 - **92 de 104 jogos disputados (J1–J92).** Em 06/07 fecharam as duas primeiras oitavas:
   **J91 Brasil 0×2 Noruega** (zebra — tool tinha palpitado 2×1 Brasil; **Brasil eliminado**) e
   **J92 México 2×3 Inglaterra** (tool acertou o lado, 1×2, mas não o placar exato). Hoje 06/07
@@ -162,6 +163,15 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
+- 2026-07-07
+  — **Eficiência (94 jogos): 100,5% do teto do tool** (seus 385 / teto 383, as-of risk 0.5 + blend
+  0.8). Subiu para **13º** no ranking. Teto teórico (oráculo) 1011; captura do tool sobre o
+  teórico 37,9% (resto é ruído irredutível). **Líder 443 está ACIMA do teto do tool (383)** — nem
+  seguir o tool à risca o alcançaria hoje; pegou variância de exatos a favor (regride), não
+  estratégia superior. Gap parcialmente **ruído de reconstrução**: no subconjunto arquivado (64
+  jogos) o as-of reconstruído (226) fica +31 acima do snapshot real (195); 30 jogos (R32/R16,
+  J1–4/25–35/73–90) sem snapshot → teto não verificável. Execução em linha com o teto do tool
+  (dentro do ruído de ±1/jogo da base).
 - 2026-07-06
   — **Eficiência (92 jogos): 100,5% do teto do tool** (seus 375 / teto 373, as-of risk 0.5 + blend
   0.8). Teto teórico (oráculo) 975; captura do tool sobre o teórico 38,3% (resto é ruído

@@ -1,0 +1,105 @@
+jogo,data,fase,grupo,mandante,palpite,visitante,P_mandante,P_empate,P_visitante,ousado,mais_provavel,prorrogacao,penaltis,avanca,status,placar_real
+1,2026-06-11,group,A,México,2x0,África do Sul,,,,,,,,,FINAL,2x0
+2,2026-06-11,group,A,Coreia do Sul,2x1,República Tcheca,,,,,,,,,FINAL,2x1
+3,2026-06-12,group,B,Canadá,1x1,Bósnia e Herzegovina,,,,,,,,,FINAL,1x1
+4,2026-06-12,group,D,Estados Unidos,4x1,Paraguai,,,,,,,,,FINAL,4x1
+5,2026-06-13,group,D,Austrália,2x0,Turquia,,,,,,,,,FINAL,2x0
+6,2026-06-13,group,C,Brasil,1x1,Marrocos,,,,,,,,,FINAL,1x1
+7,2026-06-13,group,C,Haiti,0x1,Escócia,,,,,,,,,FINAL,0x1
+8,2026-06-13,group,B,Catar,1x1,Suíça,,,,,,,,,FINAL,1x1
+9,2026-06-14,group,E,Alemanha,7x1,Curaçao,,,,,,,,,FINAL,7x1
+10,2026-06-14,group,E,Costa do Marfim,1x0,Equador,,,,,,,,,FINAL,1x0
+11,2026-06-14,group,F,Holanda,2x2,Japão,,,,,,,,,FINAL,2x2
+12,2026-06-14,group,F,Suécia,5x1,Tunísia,,,,,,,,,FINAL,5x1
+13,2026-06-15,group,G,Bélgica,1x1,Egito,,,,,,,,,FINAL,1x1
+14,2026-06-15,group,G,Irã,2x2,Nova Zelândia,,,,,,,,,FINAL,2x2
+15,2026-06-15,group,H,Arábia Saudita,1x1,Uruguai,,,,,,,,,FINAL,1x1
+16,2026-06-15,group,H,Espanha,0x0,Cabo Verde,,,,,,,,,FINAL,0x0
+17,2026-06-16,group,J,Argentina,3x0,Argélia,,,,,,,,,FINAL,3x0
+18,2026-06-16,group,J,Áustria,3x1,Jordânia,,,,,,,,,FINAL,3x1
+19,2026-06-16,group,I,França,3x1,Senegal,,,,,,,,,FINAL,3x1
+20,2026-06-16,group,I,Iraque,1x4,Noruega,,,,,,,,,FINAL,1x4
+21,2026-06-17,group,L,Inglaterra,4x2,Croácia,,,,,,,,,FINAL,4x2
+22,2026-06-17,group,L,Gana,1x0,Panamá,,,,,,,,,FINAL,1x0
+23,2026-06-17,group,K,Portugal,1x1,RD Congo,,,,,,,,,FINAL,1x1
+24,2026-06-17,group,K,Uzbequistão,1x3,Colômbia,,,,,,,,,FINAL,1x3
+25,2026-06-18,group,B,Canadá,6x0,Catar,,,,,,,,,FINAL,6x0
+26,2026-06-18,group,A,República Tcheca,1x1,África do Sul,,,,,,,,,FINAL,1x1
+27,2026-06-18,group,A,México,1x0,Coreia do Sul,,,,,,,,,FINAL,1x0
+28,2026-06-18,group,B,Suíça,4x1,Bósnia e Herzegovina,,,,,,,,,FINAL,4x1
+29,2026-06-19,group,C,Brasil,3x0,Haiti,,,,,,,,,FINAL,3x0
+30,2026-06-19,group,C,Escócia,0x1,Marrocos,,,,,,,,,FINAL,0x1
+31,2026-06-19,group,D,Turquia,0x1,Paraguai,,,,,,,,,FINAL,0x1
+32,2026-06-19,group,D,Estados Unidos,2x0,Austrália,,,,,,,,,FINAL,2x0
+33,2026-06-20,group,E,Equador,0x0,Curaçao,,,,,,,,,FINAL,0x0
+34,2026-06-20,group,E,Alemanha,2x1,Costa do Marfim,,,,,,,,,FINAL,2x1
+35,2026-06-20,group,F,Holanda,5x1,Suécia,,,,,,,,,FINAL,5x1
+36,2026-06-20,group,F,Tunísia,0x4,Japão,,,,,,,,,FINAL,0x4
+37,2026-06-21,group,G,Bélgica,0x0,Irã,,,,,,,,,FINAL,0x0
+38,2026-06-21,group,G,Nova Zelândia,1x3,Egito,,,,,,,,,FINAL,1x3
+39,2026-06-21,group,H,Espanha,4x0,Arábia Saudita,,,,,,,,,FINAL,4x0
+40,2026-06-21,group,H,Uruguai,2x2,Cabo Verde,,,,,,,,,FINAL,2x2
+41,2026-06-22,group,J,Argentina,2x0,Áustria,,,,,,,,,FINAL,2x0
+42,2026-06-22,group,I,França,3x0,Iraque,,,,,,,,,FINAL,3x0
+43,2026-06-22,group,J,Jordânia,1x2,Argélia,,,,,,,,,FINAL,1x2
+44,2026-06-22,group,I,Noruega,3x2,Senegal,,,,,,,,,FINAL,3x2
+45,2026-06-23,group,K,Colômbia,1x0,RD Congo,,,,,,,,,FINAL,1x0
+46,2026-06-23,group,L,Inglaterra,0x0,Gana,,,,,,,,,FINAL,0x0
+47,2026-06-23,group,L,Panamá,0x1,Croácia,,,,,,,,,FINAL,0x1
+48,2026-06-23,group,K,Portugal,5x0,Uzbequistão,,,,,,,,,FINAL,5x0
+49,2026-06-24,group,B,Bósnia e Herzegovina,3x1,Catar,,,,,,,,,FINAL,3x1
+50,2026-06-24,group,B,Suíça,2x1,Canadá,,,,,,,,,FINAL,2x1
+51,2026-06-24,group,A,República Tcheca,0x3,México,,,,,,,,,FINAL,0x3
+52,2026-06-24,group,C,Marrocos,4x2,Haiti,,,,,,,,,FINAL,4x2
+53,2026-06-24,group,C,Escócia,0x3,Brasil,,,,,,,,,FINAL,0x3
+54,2026-06-24,group,A,África do Sul,1x0,Coreia do Sul,,,,,,,,,FINAL,1x0
+55,2026-06-25,group,E,Curaçao,0x2,Costa do Marfim,,,,,,,,,FINAL,0x2
+56,2026-06-25,group,E,Equador,2x1,Alemanha,,,,,,,,,FINAL,2x1
+57,2026-06-25,group,F,Japão,1x1,Suécia,,,,,,,,,FINAL,1x1
+58,2026-06-25,group,D,Paraguai,0x0,Austrália,,,,,,,,,FINAL,0x0
+59,2026-06-25,group,F,Tunísia,1x3,Holanda,,,,,,,,,FINAL,1x3
+60,2026-06-25,group,D,Turquia,3x2,Estados Unidos,,,,,,,,,FINAL,3x2
+61,2026-06-26,group,H,Cabo Verde,0x0,Arábia Saudita,,,,,,,,,FINAL,0x0
+62,2026-06-26,group,G,Egito,1x1,Irã,,,,,,,,,FINAL,1x1
+63,2026-06-26,group,G,Nova Zelândia,1x5,Bélgica,,,,,,,,,FINAL,1x5
+64,2026-06-26,group,I,Noruega,1x4,França,,,,,,,,,FINAL,1x4
+65,2026-06-26,group,I,Senegal,5x0,Iraque,,,,,,,,,FINAL,5x0
+66,2026-06-26,group,H,Uruguai,0x1,Espanha,,,,,,,,,FINAL,0x1
+67,2026-06-27,group,J,Argélia,3x3,Áustria,,,,,,,,,FINAL,3x3
+68,2026-06-27,group,K,Colômbia,0x0,Portugal,,,,,,,,,FINAL,0x0
+69,2026-06-27,group,L,Croácia,2x1,Gana,,,,,,,,,FINAL,2x1
+70,2026-06-27,group,K,RD Congo,3x1,Uzbequistão,,,,,,,,,FINAL,3x1
+71,2026-06-27,group,J,Jordânia,1x3,Argentina,,,,,,,,,FINAL,1x3
+72,2026-06-27,group,L,Panamá,0x2,Inglaterra,,,,,,,,,FINAL,0x2
+73,2026-06-28,R32,,África do Sul,0x1,Canadá,,,,,,—,—,Canadá,FINAL,0x1
+74,2026-06-29,R32,,Alemanha,1x1,Paraguai,,,,,,Vai aos pênaltis,Paraguai,Paraguai,FINAL,1x1
+75,2026-06-29,R32,,Holanda,1x1,Marrocos,,,,,,Vai aos pênaltis,Marrocos,Marrocos,FINAL,1x1
+76,2026-06-29,R32,,Brasil,2x1,Japão,,,,,,—,—,Brasil,FINAL,2x1
+77,2026-06-30,R32,,França,3x0,Suécia,,,,,,—,—,França,FINAL,3x0
+78,2026-06-30,R32,,Costa do Marfim,1x2,Noruega,,,,,,—,—,Noruega,FINAL,1x2
+79,2026-06-30,R32,,México,2x0,Equador,,,,,,—,—,México,FINAL,2x0
+80,2026-07-01,R32,,Inglaterra,2x1,RD Congo,,,,,,—,—,Inglaterra,FINAL,2x1
+81,2026-07-01,R32,,Estados Unidos,2x0,Bósnia e Herzegovina,,,,,,—,—,Estados Unidos,FINAL,2x0
+82,2026-07-01,R32,,Bélgica,3x2,Senegal,,,,,,—,—,Bélgica,FINAL,3x2
+83,2026-07-02,R32,,Portugal,2x1,Croácia,,,,,,—,—,Portugal,FINAL,2x1
+84,2026-07-02,R32,,Espanha,3x0,Áustria,,,,,,—,—,Espanha,FINAL,3x0
+85,2026-07-02,R32,,Suíça,2x0,Argélia,,,,,,—,—,Suíça,FINAL,2x0
+86,2026-07-03,R32,,Argentina,3x2,Cabo Verde,,,,,,—,—,Argentina,FINAL,3x2
+87,2026-07-03,R32,,Colômbia,1x0,Gana,,,,,,—,—,Colômbia,FINAL,1x0
+88,2026-07-03,R32,,Austrália,1x1,Egito,,,,,,Vai aos pênaltis,Egito,Egito,FINAL,1x1
+89,2026-07-04,R16,,Canadá,0x3,Marrocos,,,,,,—,—,Marrocos,FINAL,0x3
+90,2026-07-04,R16,,Paraguai,0x1,França,,,,,,—,—,França,FINAL,0x1
+91,2026-07-05,R16,,Brasil,0x2,Noruega,,,,,,—,—,Noruega,FINAL,0x2
+92,2026-07-05,R16,,México,2x3,Inglaterra,,,,,,—,—,Inglaterra,FINAL,2x3
+93,2026-07-06,R16,,Portugal,0x1,Espanha,,,,,,—,—,Espanha,FINAL,0x1
+94,2026-07-06,R16,,Estados Unidos,1x4,Bélgica,,,,,,—,—,Bélgica,FINAL,1x4
+95,2026-07-07,R16,,Argentina,3x2,Egito,,,,,,—,—,Argentina,FINAL,3x2
+96,2026-07-07,R16,,Suíça,0x0,Colômbia,,,,,,,,Suíça,FINAL,0x0
+97,2026-07-09,QF,,Marrocos,1x2,França,17%,27%,56%,,,Vai aos pênaltis,França,França,PREVISTO,
+98,2026-07-10,QF,,Espanha,2x1,Bélgica,59%,24%,17%,,,Vai aos pênaltis,Espanha,Espanha,PREVISTO,
+99,2026-07-11,QF,,Noruega,1x2,Inglaterra,22%,26%,52%,,,Vai aos pênaltis,Inglaterra,Inglaterra,PREVISTO,
+100,2026-07-11,QF,,Argentina,2x1,Suíça,55%,27%,18%,,,Vai aos pênaltis,Argentina,Argentina,PREVISTO,
+101,2026-07-14,SF,,França,1x2,Espanha,26%,30%,44%,,,Vai aos pênaltis,Espanha,Espanha,PREVISTO,
+102,2026-07-15,SF,,Inglaterra,0x1,Argentina,29%,31%,40%,,,Vai aos pênaltis,Argentina,Argentina,PREVISTO,
+103,2026-07-18,3rd_place,,França,1x2,Inglaterra,36%,31%,33%,,,Vai aos pênaltis,França,França,PREVISTO,
+104,2026-07-19,final,,Espanha,1x0,Argentina,39%,31%,30%,,,Vai aos pênaltis,Espanha,Espanha,PREVISTO,

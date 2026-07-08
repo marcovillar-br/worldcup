@@ -12,8 +12,19 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-07)
+## Estado atual (atualizado em 2026-07-08)
 
+- **96 de 104 jogos disputados (J1–J96) — fase de oitavas encerrada.** Em 07/07 fecharam as
+  últimas duas: **J95 Argentina 3×2 Egito** (tool acertou o lado, 1×2, mas não o placar exato) e
+  **J96 Suíça 0×0 Colômbia** (pênaltis, **Suíça avança** — tool tinha cravado Colômbia; erro no
+  avanço). 08/07 é dia sem jogos (folga entre oitavas e quartas). Próximo: **J97 Marrocos ×
+  França** (09/07, palpite 1×2, França avança). Candidatos a campeão agora: **Espanha 30,3%**,
+  Argentina 25,1% (subiu com a queda da Colômbia), Inglaterra 15,3%, França 13,8%, Marrocos 5,8%.
+  `odds.csv` com **72 jogos** (fetch de 08/07: +1 novo, 3 atualizados). Config: `risk 0.5` +
+  `blend 0.8`. **Seus pontos (08/07): 397, 17º** (caiu de 13º mesmo com eficiência subindo —
+  o resto do bolão também pontuou bem nas oitavas) — eficiência **102,6%** do teto do tool (387,
+  primeira vez ACIMA do teto); líder **455** segue acima do teto (variância de exatos no KO, não
+  estratégia melhor).
 - **94 de 104 jogos disputados (J1–J94).** Em 07/07 fecharam as últimas duas oitavas:
   **J93 Portugal 0×1 Espanha** (tool acertou o lado, 1×2, mas não o placar exato) e
   **J94 Estados Unidos 1×4 Bélgica** (tool tinha palpitado 2×1 EUA nos 90', mas o campo
@@ -163,6 +174,17 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
+- 2026-07-08
+  — **Eficiência (96 jogos): 102,6% do teto do tool** (seus 397 / teto 387, as-of risk 0.5 +
+  blend 0.8) — **primeira vez acima de 100% de forma mais folgada**, indicando sorte de placar
+  exato a seu favor, não só execução em linha. **Caiu para 17º** (de 13º) apesar da eficiência
+  subir — sinal de que o resto do bolão também acertou bem as oitavas (J95/96), não que você
+  jogou pior. Teto teórico (oráculo) 1045; captura do tool sobre o teórico 37,0% (resto é ruído
+  irredutível). **Líder 455 está ACIMA do teto do tool (387)** — nem seguir o tool à risca o
+  alcançaria hoje; pegou variância de exatos a favor (regride), não estratégia superior. Gap
+  parcialmente **ruído de reconstrução**: no subconjunto arquivado (66 jogos) o as-of
+  reconstruído (230) fica +31 acima do snapshot real (199); 30 jogos (R32/R16,
+  J1–4/25–35/73–90) sem snapshot → teto não verificável.
 - 2026-07-07
   — **Eficiência (94 jogos): 100,5% do teto do tool** (seus 385 / teto 383, as-of risk 0.5 + blend
   0.8). Subiu para **13º** no ranking. Teto teórico (oráculo) 1011; captura do tool sobre o

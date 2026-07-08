@@ -62,6 +62,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-44](#eng-44) | P2 | model/backtest | ✅ | `CURRENT_EDITION_BOOST` (6.0) é constante mágica nunca calibrada — sweep out-of-sample de Brier |
 | [ENG-45](#eng-45) | P2 | efficiency/scoring | ✅ | KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar errado (teto infla) |
 | [ENG-46](#eng-46) | P3 | efficiency/pipeline | ✅ | `archive_scores` é só de grupo ⇒ teto de KO congela da reconstrução (menos fiel que o snapshot real) |
+| [ENG-47](#eng-47) | P3 | apresentação | ✅ | Números da campanha 2026 hardcoded em `build_presentation.py` — exigia editar código a cada rodada |
 
 ---
 
@@ -1606,3 +1607,30 @@ disputados.
 e vira `source=archive` no `ceiling.csv`; KO de formato antigo é pulado; testes de
 `_parse_ko_layers` e `_archive_ko_points`. `pytest` verde (179).
 **Commit:** 108bdfe
+
+## ENG-47
+**Números da campanha 2026 hardcoded em `build_presentation.py`** · P3 · apresentação · ✅ feito
+
+`scripts/build_presentation.py` guardava os números vivos da campanha (jogos disputados, pontos,
+favoritos ao título, bracket em andamento, Brier) como constantes hardcoded no código
+(`AS_OF`, `champ_bars()` default, `stat(...)` das slides 9/9b/10/12) — cada rodada exigia editar o
+script à mão (3 vezes em uma única sessão, 06–08/07). Violava o princípio central do projeto:
+"nada específico de um ano fica no código".
+
+**Refs:** `scripts/build_presentation.py` (constantes removidas),
+`scripts/update_presentation_data.py` (novo).
+**Resolução.** Os números viram dado em `data/editions/2026/presentation.toml`
+(`load_presentation_data(edition)`, `--edition` seleciona a edição). `update_presentation_data.py`
+atualiza os campos **deriváveis** desse TOML a partir do estado atual: jogos disputados e
+favoritos ao título (`out/palpites-2026.{csv,md}`), Brier modelo-vs-blend
+(`worldcup.backtest.prospective_blend_report`, mesma métrica do `blend-track`) e a contagem de
+melhorias do backlog (`docs/BACKLOG.md`). **Preserva** (não deriva) `campanha.pontos`/
+`eficiencia_pct` — só existem no placar real do usuário, informação externa ao repo — e
+`campanha.fase`/`bracket_destaque.*` — curadoria editorial (qual seleção acompanhar, qual jogo
+destacar), não cálculo. Cablado na skill `palpites-copa` (passo 5.5): roda logo após repalpitar,
+fechando o loop de "atualizar a apresentação" sem pedido separado do usuário.
+**Aceite:** `update_presentation_data.py --edition 2026` recalcula `jogos_disputados`, `favoritos`,
+`validacao.*` e `evolucao.melhorias_entregues` sem tocar em `pontos`/`eficiencia_pct`/`fase`/
+`bracket_destaque`; `build_presentation.py --edition 2026 --docs` gera o HTML a partir do TOML
+atualizado; ruff/mypy/pytest verdes (187 testes).
+**Commit:** ba1d532

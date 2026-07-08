@@ -12,27 +12,39 @@ Características:
   - **Contadores animados** nos números de resultado; **modo impressão/PDF** (1 slide por página).
   - Visual **SVG-first** (vetorial, nítido em qualquer escala); sem imagens externas.
 
-Conteúdo curado (números "até 05/07/2026"); para atualizar, edite as constantes abaixo e rode de novo.
+Números da campanha (jogos disputados, pontos, favoritos ao título, bracket em andamento, Brier)
+vivem em `data/editions/<edição>/presentation.toml` — agnóstico à edição, como o resto dos dados.
+Para atualizar, edite esse arquivo (não este script) e rode de novo.
 
-Uso: `uv run python scripts/build_presentation.py [--out PATH] [--docs]`
-  --out   destino do HTML (default: out/apresentacao.html, gitignored/regenerável)
-  --docs  também grava docs/apresentacao.html (cópia versionada/compartilhável)
+Uso: `uv run python scripts/build_presentation.py [--edition 2026] [--out PATH] [--docs]`
+  --edition edição cujos dados de campanha usar (default: 2026)
+  --out     destino do HTML (default: out/apresentacao.html, gitignored/regenerável)
+  --docs    também grava docs/apresentacao.html (cópia versionada/compartilhável)
 """
 
 from __future__ import annotations
 
 import argparse
 import base64
+import tomllib
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DEFAULT_OUT = PROJECT_ROOT / "out" / "apresentacao.html"
 DOCS_OUT = PROJECT_ROOT / "docs" / "apresentacao.html"
 ASSETS_DIR = Path(__file__).resolve().parent / "assets"
+EDITIONS_DIR = PROJECT_ROOT / "data" / "editions"
 
-AS_OF = "08 jul 2026"
 VERSION = "v0.2.0"
+
+
+def load_presentation_data(edition: int) -> dict[str, Any]:
+    """Carrega `data/editions/<edition>/presentation.toml` (números vivos da campanha)."""
+    path = EDITIONS_DIR / str(edition) / "presentation.toml"
+    with path.open("rb") as f:
+        return tomllib.load(f)
 
 
 @dataclass
@@ -159,10 +171,8 @@ def bar_compare() -> str:
     return "".join(out)
 
 
-def champ_bars(teams: list[tuple[str, int]] | None = None) -> str:
-    """Favoritos ao título (Monte Carlo, até 05/07 — oitavas de final em andamento)."""
-    if teams is None:
-        teams = [("Espanha", 30), ("Argentina", 25), ("Inglaterra", 15), ("França", 14), ("Marrocos", 6)]
+def champ_bars(teams: list[tuple[str, int]]) -> str:
+    """Favoritos ao título (Monte Carlo)."""
     out = ['<div class="champ">']
     for name, pct in teams:
         out.append(
@@ -203,8 +213,14 @@ def timeline(items: list[tuple[str, str, str]]) -> str:
 # --------------------------------------------------------------------------- os slides
 
 
-def build_slides() -> list[Slide]:
+def build_slides(data: dict[str, Any]) -> list[Slide]:
     s: list[Slide] = []
+    as_of = data["as_of"]
+    campanha = data["campanha"]
+    bracket = data["bracket_destaque"]
+    validacao = data["validacao"]
+    evolucao = data["evolucao"]
+    favoritos = [(f["nome"], f["pct"]) for f in campanha["favoritos"]]
 
     # 1 — capa
     s.append(
@@ -368,19 +384,23 @@ def build_slides() -> list[Slide]:
     )
 
     # 9 — resultados campanha
+    jogos = campanha["jogos_disputados"]
+    pontos = campanha["pontos"]
+    eficiencia = campanha["eficiencia_pct"]
     s.append(
         Slide(
-            f"Resultados · campanha 2026 ({AS_OF})",
+            f"Resultados · campanha 2026 ({as_of})",
             f"""
       <div class="center">
-        <h2>A campanha 2026 — oitavas de final em andamento</h2>
+        <h2>A campanha 2026 — {campanha["fase"]}</h2>
         <div class="stats">
-          {stat("96", "96", "de 104 jogos disputados")}
-          {stat("397", "397", "pontos acumulados")}
-          {stat("102.6", "102.6", "de eficiência*", suffix="%")}
+          {stat(str(jogos), str(jogos), "de 104 jogos disputados")}
+          {stat(str(pontos), str(pontos), "pontos acumulados")}
+          {stat(str(eficiencia), str(eficiencia), "de eficiência*", suffix="%")}
         </div>
         <p class="muted">*eficiência ≈ quanto dos pontos que o tool renderia você capturou (segue o blend).</p>
-        <div class="champwrap"><div class="cwtitle">{_IC_TROPHY} favoritos ao título</div>{champ_bars()}</div>
+        <div class="champwrap"><div class="cwtitle">{_IC_TROPHY} favoritos ao título</div>
+          {champ_bars(favoritos)}</div>
       </div>""",
         )
     )
@@ -405,18 +425,19 @@ def build_slides() -> list[Slide]:
               "zebra vale mais" na prática.</p>
           </div>
           <div class="panel">
-            <div class="ptitle">{_IC_TROPHY} o que esperar ({AS_OF})</div>
+            <div class="ptitle">{_IC_TROPHY} o que esperar ({as_of})</div>
             <div class="flow">
-              <span class="fstep accent">Argentina</span><span class="farr">→</span>
-              <span class="fstep">bate Suíça<small>(QF, 55%)</small></span><span class="farr">→</span>
-              <span class="fstep">bate Inglaterra<small>(SF, 40%)</small></span><span class="farr">→</span>
-              <span class="fstep">disputa a final<small>× Espanha</small></span>
+              <span class="fstep accent">{bracket["selecao"]}</span><span class="farr">→</span>
+              <span class="fstep">bate {bracket["qf_rival"]}<small>(QF, {bracket["qf_pct"]}%)</small></span>
+              <span class="farr">→</span>
+              <span class="fstep">bate {bracket["sf_rival"]}<small>(SF, {bracket["sf_pct"]}%)</small></span>
+              <span class="farr">→</span>
+              <span class="fstep">disputa a final<small>× {bracket["final_rival"]}</small></span>
             </div>
             <p class="muted">favorita ao título no agregado (Monte Carlo, slide anterior):
-              <b class="accent">Argentina</b> — o caminho jogo a jogo acima é só um retrato, não
-              o mais provável somado.</p>
-            <p class="muted">jogos para ficar de olho: <b>Marrocos × França</b> (QF, 09/07),
-              Noruega × Inglaterra (QF, 11/07).</p>
+              <b class="accent">{bracket["selecao"]}</b> — o caminho jogo a jogo acima é só um
+              retrato, não o mais provável somado.</p>
+            <p class="muted">jogos para ficar de olho: {bracket["jogos_para_ficar_de_olho"]}</p>
           </div>
         </div>
         <p class="muted">Agora cada jogo do mata-mata vale <b>2× / 4×</b> — é onde o bolão se decide.</p>
@@ -435,12 +456,15 @@ def build_slides() -> list[Slide]:
           <div class="panel">
             <div class="ptitle">{_IC_CHART} Erro de previsão (Brier · menor = melhor)</div>
             <div class="vs">
-              <div class="vrow"><span>modelo puro</span><span class="vtrack"><i style="width:100%"
-                class="away"></i></span><b>0,409</b></div>
-              <div class="vrow"><span>com blend</span><span class="vtrack"><i style="width:99%"
-                class="home"></i></span><b class="accent">0,407</b></div>
+              <div class="vrow"><span>modelo puro</span><span class="vtrack">
+                <i style="width:{validacao["brier_modelo_width_pct"]}%" class="away"></i></span>
+                <b>{f"{validacao['brier_modelo']:.3f}".replace(".", ",")}</b></div>
+              <div class="vrow"><span>com blend</span><span class="vtrack">
+                <i style="width:{validacao["brier_blend_width_pct"]}%" class="home"></i></span>
+                <b class="accent">{f"{validacao['brier_blend']:.3f}".replace(".", ",")}</b></div>
             </div>
-            <p class="muted">49 jogos rastreados · o blend reduz o erro a cada rodada.</p>
+            <p class="muted">{validacao["jogos_rastreados"]} jogos rastreados · o blend reduz o erro
+              a cada rodada.</p>
           </div>
           <div class="panel">
             <div class="ptitle">{_IC_SCALE} Backtest em 4 Copas (2010–22)</div>
@@ -517,8 +541,9 @@ def build_slides() -> list[Slide]:
                     ]
                 )
             }
-        <p class="muted">Hoje: <b>91 melhorias de engenharia entregues</b>, cobertura de testes 86%,
-          CI em duas versões de Python. Rigor é consequência das lições, não enfeite.</p>
+        <p class="muted">Hoje: <b>{evolucao["melhorias_entregues"]} melhorias de engenharia
+          entregues</b>, cobertura de testes 86%, CI em duas versões de Python. Rigor é consequência
+          das lições, não enfeite.</p>
       </div>""",
         )
     )
@@ -901,16 +926,18 @@ def render_presentation(slides: list[Slide]) -> str:
 
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Gera a apresentação HTML do projeto (deck autocontido)")
+    p.add_argument("--edition", type=int, default=2026, help="edição cujos dados de campanha usar (default: 2026)")
     p.add_argument("--out", type=Path, default=DEFAULT_OUT, help=f"destino do HTML (default: {DEFAULT_OUT})")
     p.add_argument("--docs", action="store_true", help="também grava docs/apresentacao.html (versionado)")
     args = p.parse_args(argv)
 
-    html = render_presentation(build_slides())
+    slides = build_slides(load_presentation_data(args.edition))
+    html = render_presentation(slides)
     targets = [args.out] + ([DOCS_OUT] if args.docs else [])
     for path in targets:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(html, encoding="utf-8")
-        print(f"💾 Apresentação: {path}  ({len(html) // 1024} KB, {len(build_slides())} slides)")
+        print(f"💾 Apresentação: {path}  ({len(html) // 1024} KB, {len(slides)} slides)")
     print("   Abra no navegador · ← → para navegar · Ctrl+P para PDF/handout.")
     return 0
 

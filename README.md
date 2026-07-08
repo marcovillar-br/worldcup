@@ -182,7 +182,15 @@ uv run python scripts/build_presentation.py --docs   # gera out/ e docs/apresent
 Abra o HTML no navegador (← → navegam; `Ctrl+P` salva um PDF/handout). É self-contained
 (sem CDN; imagens CC embutidas em base64). A versão pronta vive versionada em
 [`docs/apresentacao.html`](docs/apresentacao.html); ao editar o script, **regenere com `--docs`**
-e inclua o HTML no mesmo commit.
+e inclua o HTML no mesmo commit. Os números da campanha (jogos, pontos, favoritos, bracket,
+Brier) vivem em `data/editions/<edição>/presentation.toml` — agnóstico à edição, como o resto dos
+dados; atualize o TOML (não o script) a cada rodada.
+
+`scripts/update_presentation_data.py --edition 2026` atualiza os campos **deriváveis** desse
+TOML (jogos disputados, favoritos ao título, Brier do blend, melhorias do backlog) a partir do
+estado atual — parte da rotina diária da skill `palpites-copa` (passo 5.5), logo após repalpitar.
+Só `campanha.pontos`/`eficiencia_pct` (seu placar real) e `campanha.fase`/`bracket_destaque.*`
+(curadoria editorial) continuam manuais.
 
 ## Limitações conhecidas
 

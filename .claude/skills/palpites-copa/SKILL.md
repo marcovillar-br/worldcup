@@ -121,6 +121,25 @@ campanha** (mudou o `risk`, regra do bolão, situação no ranking), registre-a 
 vivas**/**Histórico**. É a memória persistente agnóstica a ferramenta — leia-a também no início
 da sessão.
 
+### 5.5 Atualizar os dados da apresentação (deriváveis)
+Depois de repalpitar (passo 3), atualize os campos deriváveis do deck `docs/apresentacao.html` e
+regenere-o — assim "atualiza os palpites" já deixa a apresentação em dia, sem pedido separado:
+```bash
+uv run python scripts/update_presentation_data.py --edition 2026
+uv run python scripts/build_presentation.py --edition 2026 --docs
+```
+O primeiro script reescreve `data/editions/2026/presentation.toml` com o que é **derivável de
+dado**: jogos disputados e favoritos ao título (via `out/palpites-2026.{csv,md}`), Brier
+modelo-vs-blend (mesma métrica do `blend-track`, chamada direto da lib) e a contagem de melhorias
+do backlog. Ele **preserva** (não sobrescreve) os campos que exigem dado externo ou curadoria:
+- `campanha.pontos`/`eficiencia_pct` — só existem no seu placar real do bolão; atualize-os quando
+  rodar o passo 6 (eficiência).
+- `campanha.fase`/`bracket_destaque.*` (seleção em destaque, rival de QF/SF, jogos para ficar de
+  olho) — é escolha editorial, não cálculo; revise à mão quando o bracket mudar de forma relevante
+  (eliminação, zebra que muda o adversário de quem você acompanha).
+O segundo comando regenera `out/apresentacao.html` + `docs/apresentacao.html` a partir do TOML
+atualizado — inclua o HTML e o TOML no mesmo commit da rodada.
+
 ### 6. Eficiência da campanha (quando o usuário perguntar "estou indo bem?")
 Mede quanto dos pontos que o tool renderia o usuário capturou. **Exige os pontos reais do
 usuário** (input dele, não derivável) — pergunte se não souber:
@@ -161,7 +180,10 @@ para avaliar a jogada do usuário — serve para dimensionar "quanto teto ainda 
    mudarem depois (ex.: um fix de scoring), o script **reporta drift** dos jogos afetados sem
    sobrescrever; para recongelar na medição atual, rode com `--reset-ceiling`.
 
-Registre o veredito (eficiência, teto, posição) no **Histórico** do `BOLAO.md`.
+Registre o veredito (eficiência, teto, posição) no **Histórico** do `BOLAO.md` e atualize
+`campanha.pontos`/`eficiencia_pct` em `data/editions/2026/presentation.toml` (único jeito de
+manter esses dois campos em dia — o passo 5.5 não os deriva). Se editou o TOML, regenere o deck
+(`build_presentation.py --edition 2026 --docs`).
 
 ## Notas
 - **Histórico/reconstrução**: `predict --archive` guarda o snapshot do dia em `history/`. Para

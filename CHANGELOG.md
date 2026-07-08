@@ -12,6 +12,19 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Adicionado
+- **Dados vivos da apresentação extraídos do código**: `scripts/build_presentation.py` lia números
+  da campanha (jogos disputados, pontos, favoritos ao título, bracket em andamento, Brier) como
+  constantes hardcoded, exigindo editar o script a cada rodada — violava "nada específico de um
+  ano fica no código". Agora esses números vivem em `data/editions/2026/presentation.toml`
+  (`--edition` seleciona a edição, default 2026); o script ficou agnóstico.
+- **`scripts/update_presentation_data.py`**: atualiza os campos deriváveis desse
+  `presentation.toml` (jogos disputados e favoritos ao título via `out/palpites-2026.{csv,md}`,
+  Brier modelo-vs-blend via `worldcup.backtest.prospective_blend_report`, contagem de melhorias
+  via `docs/BACKLOG.md`) sem exigir edição manual a cada rodada. Preserva os campos que dependem
+  de dado externo (`campanha.pontos`/`eficiencia_pct`, só existem no placar real do bolão) ou de
+  curadoria editorial (`campanha.fase`, `bracket_destaque.*`). Cablado na skill `palpites-copa`
+  (passo 5.5): rodar logo após repalpitar fecha o loop de "atualizar a apresentação sozinho" sem
+  pedido separado do usuário.
 - **Vigia de staleness do ajuste** (ENG-43): `pipeline.ingestion_gaps(edition)` lista jogos
   **disputados** que não entraram no ajuste do modelo — quando um KO disputado não resolve os slots
   (`resolve_live_bracket`), ele era filtrado pelo `.isin(edition.teams)` de `build_training_frame`

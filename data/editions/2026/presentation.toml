@@ -6,7 +6,7 @@
 # scripts/update_presentation_data.py; os demais (pontos, eficiencia_pct, fase, bracket_destaque)
 # exigem input do usuário ou curadoria editorial — revise-os manualmente a cada rodada.
 
-as_of = "08 jul 2026"
+as_of = "09 jul 2026"
 
 [campanha]
 jogos_disputados = 96

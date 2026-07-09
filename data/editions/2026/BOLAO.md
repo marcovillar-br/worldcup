@@ -12,8 +12,12 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-08)
+## Estado atual (atualizado em 2026-07-09)
 
+- **96 de 104 jogos disputados — J97 Marrocos × França (QF) pendente hoje (09/07)**, ainda sem
+  placar na fonte. Odds e blend re-sincronizados (4 jogos atualizados); veredito do
+  `blend-track` inalterado: blend segue melhor (Brier 0,4074 vs 0,4091 do modelo puro), regime de
+  empates dentro da variância (z=+0,80). Palpite de J97 mantido: **1×2, França avança**.
 - **96 de 104 jogos disputados (J1–J96) — fase de oitavas encerrada.** Em 07/07 fecharam as
   últimas duas: **J95 Argentina 3×2 Egito** (tool acertou o lado, 1×2, mas não o placar exato) e
   **J96 Suíça 0×0 Colômbia** (pênaltis, **Suíça avança** — tool tinha cravado Colômbia; erro no

@@ -63,6 +63,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-45](#eng-45) | P2 | efficiency/scoring | ✅ | KO decidido por gol na prorrogação é gravado com ET ⇒ palpite de 90' pontuado contra o placar errado (teto infla) |
 | [ENG-46](#eng-46) | P3 | efficiency/pipeline | ✅ | `archive_scores` é só de grupo ⇒ teto de KO congela da reconstrução (menos fiel que o snapshot real) |
 | [ENG-47](#eng-47) | P3 | apresentação | ✅ | Números da campanha 2026 hardcoded em `build_presentation.py` — exigia editar código a cada rodada |
+| [ENG-48](#eng-48) | P1 | eficiência | ✅ | `efficiency.py` nunca creditava o bônus de ET/pênaltis: chave de data `datetime64` vs `str` ⇒ teto subestimado, eficiência inflada |
 
 ---
 
@@ -1634,3 +1635,35 @@ fechando o loop de "atualizar a apresentação" sem pedido separado do usuário.
 `bracket_destaque`; `build_presentation.py --edition 2026 --docs` gera o HTML a partir do TOML
 atualizado; ruff/mypy/pytest verdes (187 testes).
 **Commit:** ba1d532
+
+## ENG-48
+**`efficiency.py` nunca creditava o bônus de prorrogação/pênaltis (chave de data incompatível)** ·
+P1 · eficiência · ✅ feito
+
+`_penalty_lookup` indexava a fonte martj42 por `str(r["date"])` sobre uma coluna `datetime64` ⇒
+chave `'2026-06-29 00:00:00'`. O consumidor `_actual_ko_outcome` procurava por `str(f.date)`, e
+`Fixture.date` é `str` ⇒ `'2026-06-29'`. As chaves **nunca** batiam: todo KO empatado nos 90' caía
+no ramo "a fonte ainda não confirmou (latência) — não inferir" e **perdia o bônus** de ET/pênaltis
+(+3/+3 ×peso de fase). O aviso "N jogos empatados nos 90' ainda sem shootout na fonte" não
+reportava latência da fonte — reportava o próprio bug.
+
+Efeito: o **teto** do tool saía subestimado e a **eficiência** superestimada. Em 10/07 (97 jogos):
+teto 399 → **423** (+24), eficiência 102,5% → **96,7%**. Os dois "acima do teto" (08/07 e 10/07)
+eram artefato. **Não afetava palpites**: `scripts/efficiency.py` é isolado — nada em `src/` o
+importa, e ele só escreve `ceiling.csv`.
+
+Por que passou: `tests/test_efficiency.py` montava o `pens` **à mão**, no formato do consumidor
+(`_pens(date, ...)` com `"2026-06-29"`), e nunca exercitava `_penalty_lookup`. Produtor e consumidor
+tinham cobertura, a **costura** entre eles não.
+
+**Refs:** `scripts/efficiency.py` (`_date_key`, `_penalty_lookup`, `_actual_ko_outcome`),
+`tests/test_efficiency.py::test_penalty_lookup_casa_com_a_data_do_fixture`.
+**Resolução.** `_date_key(date) -> str(date)[:10]` normaliza os dois lados (aceita `str` da edição e
+`datetime64` do pandas). Teste de regressão passa pelo `_penalty_lookup` **real**, com um frame
+`datetime64`, em vez de fabricar a chave — falha sem o fix (verificado). Teto recongelado com
+`--reset-ceiling` (ENG-34: o congelamento protege contra drift, não contra bug — corrigir exige
+reset explícito).
+**Aceite:** `_actual_ko_outcome(1, 1, "2026-06-29", ...)` devolve `("penalties", "away")` para J74
+via lookup real; latentes caem de 5 (J74, J75, J82, J88, J96) para 1 (J96, latência genuína — a
+base martj42 termina em 03/07); ruff/mypy/pytest verdes (188 testes).
+**Commit:** 39a150a

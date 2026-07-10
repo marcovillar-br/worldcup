@@ -65,7 +65,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-47](#eng-47) | P3 | apresentação | ✅ | Números da campanha 2026 hardcoded em `build_presentation.py` — exigia editar código a cada rodada |
 | [ENG-48](#eng-48) | P1 | eficiência | ✅ | `efficiency.py` nunca creditava o bônus de ET/pênaltis: chave de data `datetime64` vs `str` ⇒ teto subestimado, eficiência inflada |
 | [ENG-49](#eng-49) | P2 | eficiência/dados | ✅ | Fontes redundantes do desfecho de KO (`shootouts.csv` vs `penalty_winner`) são escolhidas, não comparadas — redundância sem detector |
-| [ENG-50](#eng-50) | P2 | eficiência | 🟡 | Anomalia numérica (eficiência > 100%) vira narrativa em vez de gatilho: sem limiar nem ação prescrita, ao contrário do monitor de empates |
+| [ENG-50](#eng-50) | P2 | eficiência | ✅ | Anomalia numérica (eficiência > 100%) vira narrativa em vez de gatilho: sem limiar nem ação prescrita, ao contrário do monitor de empates |
 
 ---
 
@@ -1705,7 +1705,7 @@ só `[96]` como latência; sem o bug, contradição = `[]` e J96 segue latência
 **Commit:** 5da25ff
 
 ## ENG-50
-**Anomalia numérica vira narrativa em vez de gatilho** · P2 · eficiência · 🟡 fazendo
+**Anomalia numérica vira narrativa em vez de gatilho** · P2 · eficiência · ✅ feito
 
 Eficiência = `seus_pontos / teto_do_tool`. Um valor **> 100%** significa que o usuário superou o
 palpite que maximiza pontos esperados — possível (variância de exatos), mas **anômalo**. Hoje o
@@ -1725,16 +1725,23 @@ que o teto pode estar subestimado e listar as suspeitas mecânicas primeiro (bô
 creditado, jogos fora do teto, `ceiling.csv` congelado antes de um fix) **antes** de oferecer a
 leitura estatística. Mesma ideia para o líder acima do teto. O objetivo não é proibir a explicação
 por variância — é **exigir que a checagem mecânica venha antes dela**.
-**Progresso (5da25ff).** Entregue a 1ª sonda: **canário de caminho morto**
+**Resolução (em duas levas).** 1ª leva (5da25ff): **canário de caminho morto**
 (`dead_path_canary`) — se há KOs empatados nos 90' e o bônus de ET/pênaltis foi creditado em
 **zero** deles, o script grita que a hipótese mecânica vem antes da estatística. É uma checagem de
 **população**, não de caso: não precisa saber o desfecho de nenhum jogo. Teria pego o ENG-48 na
-primeira rodagem. Falta: (a) o gatilho da própria eficiência > 100% (com as sondas mecânicas
-impressas **antes** de qualquer leitura por variância); (b) procedência do congelamento — gravar no
-`ceiling.csv` o commit sob o qual cada teto foi medido, para o script acusar sozinho "congelado sob
-código que mudou desde então"; (c) expurgar da skill `palpites-copa` (passo 6) as **explicações
-pré-escritas** ("ruído de reconstrução", "variância de exatos"): um documento que antecipa a
-explicação de uma anomalia a imuniza contra investigação — foi o que aconteceu em 08/07 e 10/07.
-Documento deve fornecer **checagens**, não explicações.
-**Aceite:** rodar com um teto artificialmente baixo dispara o aviso; a saída nomeia as causas
-mecânicas candidatas; teste cobre o gatilho.
+primeira rodagem. 2ª leva (8a116dc): (a) `ceiling_anomalies` dispara quando os pontos do usuário
+**ou** do líder passam do teto, e `mechanical_suspects` imprime as sondas **antes** de qualquer
+leitura estatística
+— a frase pré-escrita "líder pegou variância de exatos" saiu do código; a variância só é oferecida
+depois que todas as sondas voltam limpas. (b) Procedência: `code_fingerprint` (sha256 de
+`efficiency.py` + `scoring.py` + `knockout.py`, pega até alteração não commitada) vai para a coluna
+`code` do `ceiling.csv`; `provenance_split` separa **desatualizado** (recongele) de **desconhecido**
+(pré-ENG-50). CSV antigo sem a coluna segue carregando. (c) A skill `palpites-copa` (passo 6) teve
+as explicações pré-escritas expurgadas: **documento fornece checagens, não explicações** — um doc
+que antecipa a explicação de uma anomalia a imuniza contra investigação, e foi ele que me entregou
+"ruído de reconstrução" e "variância de exatos" prontas em 08/07 e 10/07.
+**Aceite:** ✅ com o teto do ENG-48 (399) a saída acusa as duas anomalias (409 e 471 > 399) e 5
+sondas sujas; com o teto correto (423) sobra a anomalia do líder e 2 sondas sujas honestas (J96 sem
+bônus por latência; 30 jogos só reconstruídos). Recongelamento com procedência **não mudou nenhum
+teto** (diff do `ceiling.csv` = só a coluna `code`); 199 testes verdes.
+**Commit:** 8a116dc

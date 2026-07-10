@@ -10,9 +10,9 @@ as_of = "10 jul 2026"
 
 [campanha]
 jogos_disputados = 97
-pontos = 397
-eficiencia_pct = 102.6
-fase = "oitavas de final em andamento"
+pontos = 409
+eficiencia_pct = 102.5
+fase = "quartas de final em andamento"
 
 [[campanha.favoritos]]
 nome = "Espanha"

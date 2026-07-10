@@ -210,6 +210,15 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   (fonte de verdade, rastreada). Consulte ao trabalhar em melhorias; cada item tem refs, critério
   de aceite e o commit que o fechou.
 - Rode as checagens de **Qualidade** (ruff, mypy, pytest) antes de concluir mudanças.
+- **Teste a costura, não só as pontas** (ENG-48): **nunca fabrique em teste o que uma função de
+  produção produz.** Se o teste precisa da saída de `f` para exercitar `g`, ele **chama `f`** — não
+  constrói à mão um valor "no formato esperado". Produtor e consumidor podem ter 100% de cobertura
+  isolados e ainda **discordar sobre o formato**; foi assim que o `efficiency.py` passou toda a
+  fase de mata-mata (bd8a4c0, 30/06 → 39a150a, 10/07) sem creditar o bônus de ET/pênaltis (chave
+  `datetime64` de um lado, `str` do outro), com os testes verdes o tempo todo e o teto
+  silenciosamente subestimado. Vale para toda costura do repo: `odds.csv`→`blend`,
+  `resolve_live_bracket`→`build_training_frame`, `history/`→`ceiling.csv`. Um teste que fabrica a
+  entrada testa a sua suposição sobre a interface, não a interface.
 - **Régua de markdown**: linhas de prosa em `.md` respeitam **≤100 caracteres UTF-8** (não bytes).
   `scripts/check_markdown_line_length.py` detecta violações — ferramenta **on-demand** (não é
   hook de pre-commit; reflow automático de prosa é frágil, ver ENG-37). Isenções automáticas:

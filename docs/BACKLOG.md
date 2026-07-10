@@ -64,6 +64,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-46](#eng-46) | P3 | efficiency/pipeline | ✅ | `archive_scores` é só de grupo ⇒ teto de KO congela da reconstrução (menos fiel que o snapshot real) |
 | [ENG-47](#eng-47) | P3 | apresentação | ✅ | Números da campanha 2026 hardcoded em `build_presentation.py` — exigia editar código a cada rodada |
 | [ENG-48](#eng-48) | P1 | eficiência | ✅ | `efficiency.py` nunca creditava o bônus de ET/pênaltis: chave de data `datetime64` vs `str` ⇒ teto subestimado, eficiência inflada |
+| [ENG-49](#eng-49) | P2 | eficiência/dados | 🔴 | Fontes redundantes do desfecho de KO (`shootouts.csv` vs `penalty_winner`) são escolhidas, não comparadas — redundância sem detector |
+| [ENG-50](#eng-50) | P2 | eficiência | 🔴 | Anomalia numérica (eficiência > 100%) vira narrativa em vez de gatilho: sem limiar nem ação prescrita, ao contrário do monitor de empates |
 
 ---
 
@@ -1667,3 +1669,53 @@ reset explícito).
 via lookup real; latentes caem de 5 (J74, J75, J82, J88, J96) para 1 (J96, latência genuína — a
 base martj42 termina em 03/07); ruff/mypy/pytest verdes (188 testes).
 **Commit:** 39a150a
+
+## ENG-49
+**Fontes redundantes do desfecho de KO são escolhidas, não comparadas** · P2 · eficiência/dados ·
+🔴 todo
+
+O repo conhece o desfecho de um KO (prorrogação vs pênaltis, e quem venceu) por **duas vias
+independentes**: `data/editions/<ano>/shootouts.csv` (curado à mão, ≥2 fontes) e a coluna
+`penalty_winner` da base martj42. O ENG-27 decidiu que o `efficiency.py` lê **só** a martj42 — o
+que é defensável (a base é a referência do ajuste) — mas o outro lado passou a ser ignorado em vez
+de conferido. Resultado: redundância existe e **não vira detector**.
+
+Custo concreto: o ENG-48 (chave de data incompatível) sobreviveu a ≥2 rodadas de medição
+imprimindo "5 jogos empatados nos 90' ainda sem shootout na fonte". Três deles (J74, J75, J88)
+estavam no `shootouts.csv` da edição, e o J82 no `regulation.csv`. Uma comparação cruzada teria
+gritado "a edição afirma pênaltis no J74; a fonte não confirma" e o bug cairia na primeira
+rodagem, sem depender de questionamento humano.
+
+**Refs:** `scripts/efficiency.py` (`_penalty_lookup`, `_actual_ko_outcome`),
+`data/editions/2026/shootouts.csv`, `data/editions/2026/regulation.csv`, ENG-27, ENG-48.
+**Proposta.** Ao montar a lista de "latentes", cruzar com `Edition.shootouts`/`Edition.regulation`
+e classificar cada jogo em: (a) **latência genuína** — ausente das duas fontes (ex.: J96, cuja data
+é posterior ao fim da base); (b) **contradição** — a edição afirma um desfecho que a fonte não
+confirma ⇒ **erro**, não latência: avisar alto (o caso do ENG-48). Não é preciso mudar de quem se
+lê: basta que discordância seja **ruidosa**.
+**Aceite:** com o bug do ENG-48 reintroduzido, o script distingue as duas classes e sinaliza (b);
+teste cobre um jogo em cada classe.
+
+## ENG-50
+**Anomalia numérica vira narrativa em vez de gatilho** · P2 · eficiência · 🔴 todo
+
+Eficiência = `seus_pontos / teto_do_tool`. Um valor **> 100%** significa que o usuário superou o
+palpite que maximiza pontos esperados — possível (variância de exatos), mas **anômalo**. Hoje o
+script imprime o número sem limiar nem ação prescrita, e a interpretação fica por conta de quem lê
+— que tipicamente produz uma explicação plausível (*"variância"*, *"ruído de reconstrução"*) e
+encerra a investigação. Foi exatamente o que aconteceu em 08/07 e 10/07: **dois** "acima do teto"
+seguidos, ambos artefato do ENG-48, ambos racionalizados.
+
+O `blend-track` já faz o oposto e serve de modelo: o monitor de regime de empates tem **limiar**
+(z ≥ 2σ) e **ação prescrita** ("gatilho não atingido — não agir"). A eficiência não tem nenhum dos
+dois.
+
+**Refs:** `scripts/efficiency.py` (saída final), `worldcup.backtest.pooled_draw_calibration`
+(monitor de empates, o padrão a imitar), ENG-48.
+**Proposta.** Definir limiares e a ação de cada faixa na própria saída: eficiência > 100% ⇒ avisar
+que o teto pode estar subestimado e listar as suspeitas mecânicas primeiro (bônus de KO não
+creditado, jogos fora do teto, `ceiling.csv` congelado antes de um fix) **antes** de oferecer a
+leitura estatística. Mesma ideia para o líder acima do teto. O objetivo não é proibir a explicação
+por variância — é **exigir que a checagem mecânica venha antes dela**.
+**Aceite:** rodar com um teto artificialmente baixo dispara o aviso; a saída nomeia as causas
+mecânicas candidatas; teste cobre o gatilho.

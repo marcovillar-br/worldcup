@@ -69,15 +69,23 @@ def _pct(s: str) -> float:
     return float(s.strip().rstrip("%")) / 100.0
 
 
+def _date_key(date) -> str:
+    """Data no formato `AAAA-MM-DD`, venha ela como `str` (edição) ou `datetime64` (pandas)."""
+    return str(date)[:10]
+
+
 def _penalty_lookup(historical) -> dict[tuple[str, frozenset[str]], str]:
     """Mapa (data, {mandante,visitante}) → vencedor dos pênaltis (canônico; '' se foi sem disputa).
 
     A **presença** da chave significa que o jogo já está na fonte (martj42); a ausência ⇒ ainda não
     chegou (latência, ENG-15) e não dá para inferir ET vs pênaltis. Construído uma vez.
+
+    A data é normalizada para `AAAA-MM-DD`: a coluna vem como `datetime64` do pandas, e o consumidor
+    (`_actual_ko_outcome`) casa contra `Fixture.date`, que é `str`.
     """
     pens: dict[tuple[str, frozenset[str]], str] = {}
     for _, r in historical.iterrows():
-        key = (str(r["date"]), frozenset({canonical(str(r["home_team"])), canonical(str(r["away_team"]))}))
+        key = (_date_key(r["date"]), frozenset({canonical(str(r["home_team"])), canonical(str(r["away_team"]))}))
         pens[key] = canonical(str(r["penalty_winner"])) if str(r.get("penalty_winner", "") or "") else ""
     return pens
 
@@ -115,7 +123,7 @@ def _actual_ko_outcome(
     """
     if hg != ag:
         return None, None  # decidido nos 90 min — sem camada de ET/pênaltis
-    key = (str(date), frozenset({canonical(home), canonical(away)}))
+    key = (_date_key(date), frozenset({canonical(home), canonical(away)}))
     if key not in pens:
         return None, None  # a fonte ainda não confirmou o jogo (latência) — não inferir
     pen_winner = pens[key]

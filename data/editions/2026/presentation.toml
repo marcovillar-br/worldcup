@@ -11,7 +11,7 @@ as_of = "10 jul 2026"
 [campanha]
 jogos_disputados = 97
 pontos = 409
-eficiencia_pct = 102.5
+eficiencia_pct = 96.7
 fase = "quartas de final em andamento"
 
 [[campanha.favoritos]]

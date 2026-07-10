@@ -21,13 +21,18 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   (Brier 0,4074 vs 0,4091 do modelo puro), regime de empates dentro da variância (z=+0,80).
   Candidatos a campeão: **Espanha 28,9%**, Argentina 24,0%, França 23,8% (saltou com a vaga em
   SF), Inglaterra 14,8%, Bélgica 3,5%. Config: `risk 0.5` + `blend 0.8`.
-  **Seus pontos (10/07): 409, 16º** (subiu de 17º) — eficiência **102,5%** do teto do tool (399),
-  segunda medição seguida acima do teto. Líder **471**, ainda acima do teto do tool: nem seguir o
-  tool à risca alcançaria hoje — é variância de exatos a favor dele, não estratégia melhor.
+  **Seus pontos (10/07): 409, 16º** (subiu de 17º) — eficiência **96,7%** do teto do tool (423).
+  Líder **471**, ainda acima do teto do tool: nem seguir o tool à risca alcançaria hoje — é
+  variância de exatos a favor dele, não estratégia melhor.
+  ⚠️ **Correção (ENG-48): a eficiência caiu de 102,5% para 96,7% por um bug de medição, não por
+  piora sua.** O `efficiency.py` nunca creditava o bônus de prorrogação/pênaltis (chave de data
+  `datetime64` vs `str`), subestimando o teto. **Os "acima do teto" de 08/07 e 10/07 eram
+  artefato** — desconsidere-os. Palpites nunca foram afetados (o script é isolado). Teto
+  recongelado com `--reset-ceiling`.
   Ressalvas de leitura: 30 dos 97 jogos têm teto só reconstruído (J1–J4, J25–J35, J73–J90) e o
-  subconjunto com snapshot real mostra Δ=+27 de ruído de reconstrução; 5 KOs empatados nos 90'
-  (J74, J75, J82, J88, J96) seguem sem shootout na fonte martj42, então o bônus de prorrogação/
-  pênaltis deles não entra no teto.
+  subconjunto com snapshot real mostra Δ=+27 de ruído de reconstrução; só o **J96** segue sem
+  shootout na fonte martj42 (latência genuína — a base termina em 03/07), então o bônus de KO dele
+  não entra no teto.
 - **96 de 104 jogos disputados — J97 Marrocos × França (QF) pendente hoje (09/07)**, ainda sem
   placar na fonte. Odds e blend re-sincronizados (4 jogos atualizados); veredito do
   `blend-track` inalterado: blend segue melhor (Brier 0,4074 vs 0,4091 do modelo puro), regime de

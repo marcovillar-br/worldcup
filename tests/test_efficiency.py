@@ -6,6 +6,8 @@ import importlib.util
 from pathlib import Path
 from types import SimpleNamespace
 
+import pandas as pd
+
 from worldcup.edition import Fixture, ScoringConfig
 from worldcup.scoring import Scorer
 
@@ -48,6 +50,38 @@ def test_actual_ko_outcome_latency_skips():
     # 90' empate mas o jogo ainda NÃO está na fonte (chave ausente) → não inferir (latência)
     assert efficiency._actual_ko_outcome(1, 1, "2026-06-29", "Morocco", "Netherlands", "Morocco", {}) == (
         None,
+        None,
+    )
+
+
+def test_penalty_lookup_casa_com_a_data_do_fixture():
+    """Produtor (`_penalty_lookup`, coluna `datetime64`) e consumidor (`Fixture.date`, `str`) casam.
+
+    Regressão: a chave era `str(datetime64)` = `'2026-06-29 00:00:00'` e nunca batia com o
+    `'2026-06-29'` do fixture — todo KO empatado nos 90' caía no ramo de latência e **perdia o
+    bônus** de prorrogação/pênaltis. Os testes acima montavam o `pens` à mão, no formato do
+    consumidor, e por isso não pegavam o mismatch: este teste passa pelo lookup de verdade.
+    """
+    historical = pd.DataFrame(
+        {
+            "date": pd.to_datetime(["2026-06-29", "2026-06-29"]),
+            "home_team": ["Germany", "Netherlands"],
+            "away_team": ["Paraguay", "Morocco"],
+            "penalty_winner": ["Paraguay", ""],
+        }
+    )
+    pens = efficiency._penalty_lookup(historical)
+
+    assert ("2026-06-29", frozenset({"Germany", "Paraguay"})) in pens
+
+    # 90' empate + shootout na fonte → pênaltis, lado do vencedor
+    assert efficiency._actual_ko_outcome(1, 1, "2026-06-29", "Paraguay", "Germany", "Paraguay", pens) == (
+        "penalties",
+        "away",
+    )
+    # 90' empate + na fonte SEM shootout → prorrogação, vencedor = quem avançou
+    assert efficiency._actual_ko_outcome(1, 1, "2026-06-29", "Morocco", "Netherlands", "Morocco", pens) == (
+        "away",
         None,
     )
 

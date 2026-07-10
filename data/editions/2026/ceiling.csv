@@ -72,8 +72,8 @@ match_id,pts,palpite,real,source
 71,4.0000,0x3,1x3,archive
 72,7.0000,0x2,0x2,archive
 73,16.0000,0x1,0x1,asof
-74,0.0000,2x1,1x1,asof
-75,0.0000,0x1,1x1,asof
+74,6.0000,2x1,1x1,asof
+75,6.0000,0x1,1x1,asof
 76,16.0000,2x1,2x1,asof
 77,6.0000,2x0,3x0,asof
 78,18.0000,1x2,1x2,asof
@@ -86,7 +86,7 @@ match_id,pts,palpite,real,source
 85,12.0000,2x1,2x0,asof
 86,4.0000,2x0,3x2,asof
 87,6.0000,2x0,1x0,asof
-88,0.0000,0x1,1x1,asof
+88,12.0000,0x1,1x1,asof
 89,8.0000,0x1,0x3,asof
 90,6.0000,0x2,0x1,asof
 91,0.0000,2x1,0x2,archive

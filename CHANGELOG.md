@@ -67,6 +67,16 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   (Argentina 12,9% / Espanha 29,1%). Cobertura: `test_blend_track_boost_sweep`.
 
 ### Corrigido
+- **`efficiency.py` nunca creditava o bônus de prorrogação/pênaltis** (ENG-48): `_penalty_lookup`
+  indexava a fonte martj42 por `str(<datetime64>)` (`'2026-06-29 00:00:00'`), enquanto
+  `_actual_ko_outcome` procurava por `Fixture.date`, que é `str` (`'2026-06-29'`). As chaves nunca
+  batiam ⇒ **todo** KO empatado nos 90' caía no ramo de latência e perdia o bônus (+3/+3 ×peso de
+  fase). O **teto** saía subestimado e a **eficiência** inflada (em 10/07, 97 jogos: teto 399→423,
+  eficiência 102,5%→96,7%; os dois "acima do teto" eram artefato). Os testes fabricavam o `pens` à
+  mão no formato do consumidor e nunca exercitavam o produtor — a costura entre eles não tinha
+  cobertura. Fix: `_date_key()` normaliza os dois lados; teste de regressão passa pelo
+  `_penalty_lookup` real com frame `datetime64`. **Palpites não afetados** (script isolado; nada em
+  `src/` o importa). Teto recongelado com `--reset-ceiling`.
 - **Auditoria documental completa** (2026-07-05): varredura doc↔código de todos os documentos
   (README, AGENTS, SPEC, C4, MODEL_CARD, DATA, GLOSSARIO, PRD, skills) contra a implementação —
   ~25 divergências, todas de doc defasado (nenhum código errado), concentradas em 4 causas-raiz:

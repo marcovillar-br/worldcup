@@ -135,6 +135,56 @@ def _actual_ko_outcome(
     return ("home" if adv == canonical(home) else "away"), None
 
 
+def tied_ko_ids(scores: dict[int, dict]) -> list[int]:
+    """IDs dos KOs **empatados nos 90'** — os únicos que podem receber bônus de ET/pênaltis."""
+    out = []
+    for mid, s in scores.items():
+        if not s["ko"]:
+            continue
+        h, a = _parse_score(s["real"])
+        if h == a:
+            out.append(mid)
+    return sorted(out)
+
+
+def dead_path_canary(scores: dict[int, dict]) -> tuple[int, int]:
+    """Canário de **caminho morto** (ENG-50): `(bônus creditados, KOs empatados nos 90')`.
+
+    Se há KOs empatados nos 90' e o bônus de ET/pênaltis foi creditado em **zero** deles, ou o
+    torneio é bizarro ou o código está quebrado — foi o estado do ENG-48 por toda a fase de KO.
+    A checagem é sobre a **população**, não sobre um caso: não exige saber o desfecho de nenhum
+    jogo, só que um ramo que deveria rodar rodou alguma vez.
+    """
+    tied = tied_ko_ids(scores)
+    credited = sum(1 for mid in tied if scores[mid].get("act_et") is not None)
+    return credited, len(tied)
+
+
+def cross_source_ko_check(edition: Edition, scores: dict[int, dict]) -> tuple[list[int], list[int]]:
+    """Cruza as **duas fontes independentes** do desfecho de KO (ENG-49): `(latência, contradição)`.
+
+    A edição conhece o desfecho por curadoria manual (`shootouts.csv` ⇒ pênaltis; `regulation.csv`
+    ⇒ gol na prorrogação, pois o 90' difere do gravado). A base martj42 o conhece por
+    `penalty_winner`. O `efficiency.py` **lê** só a martj42 (ENG-27), mas discordância entre as
+    duas nunca deve passar em silêncio:
+
+    - **latência**: nenhuma das duas afirma o desfecho ⇒ a fonte ainda não ingeriu o jogo (normal);
+    - **contradição**: a edição afirma um desfecho que a fonte não confirma (ou confirma diferente)
+      ⇒ **erro** — bug de lookup, curadoria errada, ou fonte corrigida. Investigar, não narrar.
+    """
+    latency: list[int] = []
+    contradiction: list[int] = []
+    for mid in tied_ko_ids(scores):
+        claims_pens = mid in edition.shootouts
+        claims_et = mid in edition.regulation
+        act_et = scores[mid].get("act_et")
+        if act_et is None:  # a fonte não confirmou nada
+            (contradiction if (claims_pens or claims_et) else latency).append(mid)
+        elif (claims_pens and act_et != "penalties") or (claims_et and act_et == "penalties"):
+            contradiction.append(mid)  # ambas falam, e discordam
+    return latency, contradiction
+
+
 def asof_scores(edition: Edition, sims: int) -> dict[int, dict]:
     """Pontua, por jogo já disputado, o palpite as-of do tool contra o resultado real.
 
@@ -448,17 +498,26 @@ def main(argv: list[str] | None = None) -> int:
     print("    de incerteza. O bônus de placar é exato; a base não. Teto e eficiência são estimativas")
     print("    (ENG-24 / SPEC §4) — não leia o % como cravado.")
     if has_ko:
-        latent = [
-            mid
-            for mid, s in scores.items()
-            if s["ko"] and s.get("act_et") is None and _parse_score(s["real"])[0] == _parse_score(s["real"])[1]
-        ]
         print("ℹ️  Mata-mata: placar dos 90' com PESO DE FASE (R32–SF ×2, final ×4) E o bônus de prorrogação/")
         print("    pênaltis (+3/+3 ×peso) onde a fonte (martj42 shootouts) confirma o desfecho (ENG-27).")
+        latent, contradiction = cross_source_ko_check(edition, scores)
+        credited, tied = dead_path_canary(scores)
         if latent:
-            ids = ", ".join("J" + str(m) for m in sorted(latent))
+            ids = ", ".join("J" + str(m) for m in latent)
             print(f"    {len(latent)} jogo(s) empatado(s) nos 90' ainda sem shootout na fonte (latência) →")
             print(f"    bônus de KO não pontuado neste teto: {ids}")
+        # Sonda 1 (ENG-49): as duas fontes do desfecho discordam ⇒ erro, não latência.
+        if contradiction:
+            ids = ", ".join("J" + str(m) for m in contradiction)
+            print(f"🚨 CONTRADIÇÃO DE FONTE em {len(contradiction)} jogo(s): {ids}")
+            print("    A edição afirma o desfecho (shootouts.csv/regulation.csv) e a base martj42 não confirma.")
+            print("    Isto NÃO é latência: é bug de lookup, curadoria errada ou fonte corrigida. Investigue")
+            print("    ANTES de interpretar o teto — o bônus destes jogos está fora dele. (ENG-49)")
+        # Sonda 2 (ENG-50): um ramo que deveria rodar nunca rodou.
+        if tied and credited == 0:
+            print(f"🚨 CANÁRIO DE CAMINHO MORTO: {tied} KO(s) empatado(s) nos 90' e o bônus de ET/pênaltis")
+            print("    foi creditado em ZERO deles. Ou o torneio é bizarro, ou o código está quebrado —")
+            print("    a hipótese mecânica vem primeiro. Foi exatamente o estado do ENG-48. (ENG-50)")
     if args.compare_archive:
         arch_ids = [m for m in scores if m in archive]
         if arch_ids:

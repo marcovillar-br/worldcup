@@ -8,7 +8,7 @@ from types import SimpleNamespace
 
 import pandas as pd
 
-from worldcup.edition import Fixture, ScoringConfig
+from worldcup.edition import Fixture, ScoringConfig, load_edition
 from worldcup.scoring import Scorer
 
 _SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "efficiency.py"
@@ -215,3 +215,56 @@ def test_weighted_ko_bonus_is_doubled_in_r32():
     assert s.knockout_bonus("penalties", "home", "penalties", "home") * w == 12.0
     # só a ida aos pênaltis certa (errou o vencedor): +3 unit ×2 = 6
     assert s.knockout_bonus("penalties", "home", "penalties", "away") * w == 6.0
+
+
+# ── sondas: contradição de fonte (ENG-49) e canário de caminho morto (ENG-50) ──────────────────
+
+
+def _score(ko: bool, real: str, act_et: str | None = None) -> dict:
+    return {"ko": ko, "real": real, "act_et": act_et}
+
+
+def test_cross_source_ko_check_separa_latencia_de_contradicao():
+    # a edição afirma pênaltis no J74 e gol na prorrogação no J82; nada sobre o J96
+    ed = SimpleNamespace(shootouts={74: "Paraguay"}, regulation={82: (2, 2)})
+    scores = {
+        74: _score(True, "1x1", None),  # edição afirma, fonte não confirma → CONTRADIÇÃO (ENG-48)
+        96: _score(True, "0x0", None),  # ninguém afirma → latência genuína (fonte não ingeriu)
+        82: _score(True, "2x2", "penalties"),  # edição diz ET, fonte diz pênaltis → CONTRADIÇÃO
+        75: _score(True, "1x1", "away"),  # fonte resolveu, edição silente → ok
+        88: _score(True, "2x1", None),  # não empatou nos 90' → nem entra na conta
+        1: _score(False, "1x1", None),  # jogo de grupo → irrelevante
+    }
+    latency, contradiction = efficiency.cross_source_ko_check(ed, scores)
+    assert latency == [96]
+    assert contradiction == [74, 82]
+
+
+def test_dead_path_canary_conta_populacao_nao_caso():
+    scores = {
+        74: _score(True, "1x1", None),
+        75: _score(True, "1x1", None),
+        88: _score(True, "3x2", None),  # decidido nos 90' → não é população do canário
+    }
+    assert efficiency.dead_path_canary(scores) == (0, 2)  # dispara: 2 empatados, 0 creditados
+    scores[75] = _score(True, "1x1", "penalties")
+    assert efficiency.dead_path_canary(scores) == (1, 2)  # não dispara: o ramo rodou
+
+
+def test_cross_source_ko_check_casa_com_as_chaves_da_edicao_real():
+    """A sonda casa contra a `Edition` de verdade — não contra um dict fabricado.
+
+    Guarda a mesma costura que o ENG-48 quebrou, um nível acima: `shootouts.csv`/`regulation.csv`
+    são indexados por `match_id` **int**. Se o carregador passar a devolver chave `str`, o
+    `mid in edition.shootouts` silencia e a contradição vira "latência" — o bug de novo, com
+    outra roupa.
+    """
+    ed = load_edition(2026)
+    assert ed.shootouts, "a edição 2026 tem shootouts curados — o teste perde o sentido sem eles"
+    assert all(isinstance(k, int) for k in ed.shootouts)
+    assert all(isinstance(k, int) for k in ed.regulation)
+
+    mid = next(iter(ed.shootouts))  # jogo que a edição afirma ter ido aos pênaltis
+    latency, contradiction = efficiency.cross_source_ko_check(ed, {mid: _score(True, "1x1", None)})
+    assert contradiction == [mid]
+    assert latency == []

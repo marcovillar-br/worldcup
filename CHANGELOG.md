@@ -32,6 +32,13 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   quebrado). Agora `worldcup predict` e `worldcup status` **avisam** identificando os jogos fora do
   ajuste; base em dia ⇒ silêncio. Cobertura: `ingestion_gaps` (saudável + KO não resolvido) e o
   alerta no `format_status`.
+- **Duas sondas mecânicas no `efficiency.py`** (ENG-49; 1ª parte do ENG-50), para que uma anomalia
+  seja **checada antes de explicada**: (1) `cross_source_ko_check` cruza as duas fontes
+  independentes do desfecho de KO — `shootouts.csv`/`regulation.csv` (curadoria) vs `penalty_winner`
+  (martj42) — e separa **latência** (ninguém afirma) de **contradição** (a edição afirma e a fonte
+  não confirma ⇒ erro, avisa alto); (2) `dead_path_canary` acusa **caminho morto**: KOs empatados
+  nos 90' com o bônus de ET/pênaltis creditado em **zero** deles. Ambas disparam sobre o bug do
+  ENG-48 reintroduzido e silenciam sem ele.
 
 ### Segurança
 - **Allowlist de esquema de URL no downloader** (auditoria de segurança, 2026-07-05):

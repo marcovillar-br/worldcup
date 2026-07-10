@@ -143,7 +143,10 @@ Para cada jogo já disputado, pontua contra o resultado real o palpite que o too
 do jogo — a soma é o **teto** que seguir o tool à risca renderia; `eficiência = seus_pontos / teto`.
 O teto de cada jogo é **congelado** na primeira medição em `ceiling.csv` (ENG-34), preferindo o
 snapshot real de `history/` e caindo na reconstrução as-of só sem arquivo — assim o número não
-oscila entre rodagens; `--reset-ceiling` recongela do zero (ex.: após um fix de scoring).
+oscila entre rodagens; `--reset-ceiling` recongela do zero (ex.: após um fix de scoring). Cada teto
+guarda a **procedência** do código sob o qual foi medido (coluna `code`), e se os seus pontos ou os
+do líder passarem do teto o script imprime `🚨 ANOMALIA` + **sondas mecânicas** — teto subestimado
+por bug produz o mesmo sintoma que sorte, e a mecânica se checa antes (ENG-49/50).
 `--compare-archive` confronta com os snapshots reais de `history/` e lista onde a reconstrução
 diverge (quanto do gap é ruído de reconstrução vs. dias sem snapshot arquivado). Cobre a fase de
 grupos com pontuação exata; no mata-mata pontua os 90' **com o peso de fase** (R32–SF ×2, final ×4)

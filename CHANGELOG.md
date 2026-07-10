@@ -32,6 +32,16 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   quebrado). Agora `worldcup predict` e `worldcup status` **avisam** identificando os jogos fora do
   ajuste; base em dia ⇒ silêncio. Cobertura: `ingestion_gaps` (saudável + KO não resolvido) e o
   alerta no `format_status`.
+- **Gatilho de anomalia do teto + procedência do congelamento** (ENG-50, fecha): quando os pontos do
+  usuário ou do líder passam do teto, o `efficiency.py` imprime `🚨 ANOMALIA` e as **sondas
+  mecânicas** (`mechanical_suspects`) **antes** de qualquer leitura estatística — a variância só é
+  oferecida como explicação depois que todas voltam limpas. Some da saída a frase pré-escrita
+  "líder pegou variância de exatos" (era exatamente a racionalização que segurou o ENG-48 por duas
+  medições). O `ceiling.csv` ganha a coluna `code` (`code_fingerprint`): a impressão digital do
+  código que decidiu cada teto congelado (`efficiency.py` + `scoring.py` + `knockout.py`), com
+  `provenance_split` separando "congelado sob código diferente" (recongele) de "sem procedência"
+  (pré-ENG-50). O congelamento do ENG-34 protege contra **drift**, não contra **bug**. CSVs antigos
+  sem a coluna seguem carregando.
 - **Duas sondas mecânicas no `efficiency.py`** (ENG-49; 1ª parte do ENG-50), para que uma anomalia
   seja **checada antes de explicada**: (1) `cross_source_ko_check` cruza as duas fontes
   independentes do desfecho de KO — `shootouts.csv`/`regulation.csv` (curadoria) vs `penalty_winner`

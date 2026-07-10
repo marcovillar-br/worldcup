@@ -46,6 +46,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 from pathlib import Path
 
 from worldcup.blend import blend_matrix_with_odds
@@ -347,9 +348,41 @@ def _ceiling_path(edition: Edition) -> Path:
     return edition.directory / "ceiling.csv"
 
 
+# Arquivos que determinam **quanto vale** o teto de um jogo já medido: o pontuador do bolão, o
+# desfecho de KO e a própria lógica de medição. Mudou algum ⇒ um teto congelado antes pode estar
+# contaminado (ENG-50). O modelo/blend ficam de fora de propósito: eles mudam o *palpite*, e para os
+# congelados de `archive` o palpite é o do snapshot real, imutável.
+CEILING_CODE_FILES = ("scripts/efficiency.py", "src/worldcup/scoring.py", "src/worldcup/knockout.py")
+
+
+def code_fingerprint(root: Path, files: tuple[str, ...] = CEILING_CODE_FILES) -> str:
+    """Impressão digital do código que decide o teto (ENG-50) — 8 hex do sha256 do conteúdo.
+
+    Procedência do **congelamento**: gravada por jogo no `ceiling.csv`. Muda só quando um desses
+    arquivos muda de fato (não a cada commit), e pega até alteração não commitada.
+    """
+    h = hashlib.sha256()
+    for rel in files:
+        h.update(rel.encode())
+        h.update((root / rel).read_bytes())
+    return h.hexdigest()[:8]
+
+
+def provenance_split(cache: dict[int, dict], code: str) -> tuple[list[int], list[int]]:
+    """Procedência dos tetos congelados (ENG-50): `(sob código diferente, sem procedência)`.
+
+    O congelamento do ENG-34 protege contra **drift** (base/odds novas), não contra **bug**: um teto
+    medido sob código depois corrigido continua congelado, errado, e em silêncio. Entradas gravadas
+    antes do ENG-50 não têm `code` ⇒ procedência desconhecida (nem acusa, nem absolve).
+    """
+    stale = sorted(m for m, e in cache.items() if e.get("code") and e["code"] != code)
+    unknown = sorted(m for m, e in cache.items() if not e.get("code"))
+    return stale, unknown
+
+
 def load_ceiling(path: Path) -> dict[int, dict]:
     """Cache do teto por jogo **congelado na 1ª medição** (ENG-34): `{match_id: {pts, palpite, real,
-    source}}`. Ausente ⇒ vazio (semeia na 1ª rodada).
+    source, code}}`. Ausente ⇒ vazio (semeia na 1ª rodada). `code` ausente ⇒ `""` (pré-ENG-50).
 
     Estabiliza o headline: sem ele, a cada rodagem o teto de um jogo **já medido** muda (a
     reconstrução as-of re-roda o modelo com base/odds/código atuais), fazendo a "eficiência" oscilar
@@ -366,6 +399,7 @@ def load_ceiling(path: Path) -> dict[int, dict]:
                 "palpite": row.get("palpite", ""),
                 "real": row.get("real", ""),
                 "source": row.get("source", "asof"),
+                "code": row.get("code", ""),
             }
     return out
 
@@ -374,14 +408,14 @@ def save_ceiling(path: Path, entries: dict[int, dict]) -> None:
     """Grava o cache do teto (rastreado). Congelado por jogo — só cresce; jogos já medidos não mudam."""
     with path.open("w", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["match_id", "pts", "palpite", "real", "source"])
+        w.writerow(["match_id", "pts", "palpite", "real", "source", "code"])
         for mid in sorted(entries):
             e = entries[mid]
-            w.writerow([mid, f"{e['pts']:.4f}", e["palpite"], e["real"], e["source"]])
+            w.writerow([mid, f"{e['pts']:.4f}", e["palpite"], e["real"], e["source"], e.get("code", "")])
 
 
 def reconcile_ceiling(
-    recon: dict[int, dict], archive: dict[int, float], cache: dict[int, dict]
+    recon: dict[int, dict], archive: dict[int, float], cache: dict[int, dict], code: str = ""
 ) -> tuple[dict[int, float], dict[int, dict], list[tuple[int, float, float]]]:
     """Teto headline **estável** por jogo (ENG-34): congela na 1ª medição e reusa depois.
 
@@ -408,8 +442,57 @@ def reconcile_ceiling(
         else:
             pts, source = (archive[mid], "archive") if mid in archive else (s["pts"], "asof")
             headline[mid] = pts
-            updated[mid] = {"pts": pts, "palpite": s["palpite"], "real": s["real"], "source": source}
+            # `code`: procedência do congelamento (ENG-50) — sob qual código este teto foi medido.
+            updated[mid] = {"pts": pts, "palpite": s["palpite"], "real": s["real"], "source": source, "code": code}
     return headline, updated, drift
+
+
+def ceiling_anomalies(total: float, my_points: float | None, leader: float | None) -> list[str]:
+    """Violações do invariante **"o teto é um teto"** (ENG-50). Vazio = nada a investigar.
+
+    Não é opinião nem faixa de tolerância: o teto é o que o palpite do tool renderia. Alguém acima
+    dele é possível (variância de placares exatos) **ou** o teto está subestimado (bug). As duas
+    hipóteses são reais; a mecânica é a que se checa primeiro, porque é a que se **descarta**.
+    """
+    out = []
+    if my_points is not None and my_points > total:
+        out.append(f"seus pontos ({my_points:.0f}) > teto do tool ({total:.0f})")
+    if leader is not None and leader > total:
+        out.append(f"pontos do líder ({leader:.0f}) > teto do tool ({total:.0f})")
+    return out
+
+
+def mechanical_suspects(
+    *,
+    latent: list[int],
+    contradiction: list[int],
+    credited: int,
+    tied: int,
+    stale: list[int],
+    unknown: list[int],
+    recon_only: int,
+) -> list[tuple[bool, str]]:
+    """Sondas mecânicas do teto (ENG-50): `[(limpa?, texto)]`, para imprimir **antes** de interpretar.
+
+    Cada uma é uma causa concreta de teto subestimado — o tipo de coisa que o ENG-48 foi. Uma sonda
+    suja não prova bug, mas precisa ser descartada antes de a variância virar explicação: a
+    estatística explica qualquer resíduo, inclusive o que é código quebrado.
+    """
+    out: list[tuple[bool, str]] = []
+    if tied:
+        ok = credited > 0
+        out.append((ok, f"bônus de ET/pênaltis creditado em {credited} de {tied} KO(s) empatado(s) nos 90'"))
+    out.append((not contradiction, f"contradição entre as fontes do desfecho de KO: {len(contradiction)} jogo(s)"))
+    if latent:
+        ids = ", ".join("J" + str(m) for m in latent)
+        out.append((False, f"{len(latent)} KO(s) sem bônus por latência da fonte ({ids}) — teto omite esses pontos"))
+    if stale:
+        out.append((False, f"{len(stale)} teto(s) congelado(s) sob código diferente do atual — recongele"))
+    if unknown:
+        out.append((False, f"{len(unknown)} teto(s) sem procedência (congelados antes do ENG-50)"))
+    if recon_only:
+        out.append((False, f"{recon_only} jogo(s) com teto só reconstruído (sem snapshot real) — não verificável"))
+    return out
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -433,9 +516,11 @@ def main(argv: list[str] | None = None) -> int:
     # ENG-34: teto headline congelado por jogo — estável entre rodagens (base/odds/código novos não
     # mudam o teto de um jogo já medido; divergências viram drift reportado, não substituição muda).
     cache = {} if args.reset_ceiling else load_ceiling(_ceiling_path(edition))
-    headline, updated_cache, drift = reconcile_ceiling(scores, archive, cache)
+    fingerprint = code_fingerprint(PROJECT_ROOT)  # ENG-50: procedência do congelamento
+    headline, updated_cache, drift = reconcile_ceiling(scores, archive, cache, fingerprint)
     save_ceiling(_ceiling_path(edition), updated_cache)
     seeded = len(updated_cache) - len(cache)
+    stale_prov, unknown_prov = provenance_split(cache, fingerprint)  # do cache LIDO, não do gravado
 
     has_ko = any(s["ko"] for s in scores.values())
     hdr = f"{'J':>3} {'fase':6} {'palp':5} {'real':5} {'pts':>4}"
@@ -497,6 +582,9 @@ def main(argv: list[str] | None = None) -> int:
     print("⚠️  APROXIMADO: a base (1–13) usa a probabilidade interna do app (inobservável) ⇒ ±~1/jogo")
     print("    de incerteza. O bônus de placar é exato; a base não. Teto e eficiência são estimativas")
     print("    (ENG-24 / SPEC §4) — não leia o % como cravado.")
+    latent: list[int] = []
+    contradiction: list[int] = []
+    credited = tied = 0
     if has_ko:
         print("ℹ️  Mata-mata: placar dos 90' com PESO DE FASE (R32–SF ×2, final ×4) E o bônus de prorrogação/")
         print("    pênaltis (+3/+3 ×peso) onde a fonte (martj42 shootouts) confirma o desfecho (ENG-27).")
@@ -540,12 +628,37 @@ def main(argv: list[str] | None = None) -> int:
         print(f"   sua captura do teto teórico: {cap:.1f}%  (vs oráculo — inclui o limite do modelo + azar)")
         if args.leader is not None:
             above = args.leader > total
-            note = (
-                "nem seguir o tool à risca alcançaria hoje; líder pegou variância de exatos a favor"
-                if above
-                else "alcançável seguindo o tool"
-            )
-            print(f"Líder: {args.leader:.0f} — {'ACIMA' if above else 'abaixo'} do teto do tool ({note}).")
+            print(f"Líder: {args.leader:.0f} — {'ACIMA' if above else 'abaixo'} do teto do tool.")
+
+    # ENG-50: o invariante "o teto é um teto" foi violado ⇒ imprimir as sondas MECÂNICAS antes de
+    # qualquer leitura estatística. Não há explicação pré-escrita aqui de propósito: a variância
+    # explica qualquer resíduo, inclusive código quebrado, e por isso vem por último — depois que
+    # as sondas voltam limpas. Foi o que faltou em 08/07 e 10/07 (ENG-48).
+    anomalies = ceiling_anomalies(total, args.my_points, args.leader)
+    if anomalies:
+        n_recon = sum(1 for m in scores if m not in archive)
+        suspects = mechanical_suspects(
+            latent=latent,
+            contradiction=contradiction,
+            credited=credited,
+            tied=tied,
+            stale=stale_prov,
+            unknown=unknown_prov,
+            recon_only=n_recon,
+        )
+        print("\n🚨 ANOMALIA: o teto deveria ser um teto.")
+        for a in anomalies:
+            print(f"   • {a}")
+        print("   Sondas mecânicas (descarte-as ANTES de atribuir a variância):")
+        for ok, text in suspects:
+            print(f"     {'✓' if ok else '✗'} {text}")
+        dirty = [t for ok, t in suspects if not ok]
+        if dirty:
+            print(f"   ⇒ {len(dirty)} sonda(s) suja(s): o teto pode estar SUBESTIMADO. Investigue antes de concluir")
+            print("     que alguém superou o tool. Um teto subestimado produz exatamente este sintoma.")
+        else:
+            print("   ⇒ sondas limpas. Só agora a leitura estatística é legítima: superar o teto do tool é")
+            print("     possível por variância de placares exatos (que regride), não por estratégia superior.")
     return 0
 
 

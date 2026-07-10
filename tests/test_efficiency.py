@@ -153,11 +153,20 @@ def test_reconcile_ceiling_no_drift_for_archive_source():
 
 def test_ceiling_cache_roundtrip(tmp_path):
     path = tmp_path / "ceiling.csv"
-    entries = {5: {"pts": 10.0, "palpite": "1x0", "real": "1x0", "source": "asof"}}
+    entries = {5: {"pts": 10.0, "palpite": "1x0", "real": "1x0", "source": "asof", "code": "cafe1234"}}
     efficiency.save_ceiling(path, entries)
     loaded = efficiency.load_ceiling(path)
     assert loaded == entries
     assert efficiency.load_ceiling(tmp_path / "nope.csv") == {}
+
+
+def test_load_ceiling_aceita_csv_pre_eng50_sem_coluna_code(tmp_path):
+    # compatibilidade: ceiling.csv antigo (sem `code`) carrega com procedência vazia, não explode
+    path = tmp_path / "ceiling.csv"
+    path.write_text("match_id,pts,palpite,real,source\n5,10.0000,1x0,1x0,asof\n")
+    loaded = efficiency.load_ceiling(path)
+    assert loaded[5]["code"] == ""
+    assert efficiency.provenance_split(loaded, "cafe1234") == ([], [5])  # desconhecida, não desatualizada
 
 
 def test_parse_ko_layers():
@@ -268,3 +277,72 @@ def test_cross_source_ko_check_casa_com_as_chaves_da_edicao_real():
     latency, contradiction = efficiency.cross_source_ko_check(ed, {mid: _score(True, "1x1", None)})
     assert contradiction == [mid]
     assert latency == []
+
+
+# ── gatilho de anomalia + procedência do congelamento (ENG-50) ─────────────────────────────────
+
+
+def test_ceiling_anomalies_dispara_so_acima_do_teto():
+    assert efficiency.ceiling_anomalies(423.0, 409.0, 400.0) == []  # ninguém acima ⇒ nada a investigar
+    assert efficiency.ceiling_anomalies(423.0, None, None) == []
+    anomalies = efficiency.ceiling_anomalies(399.0, 409.0, 471.0)  # o estado real de 10/07 sob o ENG-48
+    assert len(anomalies) == 2
+    assert "seus pontos" in anomalies[0]
+    assert "líder" in anomalies[1]
+
+
+def test_mechanical_suspects_marca_canario_e_contradicao():
+    # estado do ENG-48: bônus creditado em zero, fontes discordando, tetos sem procedência
+    suspects = efficiency.mechanical_suspects(
+        latent=[96], contradiction=[74, 75], credited=0, tied=5, stale=[], unknown=[1, 2], recon_only=30
+    )
+    assert [ok for ok, _ in suspects] == [False, False, False, False, False]  # tudo sujo
+
+    # pós-fix, sem latência e com procedência: sondas limpas ⇒ a leitura estatística fica legítima
+    clean = efficiency.mechanical_suspects(
+        latent=[], contradiction=[], credited=4, tied=5, stale=[], unknown=[], recon_only=0
+    )
+    assert all(ok for ok, _ in clean)
+
+
+def test_code_fingerprint_muda_com_o_conteudo(tmp_path):
+    (tmp_path / "a.py").write_text("x = 1")
+    before = efficiency.code_fingerprint(tmp_path, ("a.py",))
+    assert before == efficiency.code_fingerprint(tmp_path, ("a.py",))  # estável
+    (tmp_path / "a.py").write_text("x = 2")
+    assert efficiency.code_fingerprint(tmp_path, ("a.py",)) != before  # pega alteração não commitada
+
+
+def test_code_fingerprint_cobre_o_pontuador_do_teto():
+    # os arquivos vigiados existem e são os que decidem quanto vale um teto congelado
+    for rel in efficiency.CEILING_CODE_FILES:
+        assert (efficiency.PROJECT_ROOT / rel).exists(), rel
+    assert efficiency.code_fingerprint(efficiency.PROJECT_ROOT)  # não explode no repo real
+
+
+def test_provenance_split_separa_desatualizado_de_desconhecido():
+    cache = {
+        1: {"pts": 7.0, "code": "aaaaaaaa"},  # congelado sob o código atual
+        2: {"pts": 7.0, "code": "bbbbbbbb"},  # sob código diferente → recongelar
+        3: {"pts": 7.0, "code": ""},  # pré-ENG-50 → procedência desconhecida
+        4: {"pts": 7.0},  # coluna ausente (csv antigo) → idem
+    }
+    stale, unknown = efficiency.provenance_split(cache, "aaaaaaaa")
+    assert stale == [2]
+    assert unknown == [3, 4]
+
+
+def test_ceiling_roundtrip_preserva_procedencia(tmp_path):
+    # a costura: save_ceiling escreve `code`, load_ceiling o lê de volta (não fabricado no teste)
+    path = tmp_path / "ceiling.csv"
+    entries = {5: {"pts": 10.0, "palpite": "1x0", "real": "1x0", "source": "asof", "code": "deadbeef"}}
+    efficiency.save_ceiling(path, entries)
+    assert efficiency.load_ceiling(path) == entries
+    stale, unknown = efficiency.provenance_split(efficiency.load_ceiling(path), "deadbeef")
+    assert stale == []
+    assert unknown == []
+
+
+def test_reconcile_ceiling_carimba_procedencia_no_congelamento():
+    _headline, updated, _drift = efficiency.reconcile_ceiling({7: _recon(8.0)}, {}, {}, "cafe1234")
+    assert updated[7]["code"] == "cafe1234"

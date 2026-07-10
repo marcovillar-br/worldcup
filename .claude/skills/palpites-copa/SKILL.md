@@ -163,22 +163,33 @@ o oráculo é só diagnóstico de teto.** O oráculo é dominado por ruído irre
 placar exato com consistência: o tool perfeito captura ~34% do teórico), então **não** o use
 para avaliar a jogada do usuário — serve para dimensionar "quanto teto ainda existe".
 
-⚠️ **Regras de interpretação (não pule — é fácil concluir errado):**
-1. **Sempre** rode com `--compare-archive`. Ele separa o teto **verificável** (jogos com
-   snapshot real em `history/`) do **reconstruído** (dias sem arquivo) — e a reconstrução
-   **diverge** do que o tool de fato mostrou (drift de odds/refit). Parte de qualquer gap é
-   **ruído de reconstrução**.
-2. **Nunca** afirme "100%" nem culpe a execução do usuário sem checar o item 1 — sobretudo se ele
-   diz que **ajusta os palpites toda manhã** (= segue o tool; o gap então é majoritariamente
-   reconstrução, não má jogada). Foi o erro cometido na 1ª medição (ver `BOLAO.md` 2026-06-24).
-3. Se o **líder** estiver **acima** do teto do tool, diga claramente: nem seguir o tool à risca
-   alcançaria; ele pegou variância de exatos a favor (regride), não estratégia superior.
+⚠️ **Regras de interpretação — checar antes de explicar (ENG-50).**
+Este bloco fornece **checagens**, não explicações. É deliberado: um documento que já traz a
+explicação de uma anomalia a **imuniza contra investigação** — quem lê pega a explicação pronta,
+acha plausível, e para de procurar. Foi assim que o ENG-48 (bônus de KO nunca creditado ⇒ teto
+subestimado ⇒ eficiência inflada) sobreviveu a duas medições: a skill dizia "é ruído de
+reconstrução" e "o líder pegou variância de exatos", e as duas frases couberam perfeitamente no
+sintoma de um bug. **Nunca** ofereça uma leitura estatística de um número anômalo antes de as
+sondas mecânicas voltarem limpas.
+
+1. **Sempre** rode com `--compare-archive`. Ele separa o teto **verificável** (jogos com snapshot
+   real em `history/`) do **reconstruído** (dias sem arquivo).
+2. **Leia as sondas do próprio script antes de interpretar.** Se os pontos do usuário ou os do
+   líder passam do teto, ele imprime `🚨 ANOMALIA` seguido das sondas mecânicas (bônus de KO
+   creditado, contradição de fonte, latência, procedência do congelamento, jogos só reconstruídos).
+   **Sonda suja ⇒ o teto pode estar subestimado: investigue.** Só com todas limpas a variância de
+   placares exatos passa a ser leitura legítima — e aí o script diz isso sozinho.
+3. **Nunca** culpe a execução do usuário sem checar o item 1 — sobretudo se ele **ajusta os palpites
+   toda manhã** (= segue o tool). Erro cometido na 1ª medição (`BOLAO.md` 2026-06-24).
 4. Recomende manter o **arquivo da manhã completo** (`predict --archive` todo dia) — só assim a
    eficiência fica exata (seus pontos vs `scored(palpite arquivado)`, sem reconstrução).
 5. **Teto congelado (ENG-34)**: o teto por jogo é **congelado na 1ª medição** em `ceiling.csv`
    (rastreado) — o headline não muda mais retroativamente entre rodagens. Se código/odds/base
    mudarem depois (ex.: um fix de scoring), o script **reporta drift** dos jogos afetados sem
-   sobrescrever; para recongelar na medição atual, rode com `--reset-ceiling`.
+   sobrescrever; para recongelar na medição atual, rode com `--reset-ceiling`. O `ceiling.csv`
+   guarda a coluna `code` (ENG-50): a impressão digital do código que decidiu aquele teto. Mudou o
+   pontuador ⇒ o script acusa "congelado sob código diferente" — recongele; o congelamento protege
+   contra **drift**, não contra **bug**.
 
 Registre o veredito (eficiência, teto, posição) no **Histórico** do `BOLAO.md` e atualize
 `campanha.pontos`/`eficiencia_pct` em `data/editions/2026/presentation.toml` (único jeito de

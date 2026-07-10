@@ -64,8 +64,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-46](#eng-46) | P3 | efficiency/pipeline | ✅ | `archive_scores` é só de grupo ⇒ teto de KO congela da reconstrução (menos fiel que o snapshot real) |
 | [ENG-47](#eng-47) | P3 | apresentação | ✅ | Números da campanha 2026 hardcoded em `build_presentation.py` — exigia editar código a cada rodada |
 | [ENG-48](#eng-48) | P1 | eficiência | ✅ | `efficiency.py` nunca creditava o bônus de ET/pênaltis: chave de data `datetime64` vs `str` ⇒ teto subestimado, eficiência inflada |
-| [ENG-49](#eng-49) | P2 | eficiência/dados | 🔴 | Fontes redundantes do desfecho de KO (`shootouts.csv` vs `penalty_winner`) são escolhidas, não comparadas — redundância sem detector |
-| [ENG-50](#eng-50) | P2 | eficiência | 🔴 | Anomalia numérica (eficiência > 100%) vira narrativa em vez de gatilho: sem limiar nem ação prescrita, ao contrário do monitor de empates |
+| [ENG-49](#eng-49) | P2 | eficiência/dados | ✅ | Fontes redundantes do desfecho de KO (`shootouts.csv` vs `penalty_winner`) são escolhidas, não comparadas — redundância sem detector |
+| [ENG-50](#eng-50) | P2 | eficiência | 🟡 | Anomalia numérica (eficiência > 100%) vira narrativa em vez de gatilho: sem limiar nem ação prescrita, ao contrário do monitor de empates |
 
 ---
 
@@ -1672,7 +1672,7 @@ base martj42 termina em 03/07); ruff/mypy/pytest verdes (188 testes).
 
 ## ENG-49
 **Fontes redundantes do desfecho de KO são escolhidas, não comparadas** · P2 · eficiência/dados ·
-🔴 todo
+✅ feito
 
 O repo conhece o desfecho de um KO (prorrogação vs pênaltis, e quem venceu) por **duas vias
 independentes**: `data/editions/<ano>/shootouts.csv` (curado à mão, ≥2 fontes) e a coluna
@@ -1693,11 +1693,19 @@ e classificar cada jogo em: (a) **latência genuína** — ausente das duas font
 é posterior ao fim da base); (b) **contradição** — a edição afirma um desfecho que a fonte não
 confirma ⇒ **erro**, não latência: avisar alto (o caso do ENG-48). Não é preciso mudar de quem se
 lê: basta que discordância seja **ruidosa**.
-**Aceite:** com o bug do ENG-48 reintroduzido, o script distingue as duas classes e sinaliza (b);
-teste cobre um jogo em cada classe.
+**Resolução.** `cross_source_ko_check(edition, scores) -> (latência, contradição)` cruza as duas
+fontes para todo KO empatado nos 90' e classifica: **latência** (ninguém afirma o desfecho — a base
+ainda não ingeriu o jogo) vs **contradição** (a edição afirma e a fonte não confirma, ou confirma
+diferente). Contradição imprime `🚨 CONTRADIÇÃO DE FONTE` e diz explicitamente que **não é
+latência**. Continua lendo da martj42 (ENG-27 intacto); só a discordância virou ruidosa.
+**Aceite:** ✅ com o bug do ENG-48 reintroduzido a sonda acusa `[74, 75, 82, 88]` como contradição e
+só `[96]` como latência; sem o bug, contradição = `[]` e J96 segue latência (a base termina em
+03/07). Testes: um jogo em cada classe + um contra a `Edition` **real** (guarda a chave `int` do
+`shootouts.csv`, a mesma família de bug do ENG-48, um nível acima).
+**Commit:** 5da25ff
 
 ## ENG-50
-**Anomalia numérica vira narrativa em vez de gatilho** · P2 · eficiência · 🔴 todo
+**Anomalia numérica vira narrativa em vez de gatilho** · P2 · eficiência · 🟡 fazendo
 
 Eficiência = `seus_pontos / teto_do_tool`. Um valor **> 100%** significa que o usuário superou o
 palpite que maximiza pontos esperados — possível (variância de exatos), mas **anômalo**. Hoje o
@@ -1717,5 +1725,16 @@ que o teto pode estar subestimado e listar as suspeitas mecânicas primeiro (bô
 creditado, jogos fora do teto, `ceiling.csv` congelado antes de um fix) **antes** de oferecer a
 leitura estatística. Mesma ideia para o líder acima do teto. O objetivo não é proibir a explicação
 por variância — é **exigir que a checagem mecânica venha antes dela**.
+**Progresso (5da25ff).** Entregue a 1ª sonda: **canário de caminho morto**
+(`dead_path_canary`) — se há KOs empatados nos 90' e o bônus de ET/pênaltis foi creditado em
+**zero** deles, o script grita que a hipótese mecânica vem antes da estatística. É uma checagem de
+**população**, não de caso: não precisa saber o desfecho de nenhum jogo. Teria pego o ENG-48 na
+primeira rodagem. Falta: (a) o gatilho da própria eficiência > 100% (com as sondas mecânicas
+impressas **antes** de qualquer leitura por variância); (b) procedência do congelamento — gravar no
+`ceiling.csv` o commit sob o qual cada teto foi medido, para o script acusar sozinho "congelado sob
+código que mudou desde então"; (c) expurgar da skill `palpites-copa` (passo 6) as **explicações
+pré-escritas** ("ruído de reconstrução", "variância de exatos"): um documento que antecipa a
+explicação de uma anomalia a imuniza contra investigação — foi o que aconteceu em 08/07 e 10/07.
+Documento deve fornecer **checagens**, não explicações.
 **Aceite:** rodar com um teto artificialmente baixo dispara o aviso; a saída nomeia as causas
 mecânicas candidatas; teste cobre o gatilho.

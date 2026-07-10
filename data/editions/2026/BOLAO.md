@@ -12,8 +12,15 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-09)
+## Estado atual (atualizado em 2026-07-10)
 
+- **97 de 104 jogos disputados.** Em 09/07 fechou a 1ª quarta: **J97 Marrocos 0×2 França**
+  (tool palpitava 1×2 — lado e avanço certos, placar exato não). Hoje (10/07) joga
+  **J98 Espanha × Bélgica** (palpite **2×1**, Espanha avança; 58%/25%/17%). Odds re-sincronizadas
+  (3 jogos atualizados, 72 no `odds.csv`); `blend-track` inalterado: blend melhor
+  (Brier 0,4074 vs 0,4091 do modelo puro), regime de empates dentro da variância (z=+0,80).
+  Candidatos a campeão: **Espanha 28,9%**, Argentina 24,0%, França 23,8% (saltou com a vaga em
+  SF), Inglaterra 14,8%, Bélgica 3,5%. Config: `risk 0.5` + `blend 0.8`.
 - **96 de 104 jogos disputados — J97 Marrocos × França (QF) pendente hoje (09/07)**, ainda sem
   placar na fonte. Odds e blend re-sincronizados (4 jogos atualizados); veredito do
   `blend-track` inalterado: blend segue melhor (Brier 0,4074 vs 0,4091 do modelo puro), regime de

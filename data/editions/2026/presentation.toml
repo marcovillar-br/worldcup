@@ -6,29 +6,29 @@
 # scripts/update_presentation_data.py; os demais (pontos, eficiencia_pct, fase, bracket_destaque)
 # exigem input do usuário ou curadoria editorial — revise-os manualmente a cada rodada.
 
-as_of = "09 jul 2026"
+as_of = "10 jul 2026"
 
 [campanha]
-jogos_disputados = 96
+jogos_disputados = 97
 pontos = 397
 eficiencia_pct = 102.6
 fase = "oitavas de final em andamento"
 
 [[campanha.favoritos]]
 nome = "Espanha"
-pct = 30.3
+pct = 28.9
 [[campanha.favoritos]]
 nome = "Argentina"
-pct = 25.1
-[[campanha.favoritos]]
-nome = "Inglaterra"
-pct = 15.3
+pct = 24.0
 [[campanha.favoritos]]
 nome = "França"
-pct = 13.8
+pct = 23.8
 [[campanha.favoritos]]
-nome = "Marrocos"
-pct = 5.8
+nome = "Inglaterra"
+pct = 14.8
+[[campanha.favoritos]]
+nome = "Bélgica"
+pct = 3.5
 
 [bracket_destaque]
 selecao = "Argentina"

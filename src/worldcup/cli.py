@@ -117,6 +117,17 @@ def print_console_summary(run: PredictionRun) -> None:
     for t, p in champ:
         print(f"   {display(t):16s} {p * 100:4.1f}%")
 
+    # ENG-52 (INV-7): o favorito a campeão (probabilidade marginal sobre TODOS os cenários) pode não
+    # ser o campeão do bracket determinístico (o caminho único mais provável) — respostas a perguntas
+    # diferentes, não contradição. Só anota quando de fato divergem, para a saída não surpreender.
+    final_row = next((r for r in run.rows if r["fase"] == "final"), None)
+    bracket_champ = final_row["avanca"] if final_row else ""
+    if champ and bracket_champ and display(champ[0][0]) != bracket_champ:
+        print(
+            f"   ℹ️  favorito {display(champ[0][0])} (probabilidade marginal) ≠ campeão do bracket "
+            f"{bracket_champ} (cenário modal): respondem perguntas diferentes, não se contradizem."
+        )
+
     upcoming = [r for r in run.rows if r["status"] == "PREVISTO"]
     print(f"\n📋 Próximos jogos a palpitar (mostrando até 12 de {len(upcoming)}):")
     for r in upcoming[:12]:

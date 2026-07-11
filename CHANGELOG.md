@@ -11,6 +11,29 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
+### Corrigido
+- **Chaveamento e palpite escolhiam vencedores diferentes no mesmo KO** (ENG-51): o blend com odds
+  (ENG-19) só entrava na geração do palpite exibido; o `deterministic_bracket` (quem joga o próximo
+  jogo) e o `monte_carlo` (probabilidades de campeão) seguiam no modelo puro. Quando o mercado
+  **invertia o favorito** do modelo num confronto conhecido, as duas rotas divergiam e a tabela se
+  autocontradizia — visto na SF J101 França × Espanha ("avança França" mas "final Espanha ×
+  Argentina"). Latente desde o ENG-19; a Copa só produziu o gatilho na semifinal. Fix: o bracket
+  decide quem avança com a **mesma** matriz blendada do palpite (`deterministic_bracket(...,
+  matrix_fn=…)`); as probabilidades de campeão blendam os confrontos de KO **determinados** que têm
+  odds (`monte_carlo(..., ko_blend=…)` via `resolve_live_bracket`) — Espanha caiu de 38,1% para
+  29,9% e França subiu para 28,6%. Confrontos futuros (times variáveis por simulação) seguem no
+  modelo. Resíduo INV-7 (favorito marginal ≠ campeão do bracket modal) é correto e agora é anotado
+  na saída do `predict`.
+
+### Adicionado
+- **Guardião de coerência interna do palpite** (ENG-52): `src/worldcup/consistency.py`
+  (`check_prediction_consistency`) confronta partes da mesma tabela entre si — encadeamento do
+  bracket (`Wxx`/`Lxx` = quem avançou/perdeu), `avança` ∈ participantes, sem time repetido na rodada
+  de KO, 1×2 ~100%. Roda como **asserção dura** no `pipeline.run` (recusa emitir tabela
+  auto-contraditória) e como ferramenta **on-demand** `scripts/check_output_consistency.py` sobre um
+  CSV já gravado. Fecha a lacuna que deixou o ENG-51 passar: nenhum teste perguntava "a tabela que
+  entrego se contradiz?".
+
 ### Adicionado
 - **Dados vivos da apresentação extraídos do código**: `scripts/build_presentation.py` lia números
   da campanha (jogos disputados, pontos, favoritos ao título, bracket em andamento, Brier) como

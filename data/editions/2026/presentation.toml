@@ -16,19 +16,19 @@ fase = "quartas de final em andamento"
 
 [[campanha.favoritos]]
 nome = "Espanha"
-pct = 38.1
+pct = 29.9
 [[campanha.favoritos]]
 nome = "França"
-pct = 22.3
+pct = 28.6
 [[campanha.favoritos]]
 nome = "Argentina"
-pct = 21.8
+pct = 23.6
 [[campanha.favoritos]]
 nome = "Inglaterra"
-pct = 12.8
+pct = 13.5
 [[campanha.favoritos]]
 nome = "Noruega"
-pct = 2.5
+pct = 2.4
 
 [bracket_destaque]
 selecao = "Argentina"
@@ -47,4 +47,4 @@ brier_blend_width_pct = 99
 jogos_rastreados = 49
 
 [evolucao]
-melhorias_entregues = 101
+melhorias_entregues = 107

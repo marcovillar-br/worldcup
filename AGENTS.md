@@ -77,6 +77,9 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   `pipeline.run` só nos jogos com odds; sem odds ou `blend_weight=0` ⇒ matriz intacta; sem totals ⇒
   blend só de 1×2.
 - `format_engine.py` — simulação genérica: standings, Monte Carlo, chaveamento determinístico.
+  `deterministic_bracket(..., matrix_fn=…)` e `monte_carlo(..., ko_blend=…)` (ENG-51) recebem a
+  matriz **blendada com odds** para decidir quem avança — senão bracket/campeão (modelo puro) e
+  palpite (blend) escolhem vencedores diferentes no mesmo jogo e a tabela se autocontradiz.
 - `backtest.py` — valida o modelo nas 4 Copas passadas (`backtest`) e o blend prospectivamente na
   edição viva (`blend-track`): `multiclass_brier`, `reliability_curve` (campo
   `reliability_draw` do resultado), `pooled_draw_calibration` + monitor de regime de empates
@@ -87,6 +90,12 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites. `ingestion_gaps(edition)`
   (ENG-43) lista jogos disputados que **não** entram no ajuste (slot de KO não resolvido ⇒ filtrado
   pelo `.isin(edition.teams)` de `build_training_frame`) — `predict` e `status` avisam se ≠ vazio.
+  Antes de devolver, roda `check_prediction_consistency` como **asserção dura** (ENG-52): recusa
+  (`raise`) emitir uma tabela auto-contraditória.
+- `consistency.py` — funções puras (ENG-52) que confrontam partes do palpite renderizado entre si
+  (encadeamento do bracket, `avança` ∈ participantes, sem time repetido na rodada, 1×2 ~100%). Só
+  contradições **lógicas** verdadeiras (a asserção dura não pode ter falso positivo). Usada pelo
+  `pipeline.run` e pelo `scripts/check_output_consistency.py` (on-demand sobre um CSV gravado).
 - `render.py` — camada de **apresentação** (funções puras): `render_markdown`/`render_html` +
   `CSV_COLUMNS`. Geram texto a partir do `PredictionRun` (não do CSV); HTML autocontido e
   print-friendly. Sem I/O.

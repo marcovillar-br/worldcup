@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from .blend import blend_matrix_with_odds
+from .consistency import check_prediction_consistency
 from .fetch_data import load_historical
 from .format_engine import MatrixCache, deterministic_bracket, monte_carlo
 from .knockout import predict_knockout
@@ -194,24 +195,46 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345, pool_behind: st
     scorer = Scorer(edition.scoring)
     cache = MatrixCache(model, edition.hosts)
 
-    sim = monte_carlo(edition, model, cache, n_sims=n_sims, seed=seed)
-    bracket = {rm.fixture.match_id: rm for rm in deterministic_bracket(edition, sim, cache)}
-
-    # Blend com odds de mercado (ENG-19): aplicado só na geração do palpite dos jogos que têm odds;
-    # a simulação de campeão/avanço segue só com o modelo (odds em geral só existem para a rodada
-    # iminente). weight=0 ou sem odds ⇒ matriz do modelo intacta. Com totals no odds.csv, a taxa
-    # total de gols também é ancorada no mercado (ENG-35); sem totals, blend só de 1×2.
+    # Blend com odds de mercado (ENG-19): matriz do modelo × mercado nos jogos que têm odds. weight=0
+    # ou sem odds ⇒ matriz do modelo intacta. Com totals no odds.csv, a taxa total de gols também é
+    # ancorada no mercado (ENG-35); sem totals, blend só de 1×2.
     blend_weight = edition.scoring.blend_weight
+
+    def _blend(home: str, away: str, fixture) -> np.ndarray:
+        mat = cache.matrix(home, away, fixture.neutral)
+        odds = edition.odds.get(fixture.match_id)
+        if odds is not None and blend_weight > 0.0:
+            return blend_matrix_with_odds(mat, odds, blend_weight, totals=edition.totals.get(fixture.match_id))
+        return mat
+
+    # ENG-51: as probabilidades de campeão (Monte Carlo) blendam os confrontos de KO **totalmente
+    # determinados** que têm odds (via resolve_live_bracket) — a mesma estimativa do palpite. Jogos de
+    # rodadas futuras variam de time a cada simulação e não têm como ancorar a odd ⇒ seguem no modelo.
+    ko_blend: dict[tuple[str, str, bool], np.ndarray] = {}
+    if blend_weight > 0.0:
+        from .sync import resolve_live_bracket
+
+        ko_by_id = {f.match_id: f for f in edition.knockout_fixtures()}
+        for mid, (h, a) in resolve_live_bracket(edition).items():
+            f = ko_by_id.get(mid)
+            if f is not None and not f.played and edition.odds.get(mid) is not None:
+                ko_blend[(h, a, f.neutral)] = _blend(h, a, f)
+
+    sim = monte_carlo(edition, model, cache, n_sims=n_sims, seed=seed, ko_blend=ko_blend)
+
+    # O **chaveamento** decide quem avança com a MESMA matriz blendada do palpite exibido (ENG-51):
+    # senão o bracket (modelo puro) e o palpite (blend) podem escolher vencedores diferentes no mesmo
+    # jogo, e o bracket se autocontradiz ("X avança a semi" mas "Y joga a final").
+    bracket = {rm.fixture.match_id: rm for rm in deterministic_bracket(edition, sim, cache, matrix_fn=_blend)}
+
     blended_games = 0
 
     def _matrix(home: str, away: str, fixture) -> np.ndarray:
         nonlocal blended_games
-        mat = cache.matrix(home, away, fixture.neutral)
         odds = edition.odds.get(fixture.match_id)
         if odds is not None and blend_weight > 0.0:
             blended_games += 1
-            return blend_matrix_with_odds(mat, odds, blend_weight, totals=edition.totals.get(fixture.match_id))
-        return mat
+        return _blend(home, away, fixture)
 
     rows: list[dict] = []
     for f in sorted(edition.fixtures, key=lambda x: x.match_id):
@@ -287,6 +310,12 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345, pool_behind: st
 
     if blend_weight > 0.0:
         logger.info("blend com odds (peso %.2f) aplicado a %d jogo(s)", blend_weight, blended_games)
+
+    # ENG-52: recusa emitir uma tabela auto-contraditória (ex.: bracket que diz "X avança a semi" mas
+    # "Y joga a final"). É um bug de derivação, não um palpite — deve falhar alto, não sair no CSV.
+    violations = check_prediction_consistency(edition, rows)
+    if violations:
+        raise ValueError("palpite incoerente (ENG-52):\n  " + "\n  ".join(violations))
 
     return PredictionRun(
         rows=rows,

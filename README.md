@@ -155,6 +155,14 @@ soma os bônus de prorrogação/pênaltis (+3 ×peso) quando a base martj42 (`pe
 o desfecho; em jogo empatado nos 90' ainda sem shootout na fonte, só esse bônus fica de fora do
 teto (ENG-27).
 
+**Coerência interna do palpite (ENG-52)** — o `predict` recusa emitir uma tabela que se
+autocontradiz (ex.: "X avança a semi" mas "Y joga a final"), e um verificador on-demand roda as
+mesmas checagens sobre um CSV já gravado:
+
+```bash
+uv run python scripts/check_output_consistency.py --edition 2026
+```
+
 **Endgame de bolão (ENG-36)** — bolão é jogo **diferencial**: seguir o E[pts]-máximo pontua junto
 com o pelotão (que aglomera no favorito) e **preserva** sua posição; ranking só muda quando o
 palpite diverge e a divergência acerta. A simulação de pelotão quantifica:

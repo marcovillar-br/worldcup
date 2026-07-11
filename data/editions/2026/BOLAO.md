@@ -19,9 +19,15 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   Inglaterra** (palpite **1×2**, Inglaterra avança; 24%/26%/50%) e **J100 Argentina × Suíça**
   (palpite **2×1**, Argentina avança; 56%/27%/17%). Odds re-sincronizadas (2 atualizadas, 73 no
   `odds.csv`); `blend-track` inalterado (só grupos, 49 jogos): blend melhor (Brier 0,4074 vs
-  0,4091), regime de empates dentro da variância (z=+0,80). Candidatos a campeão: **Espanha 38,1%**
-  (disparou com a vaga na SF), França 22,3%, Argentina 21,8%, Inglaterra 12,8%, Noruega 2,5%.
-  Config: `risk 0.5` + `blend 0.8`.
+  0,4091), regime de empates dentro da variância (z=+0,80). Config: `risk 0.5` + `blend 0.8`.
+  **Bug ENG-51 encontrado e corrigido nesta rodada** (você perguntou "no J101 a Espanha perde?"):
+  o chaveamento e o campeão rodavam no modelo puro enquanto o palpite exibido rodava blendado — na
+  SF J101 França × Espanha o mercado inverte o favorito do modelo, e a tabela se autocontradizia
+  ("avança França" mas "final Espanha × Argentina"). Corrigido: bracket e campeão agora blendam os
+  confrontos determinados com odds. **Efeito nos favoritos:** Espanha caiu de 38,1% para
+  **29,9%**, França subiu para **28,6%**, Argentina 23,6%, Inglaterra 13,5%, Noruega 2,4%. A final
+  do bracket virou França × Argentina (Espanha na SF, cai para o 3º lugar). O favorito a campeã
+  (Espanha, marginal) ≠ campeão do bracket (Argentina, modal) — correto, agora anotado na saída.
   **Seus pontos (11/07): 425, 13º** (subiu de 16º) — eficiência **96,8%** do teto do tool (439).
   Líder **487**, acima do teto do tool. O gatilho de anomalia (ENG-50) dispara e mantém 2 sondas
   sujas honestas: J96 sem bônus por latência da fonte, e 30 jogos com teto só reconstruído (a

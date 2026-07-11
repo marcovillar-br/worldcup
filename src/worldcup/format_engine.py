@@ -19,7 +19,7 @@ import numpy as np
 from .scoring import outcome_probs_from_matrix
 
 if TYPE_CHECKING:
-    from collections.abc import Iterable
+    from collections.abc import Callable, Iterable
 
     from .edition import Edition, Fixture
     from .model import DixonColesModel
@@ -53,6 +53,13 @@ class MatrixCache:
         cdf, n = self._cdf[key]
         idx = int(np.searchsorted(cdf, rng.random() * cdf[-1]))
         return divmod(idx, n)
+
+
+def _sample_matrix(mat: np.ndarray, rng: np.random.Generator) -> tuple[int, int]:
+    """Amostra um placar `(mandante, visitante)` de uma matriz de placar arbitrária."""
+    cdf = np.cumsum(mat.ravel())
+    idx = int(np.searchsorted(cdf, rng.random() * cdf[-1]))
+    return divmod(idx, mat.shape[1])
 
 
 @dataclass
@@ -168,11 +175,18 @@ def monte_carlo(
     cache: MatrixCache,
     n_sims: int = 5000,
     seed: int = 12345,
+    ko_blend: dict[tuple[str, str, bool], np.ndarray] | None = None,
 ) -> SimulationResult:
     """Simula a Copa inteira N vezes para estimar probabilidades.
 
     O default `n_sims=5000` espelha o caminho real (CLI `predict --sims`/`pipeline.run`) e o SPEC §7.1.
-    """
+
+    `ko_blend` (ENG-51) mapeia `(mandante, visitante, neutral) → matriz blendada com odds`, e só deve
+    conter confrontos de mata-mata **totalmente determinados** (ambos os times já conhecidos por
+    resultado real — via `sync.resolve_live_bracket`). Nesses, o desfecho é amostrado da matriz
+    blendada em vez da do modelo puro, alinhando as probabilidades de campeão à mesma estimativa do
+    palpite exibido. Confrontos de rodadas futuras variam de time a cada simulação e não têm como
+    ancorar a odd — seguem no modelo puro."""
     rng = np.random.default_rng(seed)
     spec = edition.spec.group_stage
     tb = spec.tiebreakers
@@ -215,7 +229,7 @@ def monte_carlo(
         third_team = {mid: {g: s.team for g, s in qual_thirds}[g] for mid, g in third_assign.items()}
 
         # 2) mata-mata
-        champ_team = _simulate_knockout(ko, winners, runners, third_team, cache, rng)
+        champ_team = _simulate_knockout(ko, winners, runners, third_team, cache, rng, ko_blend)
         if champ_team:
             champ[champ_team] += 1
 
@@ -250,7 +264,7 @@ def _resolve_pair(f, winners, runners, third_team, ko_winner, ko_loser) -> tuple
     return one(f.home), one(f.away)
 
 
-def _simulate_knockout(ko, winners, runners, third_team, cache, rng) -> str | None:
+def _simulate_knockout(ko, winners, runners, third_team, cache, rng, ko_blend=None) -> str | None:
     ko_winner: dict[int, str] = {}
     ko_loser: dict[int, str] = {}
     champion = None
@@ -268,13 +282,19 @@ def _simulate_knockout(ko, winners, runners, third_team, cache, rng) -> str | No
                 w = f.ko_outcome or home
                 loser = away if w == home else home
         else:
-            hg, ag = cache.sample(home, away, f.neutral, rng)
+            # ENG-51: confronto determinado com odds ⇒ amostra da matriz blendada (a mesma do palpite)
+            blended = ko_blend.get((home, away, f.neutral)) if ko_blend else None
+            if blended is not None:
+                hg, ag = _sample_matrix(blended, rng)
+            else:
+                hg, ag = cache.sample(home, away, f.neutral, rng)
             if hg > ag:
                 w, loser = home, away
             elif ag > hg:
                 w, loser = away, home
             else:  # empate -> decide por probabilidade condicional
-                ph, _, pa = outcome_probs_from_matrix(cache.matrix(home, away, f.neutral))
+                mat = blended if blended is not None else cache.matrix(home, away, f.neutral)
+                ph, _, pa = outcome_probs_from_matrix(mat)
                 cond = ph / (ph + pa) if (ph + pa) > 0 else 0.5
                 w, loser = (home, away) if rng.random() < cond else (away, home)
         ko_winner[f.match_id] = w
@@ -296,8 +316,17 @@ def deterministic_bracket(
     edition: Edition,
     sim: SimulationResult,
     cache: MatrixCache,
+    matrix_fn: Callable[[str, str, Fixture], np.ndarray] | None = None,
 ) -> list[ResolvedMatch]:
-    """Monta o chaveamento do cenário mais provável a partir das contagens do Monte Carlo."""
+    """Monta o chaveamento do cenário mais provável a partir das contagens do Monte Carlo.
+
+    `matrix_fn(home, away, fixture)` fornece a matriz de placar usada para decidir **quem avança**
+    num jogo ainda não disputado. Default: a matriz do modelo puro (`cache.matrix`). O pipeline passa
+    a **matriz blendada com odds** (ENG-19) para os jogos que têm mercado — senão o chaveamento
+    (modelo puro) e o palpite exibido (blend) podem escolher vencedores **diferentes** no mesmo jogo,
+    produzindo um bracket auto-contraditório: "X avança a semi" e "Y joga a final" (ENG-51)."""
+    if matrix_fn is None:
+        matrix_fn = lambda home, away, f: cache.matrix(home, away, f.neutral)  # noqa: E731
     spec = edition.spec.group_stage
     # 1º/2º/3º mais prováveis de cada grupo (sem repetir time)
     winners, runners, thirds = {}, {}, {}
@@ -332,7 +361,7 @@ def deterministic_bracket(
                 w = f.ko_outcome or home
                 loser = away if w == home else home
         elif home and away:
-            mat = cache.matrix(home, away, f.neutral)
+            mat = matrix_fn(home, away, f)
             ph, _, pa = outcome_probs_from_matrix(mat)
             cond = ph / (ph + pa) if (ph + pa) > 0 else 0.5
             p_adv_home = ph + outcome_probs_from_matrix(mat)[1] * cond

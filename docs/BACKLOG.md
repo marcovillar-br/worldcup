@@ -66,6 +66,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-48](#eng-48) | P1 | eficiência | ✅ | `efficiency.py` nunca creditava o bônus de ET/pênaltis: chave de data `datetime64` vs `str` ⇒ teto subestimado, eficiência inflada |
 | [ENG-49](#eng-49) | P2 | eficiência/dados | ✅ | Fontes redundantes do desfecho de KO (`shootouts.csv` vs `penalty_winner`) são escolhidas, não comparadas — redundância sem detector |
 | [ENG-50](#eng-50) | P2 | eficiência | ✅ | Anomalia numérica (eficiência > 100%) vira narrativa em vez de gatilho: sem limiar nem ação prescrita, ao contrário do monitor de empates |
+| [ENG-51](#eng-51) | P1 | pipeline/format | ✅ | Bracket (modelo puro) e palpite (blend) escolhem vencedores diferentes no mesmo KO ⇒ tabela auto-contraditória ("X avança a semi" mas "Y joga a final") |
+| [ENG-52](#eng-52) | P2 | pipeline | ✅ | Sem guardião da coerência interna do artefato final: nenhum teste perguntava "a tabela que entrego se contradiz?" |
 
 ---
 
@@ -1745,3 +1747,71 @@ sondas sujas; com o teto correto (423) sobra a anomalia do líder e 2 sondas suj
 bônus por latência; 30 jogos só reconstruídos). Recongelamento com procedência **não mudou nenhum
 teto** (diff do `ceiling.csv` = só a coluna `code`); 199 testes verdes.
 **Commit:** 8a116dc
+
+## ENG-51
+**Bracket e palpite escolhem vencedores diferentes no mesmo KO** · P1 · pipeline/format · ✅ feito
+
+O blend com odds (ENG-19) foi acoplado num **único** ponto — a geração do palpite exibido
+(`predict_knockout` sobre a matriz blendada). O **chaveamento** (`deterministic_bracket`, que decide
+quem joga os jogos seguintes) e as **probabilidades de campeão** (`monte_carlo`) continuaram no
+**modelo puro**. Enquanto modelo e mercado concordam em quem passa, nada aparece; quando o mercado
+**inverte o favorito** do modelo num jogo futuro, as duas rotas escolhem vencedores diferentes e a
+tabela se autocontradiz.
+
+Manifestou-se na SF **J101 França × Espanha** (10–11/07): modelo puro França 0,276 / Espanha 0,422
+(⇒ bracket manda Espanha à final); blend França 0,378 / Espanha 0,321 (⇒ palpite diz França avança).
+Resultado no CSV: "J101 avança França" **e** "J104 final = Espanha × Argentina". Latente desde o
+ENG-19 — a Copa só produziu o gatilho (mercado invertendo o modelo num confronto conhecido) na
+semifinal. Mesma família do ENG-48: uma **costura** entre componentes que, isolados, funcionavam.
+
+**Refs:** `format_engine.deterministic_bracket` (novo `matrix_fn`), `format_engine.monte_carlo`/
+`_simulate_knockout` (novo `ko_blend`), `pipeline.run`, `sync.resolve_live_bracket`, ENG-19/38,
+ENG-48.
+**Resolução.** O chaveamento passa a decidir quem avança com a **mesma** matriz blendada do palpite
+(`deterministic_bracket(..., matrix_fn=_blend)`) — bracket e palpite nunca mais divergem. As
+probabilidades de campeão blendam os confrontos de KO **totalmente determinados** que têm odds (via
+`resolve_live_bracket`, `monte_carlo(..., ko_blend=…)`): medido antes de implementar — blendar J99/
+J100/J101 derruba Espanha de 38,1% → 29,9% e sobe França 22,3% → 28,6% (a teoria previa ~29%).
+Confrontos de rodadas futuras variam de time a cada simulação e não têm como ancorar a odd ⇒ seguem
+no modelo (limitação documentada, decrescente à medida que a Copa avança). Resíduo **INV-7**
+(favorito
+marginal ≠ campeão do bracket modal) é correto, não bug — anotado na saída do `predict` (ENG-52).
+**Aceite:** ✅ a tabela ficou coerente (final França × Argentina = avança(J101)×avança(J102), 3º
+lugar
+= os dois perdedores); testes: `matrix_fn` troca o vencedor propagado, bracket == `predict_knockout`
+sob a mesma matriz, `ko_blend` desloca o campeão — todos sem `historical_results.csv` (ausente no
+CI).
+**Commit:** cead9b0
+
+## ENG-52
+**Sem guardião da coerência interna do artefato final** · P2 · pipeline · ✅ feito
+
+O ENG-51 passou despercebido por semanas porque **nenhum teste perguntava "a tabela que entrego se
+contradiz?"**. Todos verificavam peças (modelo, blend, palpite) isoladas; a **junção** — o CSV de
+104
+linhas que o usuário lê — não tinha guardião. Foi um humano olhando a saída ("no J101 a Espanha
+perde?") que achou o bug, como no ENG-48 e no loop travado. O padrão é sempre o mesmo: o artefato
+não
+carrega o próprio diagnóstico, então a detecção depende de alguém reparar na hora.
+
+Levantamento dos invariantes de coerência (rodado sobre a saída real): INV-1 encadeamento do bracket
+(`Wxx`/`Lxx` = quem avançou/perdeu de xx — o bug do ENG-51); INV-2 avança ∈ participantes; INV-3 sem
+time repetido na rodada de KO; INV-4 1×2 soma ~100%. **Descartado como invariante** o "avança =
+vencedor do 90'": placar (melhor exato não-empate por E[pts]) e avanço (P(avançar)) otimizam slots
+**independentes** do bolão e podem divergir legitimamente — incluí-lo faria a asserção falhar em
+palpite válido (pego pelo e2e sintético, não pela saída real). INV-7 (favorito marginal ≠ campeão
+modal) não é contradição, é anotação.
+
+**Refs:** `src/worldcup/consistency.py` (novo), `scripts/check_output_consistency.py` (novo),
+`pipeline.run` (asserção dura), `cli.print_console_summary` (anotação INV-7),
+`tests/test_consistency.py`.
+**Resolução.** `check_prediction_consistency(edition, rows)` (função pura sobre as linhas
+renderizadas)
+roda em dois lugares: (1) **asserção dura** no `pipeline.run` — recusa emitir uma tabela que viola
+INV-1..4 (`raise ValueError`), porque isso é bug de derivação, não palpite; (2) **ferramenta
+on-demand** `check_output_consistency.py` sobre um `out/palpites-<ano>.csv` já gravado. Só
+contradições lógicas verdadeiras entram (sem falso positivo, senão a asserção quebra `predict`). A
+anotação do INV-7 no `predict` responde a pergunta antes de o usuário fazê-la.
+**Aceite:** ✅ a saída real passa (104 jogos, 0 violações); injetar o bug do ENG-51 dispara INV-1 nos
+jogos certos (final e 3º lugar); a asserção dura pega a incoerência antes do CSV; 208 testes verdes.
+**Commit:** cead9b0

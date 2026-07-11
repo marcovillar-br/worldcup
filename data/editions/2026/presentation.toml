@@ -6,29 +6,29 @@
 # scripts/update_presentation_data.py; os demais (pontos, eficiencia_pct, fase, bracket_destaque)
 # exigem input do usuário ou curadoria editorial — revise-os manualmente a cada rodada.
 
-as_of = "10 jul 2026"
+as_of = "11 jul 2026"
 
 [campanha]
-jogos_disputados = 97
-pontos = 409
-eficiencia_pct = 96.7
+jogos_disputados = 98
+pontos = 425
+eficiencia_pct = 96.8
 fase = "quartas de final em andamento"
 
 [[campanha.favoritos]]
 nome = "Espanha"
-pct = 28.9
-[[campanha.favoritos]]
-nome = "Argentina"
-pct = 24.0
+pct = 38.1
 [[campanha.favoritos]]
 nome = "França"
-pct = 23.8
+pct = 22.3
+[[campanha.favoritos]]
+nome = "Argentina"
+pct = 21.8
 [[campanha.favoritos]]
 nome = "Inglaterra"
-pct = 14.8
+pct = 12.8
 [[campanha.favoritos]]
-nome = "Bélgica"
-pct = 3.5
+nome = "Noruega"
+pct = 2.5
 
 [bracket_destaque]
 selecao = "Argentina"
@@ -47,4 +47,4 @@ brier_blend_width_pct = 99
 jogos_rastreados = 49
 
 [evolucao]
-melhorias_entregues = 93
+melhorias_entregues = 101

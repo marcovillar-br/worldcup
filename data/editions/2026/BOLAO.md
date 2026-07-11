@@ -12,8 +12,22 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-10)
+## Estado atual (atualizado em 2026-07-11)
 
+- **98 de 104 jogos disputados.** Em 10/07 fechou a 2ª quarta: **J98 Espanha 2×1 Bélgica**
+  (tool **cravou o placar exato**, 2×1, Espanha avança). Hoje (11/07) jogam **J99 Noruega ×
+  Inglaterra** (palpite **1×2**, Inglaterra avança; 24%/26%/50%) e **J100 Argentina × Suíça**
+  (palpite **2×1**, Argentina avança; 56%/27%/17%). Odds re-sincronizadas (2 atualizadas, 73 no
+  `odds.csv`); `blend-track` inalterado (só grupos, 49 jogos): blend melhor (Brier 0,4074 vs
+  0,4091), regime de empates dentro da variância (z=+0,80). Candidatos a campeão: **Espanha 38,1%**
+  (disparou com a vaga na SF), França 22,3%, Argentina 21,8%, Inglaterra 12,8%, Noruega 2,5%.
+  Config: `risk 0.5` + `blend 0.8`.
+  **Seus pontos (11/07): 425, 13º** (subiu de 16º) — eficiência **96,8%** do teto do tool (439).
+  Líder **487**, acima do teto do tool. O gatilho de anomalia (ENG-50) dispara e mantém 2 sondas
+  sujas honestas: J96 sem bônus por latência da fonte, e 30 jogos com teto só reconstruído (a
+  reconstrução infla +27 sobre 68 verificáveis) — o teto real pode ser um pouco menor que 439, o
+  que empurraria a sua eficiência para cima. As duas sondas que pegariam o ENG-48 (bônus de KO
+  creditado; fontes concordam) seguem **limpas**.
 - **97 de 104 jogos disputados.** Em 09/07 fechou a 1ª quarta: **J97 Marrocos 0×2 França**
   (tool palpitava 1×2 — lado e avanço certos, placar exato não). Hoje (10/07) joga
   **J98 Espanha × Bélgica** (palpite **2×1**, Espanha avança; 58%/25%/17%). Odds re-sincronizadas

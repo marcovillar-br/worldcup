@@ -26,6 +26,11 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   na saída do `predict`.
 
 ### Adicionado
+- **Explicação do palpite de campeão no HTML/MD dos palpites** (ENG-52, INV-7): quando o favorito
+  por probabilidade de título (o campeão sugerido) **difere** do campeão do bracket determinístico,
+  `render_html`/`render_markdown` incluem uma nota explicando que são leituras diferentes (chance de
+  título vs. resultado mais provável de cada jogo), pontuadas em slots separados pelo bolão — e que,
+  para o slot de campeão, vale o favorito. Antes essa explicação só saía no console do `predict`.
 - **Guardião de coerência interna do palpite** (ENG-52): `src/worldcup/consistency.py`
   (`check_prediction_consistency`) confronta partes da mesma tabela entre si — encadeamento do
   bracket (`Wxx`/`Lxx` = quem avançou/perdeu), `avança` ∈ participantes, sem time repetido na rodada

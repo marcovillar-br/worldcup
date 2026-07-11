@@ -46,6 +46,30 @@ CSV_COLUMNS = [
 ]
 
 
+def _bracket_champion(run: PredictionRun) -> str:
+    """Campeão do **bracket determinístico** = quem avança na final (nome de exibição; '' se não há)."""
+    final = next((r for r in run.rows if r["fase"] == "final"), None)
+    return final["avanca"] if final and final.get("avanca") else ""
+
+
+def _champion_note(favorite_display: str, bracket_champion: str) -> str | None:
+    """Explicação do INV-7 (ENG-52): favorito marginal ≠ campeão do bracket modal — quando diferem.
+
+    O bolão pontua o **slot de campeão** e os **slots de placar** separadamente. O palpite de campeão
+    é o favorito por probabilidade de título; o bracket é o cenário mais provável **jogo a jogo** e
+    pode coroar outro time. Respondem perguntas diferentes; não se contradizem.
+    """
+    if not favorite_display or not bracket_champion or favorite_display == bracket_champion:
+        return None
+    return (
+        f"O palpite de campeão é {favorite_display}, o favorito por probabilidade de título. "
+        f"No cenário mais provável jogo a jogo (o bracket abaixo), quem levanta a taça é "
+        f"{bracket_champion} — as duas leituras respondem perguntas diferentes (chance de título vs. "
+        f"resultado mais provável de cada jogo) e o bolão pontua o campeão e os placares em slots "
+        f"separados. Para o slot de campeão, marque o favorito ({favorite_display})."
+    )
+
+
 # ----------------------------------------------------------------- Markdown
 def render_markdown(run: PredictionRun) -> str:
     e = run.edition
@@ -56,6 +80,9 @@ def render_markdown(run: PredictionRun) -> str:
         out += ["## 🏆 Probabilidade de título (Monte Carlo)", ""]
         out += [f"- **{display(t)}** — {p * 100:.1f}%" for t, p in champ]
         out += ["", f"_Palpite de campeão sugerido: **{display(champ[0][0])}**._", ""]
+        note = _champion_note(display(champ[0][0]), _bracket_champion(run))
+        if note:
+            out += [f"> ℹ️ {note}", ""]
 
     by_stage: dict[str, list[dict]] = {}
     for r in run.rows:
@@ -135,6 +162,8 @@ h2 { font-size: 1.15rem; margin: 2rem 0 .6rem; padding-bottom: .3rem;
 .champ .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
 .pick { text-align: center; padding: .5rem .75rem; background: #eff6ff;
         border: 1px solid #bfdbfe; border-radius: 8px; margin: .75rem 0 0; font-size: .9rem; }
+.note { padding: .5rem .75rem; background: #fffbeb; border: 1px solid #fde68a;
+        border-radius: 8px; margin: .5rem 0 0; font-size: .8rem; color: #713f12; line-height: 1.5; }
 table { width: 100%; border-collapse: collapse; font-size: .82rem; }
 th, td { padding: .4rem .55rem; text-align: left; border-bottom: 1px solid var(--line);
          vertical-align: middle; }
@@ -162,7 +191,7 @@ tr.final .score { color: var(--muted); }
   h2 { break-after: avoid; }
   section { break-inside: avoid; }
   tr { break-inside: avoid; }
-  .pick, .champ { break-inside: avoid; }
+  .pick, .champ, .note { break-inside: avoid; }
 }
 """
 
@@ -194,6 +223,9 @@ def render_html(run: PredictionRun) -> str:
             )
         parts.append("</div>")
         parts.append(f'<p class="pick">Palpite de campeão sugerido: <b>{_esc(display(champ[0][0]))}</b></p>')
+        note = _champion_note(display(champ[0][0]), _bracket_champion(run))
+        if note:
+            parts.append(f'<p class="note">ℹ️ {_esc(note)}</p>')
         parts.append("</section>")
 
     by_stage: dict[str, list[dict]] = {}

@@ -4,12 +4,34 @@ from __future__ import annotations
 
 from worldcup.edition import load_edition
 from worldcup.pipeline import PredictionRun
-from worldcup.render import CSV_COLUMNS, render_html, render_markdown
+from worldcup.render import CSV_COLUMNS, _champion_note, render_html, render_markdown
 
 
-def _run_with(rows: list[dict]) -> PredictionRun:
+def _run_with(rows: list[dict], champion_prob: dict | None = None) -> PredictionRun:
     ed = load_edition(2026)
-    return PredictionRun(rows=rows, champion_prob={"Brazil": 0.3, "France": 0.2}, advance_prob={}, edition=ed)
+    return PredictionRun(
+        rows=rows,
+        champion_prob=champion_prob or {"Brazil": 0.3, "France": 0.2},
+        advance_prob={},
+        edition=ed,
+    )
+
+
+def _final_row(**over) -> dict:
+    row = dict.fromkeys(CSV_COLUMNS, "")
+    row.update(
+        {
+            "jogo": "104",
+            "fase": "final",
+            "mandante": "França",
+            "visitante": "Argentina",
+            "palpite": "1x2",
+            "avanca": "Argentina",
+            "status": "PREVISTO",
+        }
+    )
+    row.update(over)
+    return row
 
 
 def _group_row(**over) -> dict:
@@ -57,6 +79,24 @@ def test_render_html_marks_final_games_with_real_score():
     html_out = render_html(run)
     assert "1x1" in html_out  # mostra o placar real, não o palpite
     assert "tag fin" in html_out  # marca como final
+
+
+def test_champion_note_only_when_favorite_differs_from_bracket():
+    # favorito (Espanha) ≠ campeão do bracket (Argentina) → explica; iguais → sem nota
+    assert _champion_note("Espanha", "Argentina") is not None
+    assert _champion_note("Argentina", "Argentina") is None
+    assert _champion_note("Espanha", "") is None  # sem final resolvida
+
+
+def test_render_expoe_inv7_no_html_e_md_quando_favorito_diverge_do_bracket():
+    # favorito marginal = Espanha (champion_prob), campeão do bracket = Argentina (avança na final)
+    run = _run_with([_final_row()], champion_prob={"Spain": 0.30, "France": 0.29, "Argentina": 0.24})
+    html_out = render_html(run)
+    md_out = render_markdown(run)
+    for text in (html_out, md_out):
+        assert "Espanha" in text  # favorito sugerido
+        assert "slots separados" in text  # a explicação do INV-7 está presente
+    assert 'class="note"' in html_out  # estilizado como nota no HTML
 
 
 def test_final_group_game_shows_dash_not_zeros_in_mev():

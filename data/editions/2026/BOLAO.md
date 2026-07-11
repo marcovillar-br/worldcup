@@ -166,6 +166,14 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Decisões vivas
 
+- **Palpite de campeão (11/07): ESPANHA.** Marcado o **favorito por probabilidade marginal**
+  (29,9%), não o campeão do bracket determinístico (Argentina, cenário modal — ENG-52/INV-7). Para
+  o slot de campeão do bolão, o que maximiza P(acertar) é o time com maior probabilidade de título,
+  não o vencedor da final do caminho mais provável. Números do dia: Espanha 29,9% > França 28,6% >
+  Argentina 23,6% > Inglaterra 13,5% > Noruega 2,4% (já pós-fix do blend no campeão, ENG-51).
+  **Cuidado:** o palpite jogo a jogo segue o bracket (J101 França vence Espanha) — o slot de campeão
+  e os slots de placar são pontuados **separados** pelo bolão, então marcar Espanha campeã e França
+  vencendo a J101 não se contradiz (apostas independentes, como no ENG-52).
 - `risk = 0.5` **definitivo** — ótimo para a média **e** para o ranking. O botão de
   risco **não é instrumento de variância** neste sistema de pontos: subir o risco baixa o E[pts] sem
   aumentar o SD e, na simulação de campo, **reduz** P(vencer)/P(top-10) — inclusive no mata-mata

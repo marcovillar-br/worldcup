@@ -124,20 +124,28 @@ propósito.
   empate, o que custava E[pts] exatamente nos jogos equilibrados e de maior peso (a final). O
   maximizador fiel já é conservador sozinho — palpita empate em 13% dos KO de 2026, contra 25% de
   empates reais nos 90'.
-- ⚠️ **O modelo treina em placar de 120' (ENG-54, aberto) — viés conhecido contra o empate.** O
-  `historical_results.csv` (martj42) grava o placar **ao fim da prorrogação**, não dos 90' (a final
-  de 2022 aparece `3×3`, foi `2×2`). Consequências: (a) o λ absorve gols de ET como se fossem de
-  90' — e `knockout._extra_time_probs` reescala λ por 30/90 **assumindo** que λ é de 90'; (b) pior,
-  um empate de 90' decidido por gol na ET entra como **vitória**, então o modelo aprende uma taxa de
-  empate baixa demais. **A digital:** a base registra **23,2%** de empates e o modelo prevê **~24%**
-  — reproduz fielmente a taxa **da base contaminada**; o real nos 90' é mais alto (grupos de 2026,
-  90' puro: **28%**). ~4,6% do **peso efetivo** do ajuste está afetado. É o que o monitor de regime
-  de empates vinha lendo como "variância" (z=+0,80): é **viés de rótulo**, não ruído. Trate a
-  probabilidade de empate do modelo como um **piso**, não como uma estimativa não-enviesada.
-- ⚠️ **Não use `backtest` como evidência sobre placar de KO** (mesma raiz): ele pontua contra essa
-  base, então zera o palpite de empate exatamente nos jogos que o bolão (que pontua os 90')
-  premiaria. Foi essa medição enviesada que "provou" o ban de empate do ENG-32, revogado no ENG-53.
-  A edição **viva** já treina no 90' (`Edition.score_90`, ENG-55); a base histórica, não.
+- ✅ **O modelo treina no placar dos 90'** (ENG-54/ENG-55), nos dois lados da união: a edição viva
+  via `Edition.score_90` e a base histórica via `fetch_data.score_90`, que reconstrói o tempo normal
+  subtraindo os gols de `minute > 90` do `goalscorers.csv` do martj42. A fonte grava o placar
+  **consolidado** (a final de 2022 aparece `3×3`, foi `2×2`), e treinar nele inflaria o λ (que a
+  camada de ET reescala por 30/90 **assumindo** ser de 90') e **apagaria empates** (um 1×1 decidido
+  na ET vira "vitória").
+- ⚠️ **Mas a contaminação era pequena — e NÃO explica o modelo subestimar empate.** Medido ao
+  fechar o ENG-54: só **76 jogos em 19.771** tinham gol na prorrogação (**0,6% do peso efetivo** do
+  ajuste; **0,5%** se contados só os 61 que viram empate→vitória, o dano real). Corrigi-los move a
+  taxa de empate da base de **23,2% para 23,5%** — não para os ~28% que se supunha. A hipótese "o
+  modelo reproduz uma taxa de empate contaminada" está **refutada**; o gap
+  contra os empates observados (grupos de 2026: 28%; KO das Copas passadas: 34,4% nos 90' contra
+  28,2% previstos) permanece **aberto e sem mecanismo conhecido** — e, em cada amostra isolada, fica
+  dentro de ~1 erro-padrão, ou seja, **não é estatisticamente significativo**. Ver ENG-56. Não trate
+  mais a probabilidade de empate como um "piso" com base neste mecanismo: ele foi medido e é ~zero.
+- ✅ **O `backtest` voltou a ser evidência válida sobre placar de KO** (ENG-54): ele treina **e
+  pontua** nos 90', e credita o bônus de prorrogação também nos jogos decididos por **gol na ET**
+  (antes invisíveis na fonte, nunca creditados). Re-testada com a régua certa, a política de KO do
+  ENG-32 (banir empate) vale **+0,23 pt/jogo — t=+0,54, IC95% [-0,62, +1,09]** nos 64 jogos de KO
+  das 4 Copas: o placar palpitado diverge em 18 jogos e os pontos mudam em só 15 (o ban ganha 9,
+  perde 6). O backtest **não distingue** as duas. Os "+70 pts" que "provaram" o ENG-32 eram artefato
+  da régua antiga. Reproduzível: `scripts/eng54_ko_policy_sim.py`.
 - **Dependências externas:** qualidade do dataset martj42 e disponibilidade/ToS da The Odds API
   ([`DATA.md`](DATA.md)). Sem rede, o produto degrada para o último estado conhecido.
 - **Revalidação:** re-rodar `backtest` e revisar este cartão a cada bump de versão que toque

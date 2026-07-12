@@ -69,8 +69,9 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-51](#eng-51) | P1 | pipeline/format | ✅ | Bracket (modelo puro) e palpite (blend) escolhem vencedores diferentes no mesmo KO ⇒ tabela auto-contraditória ("X avança a semi" mas "Y joga a final") |
 | [ENG-52](#eng-52) | P2 | pipeline | ✅ | Sem guardião da coerência interna do artefato final: nenhum teste perguntava "a tabela que entrego se contradiz?" |
 | [ENG-53](#eng-53) | P1 | knockout | ✅ | Empate proibido no 90' do KO (ENG-32) custa E[pts] justamente na final: as duas premissas do ban são falsas e a evidência que o sustentava é inválida |
-| [ENG-54](#eng-54) | P1 | dados/model | 🔴 | A base martj42 grava o placar COM prorrogação ⇒ o **modelo treina em placar de 120'** (λ inflado, empates apagados) e nenhum backtest de política de KO é confiável |
+| [ENG-54](#eng-54) | P1 | dados/model | ✅ | A base martj42 grava o placar COM prorrogação ⇒ o **modelo treinava em placar de 120'**; os 90' são reconstruídos do `goalscorers.csv` (`minute > 90`), o que também devolve validade ao backtest de KO |
 | [ENG-55](#eng-55) | P1 | pipeline/edition | ✅ | `build_training_frame` alimentava o ajuste com o placar consolidado da edição viva, tendo o 90' em `regulation.csv` |
+| [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,4% do peso): mecanismo desconhecido, sem significância estatística |
 
 ---
 
@@ -1860,7 +1861,7 @@ camada 1 = E[pts]-fiel, pode empatar; favorito claro ⇒ ainda escolhe vencedor)
 
 ## ENG-54
 **A base grava o placar COM prorrogação ⇒ o modelo treina em placar de 120'** · P1 · dados/model ·
-🔴 todo
+✅ feito
 
 `data/historical_results.csv` (martj42) grava o placar **ao fim da prorrogação**, não dos 90':
 a final de 2022 aparece como `Argentina 3×3 França` (foi **2×2** nos 90') e `Croácia 1×1 Brasil`
@@ -1902,25 +1903,109 @@ danos distintos:
    aritmética que **só é válida se λ for a taxa de 90'**. Treinado em 120', o λ já contém parte da
    ET, e a ET é modelada em cima dela outra vez.
 
-**A digital do viés (medida):** a base registra **23,2%** de empates e o modelo prevê **~24%** — ele
-reproduz fielmente a taxa **da base contaminada**. Mas o real nos 90' é mais alto: grupos de 2026
-(90' puro, sem contaminação possível) deram **28%**, e o KO de 2026 deu **25%** nos 90'. O monitor
-de regime de empates vinha vendo esse desvio (z=+0,80) e classificando como **variância** — não é:
-é viés sistemático de rótulo. É também a causa raiz do sintoma do ENG-53 (sem o ban, o maximizador
-palpita empate em 13% dos KO contra 25% reais: ele subestima empate porque **aprendeu** a
-subestimar).
+**⚠️ A "digital do viés" que este item alegava — REFUTADA pela própria correção.** O item afirmava:
+a base registra 23,2% de empates, o modelo prevê ~24% (reproduzindo a taxa contaminada), o real é
+28%, logo o viés de rótulo explica o gap; e estimava **~4,6% do peso efetivo** afetado. **Medido,
+não é isso.** A contaminação existe mas é pequena: **76 jogos em 19.771** têm gol na prorrogação
+(**0,62% do peso efetivo**; os que viram empate→vitória, o dano real, são **61 jogos = 0,48% do
+peso**). ⚠️ Uma 1ª medição destes dois números deu 0,53%/0,40% porque pesou os jogos **só pelo
+decaimento temporal**, esquecendo o fator de torneio — mas o peso do `fit` é
+`decay × tournament_weight`, e os jogos de prorrogação se concentram justo nos torneios de peso
+alto, então ignorá-lo **subestima** a contaminação. Os valores acima são os do peso real do ajuste.
+Corrigi-los move a taxa de empate da base de **23,17% → 23,47%** e os gols/jogo de
+2,725 → 2,719. **Não** para os ~28% que se supunha. A estimativa antiga errou ao extrapolar a razão
+ET:pênaltis de 2026 (~1:1) para a base inteira — na base os jogos de pênaltis (310) superam em muito
+os decididos por gol na ET (61), e, decisivo: **jogo de pênaltis não corrompe o rótulo** (o placar
+gravado já é o empate em que o jogo terminou; só a contagem de gols infla).
 
-**Magnitude:** 1,56% da base são jogos identificáveis como ida a pênaltis (**2,29% do peso efetivo**
-do ajuste — vivem nos torneios de peso alto); somando os decididos **por gol** na ET (invisíveis na
-base, ~1:1 com os de pênaltis nesta Copa) chega-se a **~4,6% do peso**, dos quais ~2,3% são empates
-de 90' rotulados como vitória. Consistente com o gap de 2–4 pp observado.
+O gap de empates contra o observado, portanto, **permanece aberto e sem mecanismo conhecido** →
+**ENG-56**. Corolário desagradável: o monitor de regime de empates lia o desvio como "variância"
+(z=+0,80), este item o reclassificou como "viés de rótulo" — e a medição mostra que a leitura
+original estava **mais perto de certa**. Registrado como lição em ENG-56.
 
-**Por que não dá para consertar sozinho:** os jogos de pênaltis são identificáveis
-(`penalty_winner`) mas os decididos **por gol na ET não são** — a base não tem coluna de rodada nem
-de tempo do gol. Descartar/reponderar os identificáveis **pioraria** (eles carregam o rótulo de
-empate **correto**). Só o dado de 90' resolve.
-**Escopo (c):** com o placar de 90' histórico, re-treinar e reavaliar — a taxa de empate aprendida
-deve subir, o que muda palpite de empate, camada de ET e probabilidades de campeão.
+**Por que era resolúvel, ao contrário do que este item afirmava.** O item dizia que os jogos
+decididos por gol na ET "não são identificáveis — a base não tem coluna de rodada nem de tempo do
+gol". **Falso:** o martj42 publica um terceiro arquivo, `goalscorers.csv`, com a coluna
+**`minute`**. A premissa nunca foi verificada; bastou olhar. E a convenção da fonte torna a
+reconstrução
+inequívoca: ela **achata o acréscimo do tempo normal no minuto 90** (o minuto 90 concentra ~2.000
+gols contra ~700 nos vizinhos; os minutos 91–96 despencam para 4–17), então `minute > 90` é
+prorrogação, jamais acréscimo dos 90'.
+
+**Resolução.**
+- `fetch_data`: baixa o `goalscorers.csv`; `regulation_scores` reconstrói o placar dos 90'
+  (consolidado **menos** os gols de `minute > 90`) e persiste `reg_home_score`/`reg_away_score`.
+  **Portão de confiança:** só reconstrói quando a lista de gols do jogo bate **exatamente** com o
+  placar consolidado e nenhum minuto é ilegível — lista incompleta subtrairia gols inexistentes e
+  **inventaria empates**, pior que o viés a corrigir. Fora do portão, mantém o consolidado (status
+  quo, nunca regressão). Reconcilia **100%** dos 7.413 jogos com gols listados (≥2006).
+- `fetch_data.score_90(base)`: **fonte única** dos 90' na base histórica — o gêmeo do
+  `Edition.score_90` (ENG-55). Devolve também `et_outcome` (desfecho real do slot de prorrogação),
+  de propósito no mesmo passo: calculá-lo exige o consolidado, que a função sobrescreve — separar as
+  duas coisas viraria armadilha de ordem. O `sync` (que preenche o `fixtures.csv`) segue usando o
+  consolidado; ninguém lê `reg_*` na mão.
+- `pipeline.build_training_frame` e `backtest._prepare` passam a treinar (e o backtest, a
+  **pontuar**) nos 90'. `backtest._knockout_bonus_for` agora credita também os jogos decididos por
+  **gol na ET** (61 na base) — antes invisíveis, nunca pontuados: o teto do backtest saía
+  subestimado no KO.
+- Validação em jogos conhecidos: final 2022 `3×3` → **`2×2`** (Messi 108', Mbappé 118'); Croácia
+  `1×1` Brasil → **`0×0`**; Alemanha `1×0` Argentina (2014) → **`0×0`**; Holanda `0×1` Espanha
+  (2010) → **`0×0`**.
+
+**Escopo (c) — a política de KO, re-medida com a régua certa.** O ENG-32 ("banir empate no KO")
+fora "provado" por +70 pts em 4 Copas contra a base contaminada. Refeita a medição nos 64 jogos de
+KO das 4 Copas, com placar de 90' e bônus de ET creditados: o ban vale **+0,23 pt/jogo — t=+0,54,
+IC95% [-0,62, +1,09]**; o placar palpitado diverge em **18 dos 64** jogos e os **pontos** mudam em
+só **15** (ban ganha 9, perde 6 — nos outros 3 as duas políticas zeram), e o sinal **inverte por
+Copa** (-14, -1, +17, +13 pts). **O backtest não distingue as duas políticas** — e certamente não
+apoia o ban. A escolha do ENG-53 (E[pts]-fiel) se sustenta no argumento de E[pts], que vale por
+construção; o backtest deixou de contradizê-la (contradição que era artefato). Número que sustenta
+decisão tem de ser reproduzível: **`scripts/eng54_ko_policy_sim.py`** refaz a medição (precedente:
+o `eng36_pool_sim.py`).
+
+**Efeito nos palpites (2026, 12/07):** 1 dos 4 jogos restantes mudou — J101 França×Espanha, de `2×1`
+para `1×1` (semifinal, peso ×2). As probabilidades 1×2 não se moveram na precisão exibida (P(empate)
+30% antes e depois): `1×1` e `2×1` estavam praticamente empatados em E[pts] e o pequeno empurrão na
+taxa de empate inverteu o desempate.
+**Aceite:** ✅ backtest treina e pontua nos 90' e credita o bônus de ET; política de KO re-medida,
+reportada com incerteza e **reproduzível** (`scripts/eng54_ko_policy_sim.py`); 222 testes verdes
+(novos: reconstrução, portão de confiança contra lista incompleta/minuto ilegível, acréscimo dos 90'
+**não** subtraído, jogo não disputado (placar NaN) sobrevive à reconstrução, costura base→ajuste e
+base→bônus de KO, ambas consumindo `fetch_data.score_90` em vez de fabricar a entrada — ENG-48).
+**Commit:** (esta rodada)
+
+
+## ENG-56
+**O modelo subestima empate — e a base contaminada NÃO era a explicação** · P2 · model ·
+🔴 todo
+
+Sobra do ENG-54. Os empates observados vêm sistematicamente acima do previsto:
+
+| amostra | previsto | real |
+|---|---|---|
+| grupos 2026 (90' puro, n=72) | ~23,5% | **28%** |
+| KO das 4 Copas passadas (90', n=64) | 28,2% | **34,4%** |
+| KO 2026 (90') | — | 25% |
+
+O ENG-54 apostava que a culpa era da base gravar placar de 120'. **Corrigido, o efeito é 0,3 pp**
+(23,17% → 23,47%): a hipótese está morta. O desvio segue na mesma direção em amostras independentes,
+mas **cada uma isolada fica dentro de ~1 erro-padrão** (n=72 ⇒ EP ≈ 5 pp; n=64 ⇒ EP ≈ 5,9 pp), então
+**não há evidência estatística** — pode ser exatamente o que o monitor de regime de empates dizia:
+variância.
+
+**Lição de método (a real):** o ENG-54 partiu de um sintoma (empates a mais), encontrou um mecanismo
+**verdadeiro** (a base grava 120'), e concluiu que o mecanismo explicava o sintoma — **sem medir a
+magnitude**. O mecanismo era real e valia 0,4% do peso. Um mecanismo plausível e verdadeiro pode
+ainda assim ser irrelevante: **medir a magnitude antes de atribuir a causa**. É o mesmo erro que o
+ENG-50 registra do outro lado (explicação pronta imuniza contra investigação).
+
+**Hipóteses a testar (nenhuma medida):** (a) ruído — o mais provável, e a hipótese nula honesta;
+(b) `rho` (Dixon–Coles) sub-ajustado, que governa exatamente a massa nos placares baixos (0×0, 1×1);
+(c) jogo de torneio é mais travado que a média da base (que é dominada por eliminatórias e
+amistosos) — um efeito de "peso de torneio" no λ, não só no peso da amostra.
+**Aceite:** um teste com poder suficiente (poolar os empates de 90' de várias Copas, não uma) que
+decida entre (a) e (b)/(c); se houver viés real, corrigi-lo na calibração — **não** com uma regra
+especial de empate.
 
 
 ## ENG-55

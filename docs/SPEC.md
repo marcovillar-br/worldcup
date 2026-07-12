@@ -427,15 +427,18 @@ decidido):
   decisivo) e num KO equilibrado (34%/31%/34%, típico de SF/final) o empate **é** o E[pts]-máximo
   (na final de 2026, +1,42 pt de peso); (ii) o modelo super-estimaria empate no KO — mas sem o ban
   o maximizador palpita empate em 13% dos KO de 2026 contra 25% de empates reais nos 90', ou seja,
-  **subestima** — e subestima porque **aprendeu** a subestimar: a base de treino grava o placar
-  **com prorrogação**, então um empate de 90' decidido por gol na ET entra como *vitória* e o modelo
-  aprende uma taxa de empate baixa demais (ENG-54; a base tem 23,2% de empates, o modelo prevê ~24%,
-  o real nos 90' é ~25–28%). A mesma contaminação invalida a evidência de backtest que sustentava o
-  ban (pontuar contra essa base pune o palpite de empate justamente nos jogos que o bolão — que
-  pontua os 90' — premiaria). O parâmetro `forbid_draw` segue existindo no `Scorer`, sem uso em
-  produção. Exceção: o modo endgame `pool_behind="empate"` (ENG-39/40) força o melhor **empate** por
-  E[pts] nos 90' do jogo de peso máximo (final) — por um motivo **diferente** (escolha diferencial
-  de quem está atrás, não E[pts] fiel) —, mantendo as camadas 2–3 e o avanço fiéis;
+  **subestima**. A evidência de backtest que sustentava o ban ("+70 pts em 4 Copas") era **artefato
+  da régua**: a base gravava o placar **com prorrogação**, então pontuar contra ela punia o palpite
+  de empate justamente nos jogos que o bolão — que pontua os 90' — premiaria. Fechado o ENG-54 (os
+  90' da base reconstruídos da lista de gols), a política foi re-medida com a régua certa: o ban
+  vale **+0,23 pt/jogo (t=+0,54; IC95% [-0,62, +1,09])** nos 64 KO das 4 Copas — o placar palpitado
+  diverge em 18 jogos e os pontos mudam em só 15 (ganha 9, perde 6) — o backtest **não distingue**
+  as políticas, e a escolha fiel se sustenta no argumento de E[pts], que vale por construção
+  (`scripts/eng54_ko_policy_sim.py` refaz a medição). O parâmetro `forbid_draw` segue
+  existindo no `Scorer`, sem uso em produção. Exceção: o modo endgame `pool_behind="empate"`
+  (ENG-39/40) força o melhor **empate** por E[pts] nos 90' do jogo de peso máximo (final) — por
+  um motivo **diferente** (escolha diferencial de quem está atrás, não E[pts] fiel) —, mantendo
+  as camadas 2–3 e o avanço fiéis;
   `pool_behind="zebra"` (ENG-36, superado) vira o lado azarão nas 3 camadas. Só quando o usuário
   está atrás no bolão (`predict --pool-behind`, default do flag `empate`).
 - **Camada 2 — prorrogação** (ENG-29): modela a prorrogação (30 min) como **Poisson independente**
@@ -602,13 +605,19 @@ para cá._
   `tournament.toml::[group_stage.third_allocation]` (feito em 2026 após a fase de grupos: row 67,
   grupos B/D/E/F/I/J/K/L). A tabela completa de 495 combinações segue pendente (§9.3).
   **Sempre confira os 8 confrontos dos 16-avos com o bracket oficial** após a fase de grupos.
-- **Mata-mata em camadas**: o placar real importado pode incluir prorrogação (não só 90'); para a
-  realimentação isso é irrelevante (interessa o vencedor e o efeito no treino).
-- **Bônus de KO no backtest (ENG-12)**: o backtest concede os bônus de prorrogação/pênaltis **só**
-  nos jogos decididos **nos pênaltis** — os únicos determináveis da fonte (`shootouts.csv`, mesclado
-  como `penalty_winner` em `fetch_data`). O martj42 **não traz a fase** nem separa 90' de
-  prorrogação, então jogos decididos **dentro** da prorrogação não são identificáveis e **não**
-  recebem o bônus de ET (subestimativa pequena e conhecida, **só nas Copas passadas**).
+- **Taxa de empate acima do previsto (ENG-56, aberto)**: o modelo prevê ~23–28% de empate e os
+  empates observados vêm mais altos (grupos de 2026: 28%; KO das Copas passadas: 34,4% nos 90'
+  contra 28,2% previstos). A hipótese de que a base contaminada explicava isso foi **medida e
+  refutada** (ENG-54: a correção vale 0,4% do peso e move a base de 23,2% para 23,5%). Cada amostra
+  isolada fica dentro de ~1 erro-padrão, então **não há evidência significativa** — mas o desvio é
+  consistentemente na mesma direção e segue **sem mecanismo conhecido**.
+- **Reconstrução dos 90' depende da lista de gols (ENG-54)**: `fetch_data.regulation_scores` só
+  reconstrói o tempo normal quando a lista de gols do jogo **bate exatamente** com o placar
+  consolidado (portão de confiança — uma lista incompleta inventaria empates). Jogos fora do portão
+  mantêm o consolidado. Na prática a lacuna é inofensiva: a fonte não cobre amistosos, mas amistoso
+  não tem prorrogação; o resíduo real são jogos de prorrogação em torneios menores sem cobertura de
+  gols, cujo **rótulo** empate/vitória, no caso dos pênaltis, é preservado de qualquer forma (o
+  placar gravado já é um empate) — só a contagem de gols infla.
 - **Placar de 90' de KO decidido por gol na prorrogação (ENG-45)**: o placar gravado em
   `fixtures.csv` inclui a ET (convenção martj42), mas o bolão pontua o slot de 90' contra o **tempo
   normal**. Na edição **viva**, `regulation.csv` (`match_id,reg_home,reg_away`) guarda o 90' desses

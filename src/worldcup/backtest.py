@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 import pandas as pd
 
 from .edition import ScoringConfig
-from .fetch_data import load_historical
+from .fetch_data import load_historical, score_90
 from .format_engine import MatrixCache
 from .knockout import predict_knockout
 from .model import DixonColesModel, FitConfig
@@ -118,7 +118,15 @@ def reliability_curve(pred_probs: Sequence[float], hits: Sequence[bool], n_bins:
 
 
 def _prepare(year: int, df: pd.DataFrame) -> tuple[DixonColesModel, MatrixCache, pd.DataFrame]:
-    """Treina o modelo com jogos anteriores à Copa `year` e devolve (modelo, cache de mando, teste)."""
+    """Treina o modelo com jogos anteriores à Copa `year` e devolve (modelo, cache de mando, teste).
+
+    Treino **e** teste usam o placar dos **90'** (`fetch_data.score_90`, ENG-54): o ajuste porque o
+    modelo estima taxas de gol de 90', e o teste porque o bolão pontua o slot de 90' contra o tempo
+    normal. Com o consolidado, o backtest **punia o palpite de empate exatamente nos jogos em que o
+    bolão o premiaria** (empate nos 90' decidido por gol na ET vira "vitória" na fonte) — foi essa
+    medição enviesada que sustentou o ban de empate no KO do ENG-32, revogado pelo ENG-53.
+    """
+    df = score_90(df)
     start = _WORLD_CUP_START[year]
     train = df[df["date"] < pd.Timestamp(start)].copy()
     test = df[(df["tournament"] == "FIFA World Cup") & (df["date"].dt.year == year)].copy()
@@ -161,7 +169,7 @@ def run_backtest(year: int = 2022, risks: tuple[float, ...] = (0.0, 0.5, 1.0), n
             actual = (int(m["home_score"]), int(m["away_score"]))
             probs = outcome_probs_from_matrix(mat)
             pts = award.points((pred.home_goals, pred.away_goals), actual, probs)
-            pts += _knockout_bonus_for(m, mat, award)  # +pênaltis quando o jogo foi à disputa (ENG-12)
+            pts += _knockout_bonus_for(m, mat, award)  # +bônus quando o jogo passou dos 90' (ENG-12/54)
             total += pts
             if (pred.home_goals, pred.away_goals) == actual:
                 exact += 1
@@ -435,20 +443,25 @@ def draw_regime_report(edition: Edition) -> DrawRegime:
 
 
 def _knockout_bonus_for(row: pd.Series, matrix, award: Scorer) -> float:
-    """Bônus de prorrogação/pênaltis (Sistema I) de um jogo de KO decidido **nos pênaltis**.
+    """Bônus de prorrogação/pênaltis (Sistema I) de um jogo de KO que passou dos 90'.
 
-    Só os jogos com `penalty_winner` (do `shootouts` mesclado em `fetch_data`) são determináveis da
-    fonte: foram à disputa (`extra_time` real = "penalties") e sabemos o vencedor → concede o bônus de
-    ida-aos-pênaltis (+3) e o de acerto do vencedor (+3). Jogos decididos **dentro** da prorrogação não
-    são separáveis no martj42 (sem fase/flag de ET), então não recebem bônus aqui (limitação SPEC §9.2).
+    Dois desfechos são creditados, ambos vindos do `et_outcome` de `fetch_data.score_90`:
+      - **pênaltis** (`penalty_winner` do `shootouts`): bônus de ida-à-disputa (+3) e de acerto do
+        vencedor (+3);
+      - **gol na prorrogação** (empate nos 90' + decisão no consolidado): bônus do slot de
+        prorrogação (+3). Estes eram **invisíveis** antes do ENG-54 — a fonte não traz fase nem flag
+        de ET, e o backtest simplesmente não os creditava (a limitação que o ENG-12 registrou).
+        Reconstruído o placar dos 90' da lista de gols, eles passam a ser identificáveis.
     """
-    pen_winner = str(row.get("penalty_winner", "") or "")
-    if not pen_winner:
+    actual_et = str(row.get("et_outcome", "") or "")
+    if not actual_et:
         return 0.0
     home, away = canonical(row["home_team"]), canonical(row["away_team"])
     kp = predict_knockout(home, away, matrix, award)
-    actual_pen = "home" if canonical(pen_winner) == home else "away"
-    return award.knockout_bonus(kp.extra_time, kp.penalty_winner, "penalties", actual_pen)
+    actual_pen: str | None = None
+    if actual_et == "penalties":
+        actual_pen = "home" if canonical(str(row["penalty_winner"])) == home else "away"
+    return award.knockout_bonus(kp.extra_time, kp.penalty_winner, actual_et, actual_pen)
 
 
 def _award_scorer() -> Scorer:

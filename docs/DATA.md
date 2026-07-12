@@ -13,14 +13,14 @@ termos próprios, tratados aqui.
 
 | Fonte | O que fornece | Acesso | Uso no produto |
 |---|---|---|---|
-| **martj42 / international_results** | `results.csv` (jogos de seleções desde 1872) + `shootouts.csv` (vencedor em pênaltis) | CSV público no GitHub (raw) · **licença CC0-1.0** (domínio público) | Base de **treino** do modelo |
+| **martj42 / international_results** | `results.csv` (jogos de seleções desde 1872) + `shootouts.csv` (vencedor em pênaltis) + `goalscorers.csv` (gols com o **minuto**) | CSV público no GitHub (raw) · **licença CC0-1.0** (domínio público) | Base de **treino** do modelo; o minuto do gol reconstrói o placar dos **90'** (ENG-54) |
 | **The Odds API** | Odds decimais 1×2 (`h2h`) + over/under (`totals`) por jogo | API REST v4 (chave própria, **tier gratuito**) | **Blend** opcional com o mercado (ENG-19/ENG-35) |
 | **Specs de edição** (autorais) | Formato do torneio, grupos, fixtures, pontuação | Mantidas no repo | Descrição da edição |
 
 **URLs/parâmetros (canônicos no código):**
 - `fetch_data.DEFAULT_URL` →
   `raw.githubusercontent.com/martj42/international_results/master/results.csv`
-  (e `…/shootouts.csv`).
+  (e `…/shootouts.csv`, `…/goalscorers.csv`).
 - `scripts/fetch_odds.py` → `api.the-odds-api.com/v4/...`, mercados `h2h,totals`, formato `decimal`,
   região `eu` (tem Pinnacle), casa preferida **Pinnacle** (fallback: mediana das casas; no totals, a
   mediana é tirada na **linha modal** entre as casas, para não misturar preços de linhas
@@ -30,12 +30,26 @@ termos próprios, tratados aqui.
 
 - **Normalização** (`fetch_data.normalize`): recorte a partir de **2006-01-01**, só jogos
   disputados, nomes mapeados para o **canônico em inglês** (`teams.canonical`), saída em
-  `data/historical_results.csv` com 8 colunas (`fetch_data.OUTPUT_COLUMNS`):
-  `date, home_team, away_team, home_score, away_score, tournament, neutral, penalty_winner`. As 7
-  primeiras vêm do `results.csv`; **`penalty_winner`** é **mesclada** do `shootouts.csv`
-  (`_merge_penalty_winner`, casando por `date+home+away`): nome canônico do vencedor da disputa, ou
-  `""` se o jogo não foi a pênaltis. É o **único desfecho de mata-mata determinável da fonte**
-  (o martj42 não traz a fase); o `backtest` a usa para os bônus de prorrogação/pênaltis (ENG-12).
+  `data/historical_results.csv` com 10 colunas (`fetch_data.OUTPUT_COLUMNS`):
+  `date, home_team, away_team, home_score, away_score, tournament, neutral, penalty_winner,
+  reg_home_score, reg_away_score`. As 7 primeiras vêm do `results.csv`; **`penalty_winner`** é
+  **mesclada** do `shootouts.csv` (`_merge_penalty_winner`, casando por `date+home+away`): nome
+  canônico do vencedor da disputa, ou `""` se o jogo não foi a pênaltis; o `backtest` a usa para os
+  bônus de prorrogação/pênaltis (ENG-12).
+- **Placar dos 90'** (`fetch_data.regulation_scores`, ENG-54): `results.csv` grava o placar
+  **consolidado** (com prorrogação) — a final de 2022 aparece `3×3`, foi `2×2` nos 90'.
+  `reg_home_score`/`reg_away_score` reconstroem o tempo normal **subtraindo os gols de
+  `minute > 90`** do `goalscorers.csv`. A convenção da fonte permite isso sem ambiguidade: ela
+  **achata o acréscimo no minuto 90** (o minuto 90 concentra ~2.000 gols contra ~700 nos vizinhos,
+  e os minutos 91–96 despencam para 4–17), então `minute > 90` é prorrogação, nunca acréscimo dos
+  90'.
+  **Portão de confiança:** só reconstrói quando a lista de gols do jogo **bate exatamente** com o
+  placar consolidado (soma por lado) e nenhum minuto é ilegível — uma lista incompleta subtrairia
+  gols inexistentes e **inventaria empates**, pior que o viés a corrigir. Fora do portão, mantém o
+  consolidado. Validação: reconcilia **100%** dos 7.413 jogos com gols listados (≥2006); a fonte não
+  cobre amistosos, mas amistoso não tem prorrogação. Efeito medido: **76 jogos** corrigidos, taxa de
+  empate da base de 23,2% → 23,5%. Quem consome os 90' passa por `fetch_data.score_90` (fonte
+  única); o `sync`, que preenche o `fixtures.csv`, usa o **consolidado**.
 - **Odds** (`scripts/fetch_odds.py`): busca e **mescla** no `odds.csv`, **preservando** os jogos já
   disputados (não sobrescreve histórico de odds). Linhas em branco/ inválidas são ignoradas. As
   colunas `total_line,over,under` são **opcionais** (ENG-35): arquivos antigos (só 1×2) seguem

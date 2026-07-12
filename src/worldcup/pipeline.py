@@ -67,15 +67,19 @@ def build_training_frame(edition: Edition, historical: pd.DataFrame, boost: floa
     entrar. Sem isso escapariam do filtro `.isin(edition.teams)` e o KO só chegaria ao modelo pela
     base histórica (peso 1.0, refém da atualidade dela) — a subponderação do ENG-42.
 
-    O placar que entra é o dos **90'** (`Edition.score_90`, ENG-55), **não** o consolidado do
-    `fixtures.csv`: num KO decidido por gol na prorrogação o consolidado inclui a ET (J82 = `3×2`,
-    mas `2×2` nos 90'). O modelo estima taxas de gol de **90'** — e a camada de ET do `knockout`
-    reescala λ por 30/90, o que só é válido se λ for a taxa de 90'. Treinar com o consolidado infla
-    o λ e, pior, **apaga empates** (um 1×1 decidido na ET vira "vitória"), suprimindo a taxa de
-    empate que o modelo aprende.
+    O placar que entra é o dos **90'** — dos **dois lados** da união. Da edição, via
+    `Edition.score_90` (ENG-55); da base histórica, via `fetch_data.score_90` (ENG-54), que
+    reconstrói o tempo normal a partir da lista de gols do martj42. Nos dois casos o consolidado
+    inclui a prorrogação (J82 = `3×2`, mas `2×2` nos 90'; a final de 2022 = `3×3`, mas `2×2`), e o
+    modelo estima taxas de gol de **90'** — a camada de ET do `knockout` reescala λ por 30/90, o que
+    só é válido se λ for a taxa de 90'. Treinar com o consolidado infla o λ e, pior, **apaga
+    empates** (um 1×1 decidido na ET vira "vitória"), suprimindo a taxa de empate que o modelo
+    aprende.
     """
+    from .fetch_data import score_90
     from .sync import resolve_live_bracket
 
+    historical = score_90(historical)  # a base grava o consolidado; o ajuste treina nos 90' (ENG-54)
     b = edition.scoring.edition_boost if boost is None else boost
     ko_matchups = resolve_live_bracket(edition)  # {match_id: (mandante, visitante)} real dos KO disputados
     rows = []

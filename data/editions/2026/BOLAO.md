@@ -25,10 +25,11 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   3º lugar (18/07) e final (19/07). Odds re-sincronizadas (74 jogos no `odds.csv`); `blend-track`
   inalterado (só grupos, 49 jogos): blend melhor (Brier 0,4074 vs 0,4091), regime de empates dentro
   da variância (z=+0,80). Config: `risk 0.5` + `blend 0.8`. **As 4 seleções vivas estão num
-  quase-empate**: Espanha 27,6%, França 26,9%, Argentina 23,8%, Inglaterra 21,7% — nenhuma semi
-  passa de 39% no 1×2, e por isso o palpite de 90' diverge de "avança" em J102 e J104 (o placar
-  segue E[pts], que premia a zebra; "avança" segue a probabilidade — divergência permitida por
-  design, `consistency.py:47`).
+  quase-empate**: Espanha 28,6%, França 26,6%, Argentina 22,6%, Inglaterra 22,2% (após o ENG-54) —
+  nenhuma semi passa de 39% no 1×2, e por isso o palpite de 90' diverge de "avança" (o placar segue
+  E[pts], que num jogo-moeda premia o empate; "avança" segue a probabilidade — divergência permitida
+  por design, `consistency.py:47`). **Com o ENG-54, J101 passou de `2×1` a `1×1`**: agora os 4 jogos
+  restantes saem `1×1`.
 - **Placar (12/07): 425 pts, 19º. Líder 509 — gap de 84 com 4 jogos.** Ontem você **não pontuou**:
   os dois jogos terminaram **1×1 nos 90'** e o tool palpitou decisivo (`1×2`, `2×1`) nos dois. **Não
   foi execução nem defeito:** a reconstrução as-of de 11/07 mostra que, mesmo com o empate liberado,
@@ -46,21 +47,28 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   As duas premissas do ban eram falsas — o empate é o **E[pts]-máximo** num KO equilibrado (custava
   +1,42 na final, de peso ×4) e o modelo **subestima** empate no KO (13% palpitados vs 25%
   reais). Pior:
-  a evidência de backtest que sustentava o ban é **inválida** (ENG-54) — a base martj42 grava o
-  placar **com prorrogação**, então o backtest pune o palpite de empate justamente nos jogos que o
-  bolão (que pontua os 90') premiaria. Mesma classe do ENG-48. Palpites agora: J102 e J104 saem
-  `1×1`.
+  a evidência de backtest que sustentava o ban era **artefato da régua** (ENG-54) — a base martj42
+  grava o placar **com prorrogação**, então o backtest punia o palpite de empate justamente nos
+  jogos que o bolão (que pontua os 90') premiaria. Mesma classe do ENG-48. Palpites agora: J102 e
+  J104 saem `1×1`.
 - **E a sua pergunta seguinte achou um bug maior (ENG-55/54)**: "nas simulações estamos usando o
   placar consolidado?". **Estávamos.** O `build_training_frame` mandava o placar do `fixtures.csv`
   (com ET) para o **ajuste do modelo**, tendo o 90' no `regulation.csv` — J82, J99 e J100 eram
   ensinados ao modelo como *vitórias*, sendo empates nos 90'. Corrigido (`Edition.score_90` vira
-  fonte única; efeito em 2026 é pequeno — Espanha 27,6→28,4%, palpites iguais). **O dano grande é a
-  base histórica (ENG-54, aberto):** martj42 grava o consolidado, e a digital é inequívoca — a base
-  tem **23,2%** de empates e o modelo prevê **~24%** (aprendeu a taxa contaminada), mas o real nos
-  90' é **28%** (grupos 2026) / **25%** (KO 2026). ~4,6% do peso do ajuste está afetado. **O monitor
-  de regime de empates vinha chamando isso de "variância" (z=+0,80) — não é: é viés de rótulo.**
-  Não dá para consertar sem o placar de 90' histórico (os jogos decididos por gol na ET são
-  invisíveis na base). Enquanto isso: trate a probabilidade de empate do modelo como um **piso**.
+  fonte única; efeito em 2026 é pequeno — Espanha 27,6→28,4%, palpites iguais).
+- **ENG-54 resolvido (12/07) — e o resultado desmente o que eu mesmo tinha afirmado.** A base
+  histórica também treinava em placar de 120'. Eu havia registrado que isso era **insolúvel** ("os
+  jogos decididos por gol na ET são invisíveis na base") e que explicava o modelo subestimar empate.
+  **As duas coisas estavam erradas.** (a) O martj42 publica um terceiro arquivo, `goalscorers.csv`,
+  com o **minuto** de cada gol — eu nunca tinha verificado a premissa. Reconstruído o placar dos
+  90' (subtraindo os gols após o minuto 90), a base ficou correta. (b) Mas a contaminação era
+  **pequena**: 76 jogos em 19.771 (~0,5% do peso), e a taxa de empate da base sobe só de **23,2%
+  para 23,5%** — não para os 28% que eu supunha. **A explicação que eu tinha dado para o excesso
+  de empates está morta** (ENG-56); o monitor que chamava aquilo de "variância" estava mais perto
+  de certo do que eu.
+  **Efeito prático:** J101 França×Espanha mudou de `2×1` para `1×1`. E o backtest de mata-mata volta
+  a valer: re-medido, o ban de empate é **estatisticamente indistinguível** de não ter ban
+  (+0,23 pt/jogo, IC95% cruzando o zero) — os "+70 pts" que o justificavam eram da régua velha.
 - **Histórico da rodada anterior (11/07):**
   **Bug ENG-51 encontrado e corrigido** (você perguntou "no J101 a Espanha perde?"):
   o chaveamento e o campeão rodavam no modelo puro enquanto o palpite exibido rodava blendado — na

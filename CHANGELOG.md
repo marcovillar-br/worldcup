@@ -12,6 +12,33 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **A base histórica gravava o placar COM prorrogação — o modelo treinava em placar de 120'**
+  (ENG-54): o `results.csv` (martj42) registra o placar consolidado (a final de 2022 aparece `3×3`;
+  foi `2×2` nos 90'), então o `DixonColesModel` aprendia taxas de gol de 120' como se fossem de 90'
+  — e a camada de prorrogação reescala λ por 30/90 **assumindo** que λ é de 90'. Pior, um empate de
+  90' decidido por gol na ET entrava como **vitória**. O item se dava como insolúvel ("a base não
+  tem coluna de rodada nem de tempo do gol"); a premissa **nunca fora verificada** e é falsa: o
+  martj42 publica `goalscorers.csv`, com a coluna **`minute`**. E a fonte **achata o acréscimo dos
+  90' no minuto 90** (o minuto 90 concentra ~2.000 gols contra ~700 nos vizinhos; 91–96 caem para
+  4–17), o que torna `minute > 90` inequivocamente prorrogação. Fix: `fetch_data.regulation_scores`
+  reconstrói o tempo normal (consolidado **menos** os gols de `minute > 90`) e persiste
+  `reg_home_score`/`reg_away_score`, atrás de um **portão de confiança** — só reconstrói quando a
+  lista de gols bate **exatamente** com o placar consolidado (lista incompleta inventaria empates);
+  reconcilia **100%** dos 7.413 jogos com gols listados. `fetch_data.score_90` vira a **fonte
+  única** dos 90' na base (gêmea de `Edition.score_90`), e o `backtest` passa a treinar **e
+  pontuar** nos 90', creditando o bônus de prorrogação também nos jogos decididos por **gol na
+  ET** (61 na base), antes invisíveis. Validação: final 2022 → `2×2`; Croácia×Brasil → `0×0`;
+  Alemanha×Argentina (2014) → `0×0`; Holanda×Espanha (2010) → `0×0`.
+  ⚠️ **Mas a contaminação era pequena, e o item errou ao atribuir a ela o excesso de empates**: são
+  **76 jogos em 19.771** (0,6% do peso do ajuste; 0,5% contando só os 61 que viram empate→vitória),
+  e corrigi-los move a taxa de empate da base de **23,2% para 23,5%** — não para os ~28% que se
+  supunha. O gap contra os empates observados segue **aberto e sem mecanismo conhecido** (ENG-56).
+  Efeito nos palpites de 2026: J101 França×Espanha passou de `2×1` a `1×1` (E[pts] quase empatado
+  entre os dois); os demais, inalterados.
+  **Consequência boa:** o backtest de política de KO volta a ser evidência válida — e, re-medido com
+  a régua certa, o ban de empate do ENG-32 vale **+0,23 pt/jogo (t=+0,54; IC95% [-0,62, +1,09])**
+  nos 64 KO das 4 Copas (o placar diverge em 18 jogos, os pontos mudam em 15): o backtest **não
+  distingue** as políticas. Os "+70 pts" que o "provaram" eram artefato da régua antiga.
 - **O ajuste do modelo treinava com o placar consolidado (com prorrogação)** (ENG-55):
   `pipeline.build_training_frame` mandava `fixtures.csv::home_goals/away_goals` para o
   `DixonColesModel` — nos KO decididos por gol na ET esse placar inclui a prorrogação, mesmo com o
@@ -51,18 +78,10 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   na saída do `predict`.
 
 ### Adicionado
-- **Aviso: a base histórica grava o placar COM prorrogação** (ENG-54, aberto): martj42 registra o
-  placar dos **120'** (a final de 2022 aparece `3×3`; foi `2×2` nos 90'). Dois danos.
-  (1) **Treino:** o `DixonColesModel` aprende taxas de gol de 120' como se fossem de 90' e, pior,
-  um empate de 90'
-  decidido na ET vira **vitória** ⇒ o modelo aprende que empate é mais raro do que é. A digital: a
-  base tem **23,2%** de empates e o modelo prevê **~24%** — reproduz fielmente a taxa contaminada,
-  enquanto os grupos de 2026 (90' puro) deram **28%**. É o que o monitor de empates vinha lendo como
-  "variância" (z=+0,80): é viés de rótulo. ~4,6% do **peso efetivo** do ajuste está afetado.
-  (2) **Backtest:** pontuar palpite de KO contra essa base zera o palpite de empate num jogo que o
-  bolão pontuaria cheio — foi essa medição que "provou" o ENG-32 (ENG-53). Os jogos de pênaltis são
-  identificáveis, mas os decididos **por gol na ET não são**: só o placar de 90' histórico resolve.
-  Registrado em `AGENTS.md`, `docs/MODEL_CARD.md` §9 e `docs/SPEC.md` §6.
+- **`scripts/eng54_ko_policy_sim.py`** — refaz, de forma reproduzível, o re-teste da política de 90'
+  no mata-mata (ban de empate do ENG-32 × E[pts]-fiel do ENG-53) contra a régua certa, o placar dos
+  90'. O veredito do ENG-54 é citado como evidência em quatro documentos; número que sustenta
+  decisão precisa ser reproduzível (mesmo espírito do `eng36_pool_sim.py`), e este não era.
 - **Explicação do palpite de campeão no HTML/MD dos palpites** (ENG-52, INV-7): quando o favorito
   por probabilidade de título (o campeão sugerido) **difere** do campeão do bracket determinístico,
   `render_html`/`render_markdown` incluem uma nota explicando que são leituras diferentes (chance de

@@ -183,6 +183,19 @@ placar da diagonal por E[pts] + camadas de prorrogação/pênaltis) **só nos jo
 (a final) — ENG-40; `--pool-behind zebra` mantém a política antiga do ENG-36 para comparação na
 véspera. Use apenas na manhã da final e apenas se estiver **atrás** no ranking.
 
+**Política de 90' no mata-mata (ENG-54)** — o ENG-32 baniu o palpite de empate no KO apoiado em
+"+70 pts em 4 Copas", número que era **artefato da régua** (o backtest pontuava contra o placar
+consolidado, com prorrogação). Reconstruídos os 90' da base, a medição foi refeita:
+
+```bash
+uv run python scripts/eng54_ko_policy_sim.py
+```
+
+O ban vale **+0,23 pt/jogo (t=+0,54; IC95% [-0,62, +1,09])** nos 64 jogos de KO das 4 Copas: o
+intervalo cruza o zero, ou seja, o backtest **não distingue** as duas políticas. Por isso a escolha
+atual (ENG-53) é a **E[pts]-fiel**, com empate liberado — ela se sustenta no argumento de pontos
+esperados, que vale por construção.
+
 **Apresentação do projeto** — um deck HTML autocontido (tema "Placar Noturno", 16:9, navegável) que
 explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):
 

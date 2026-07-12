@@ -63,8 +63,17 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   a **pontuação** (o bolão mede o slot de 90' contra o tempo normal). Nunca leia
   `home_goals`/`away_goals` cru para esses fins.
 - `teams.py` — nome canônico (inglês, do dataset) ↔ exibição em português.
-- `fetch_data.py` — baixa `results.csv`/`shootouts.csv` (martj42), normaliza →
-  `data/historical_results.csv`.
+- `fetch_data.py` — baixa `results.csv`/`shootouts.csv`/`goalscorers.csv` (martj42), normaliza →
+  `data/historical_results.csv`. `score_90(base)` (ENG-54) é a **fonte única** de "o que aconteceu
+  nos 90'" na base histórica — o gêmeo do `Edition.score_90` para os jogos de fora da edição. A
+  fonte grava o placar **consolidado** (a final de 2022 aparece `3×3`, foi `2×2` nos 90'), então
+  `regulation_scores` reconstrói o tempo normal subtraindo os gols de `minute > 90` do
+  `goalscorers.csv` — a fonte achata o acréscimo dos 90' no minuto 90, o que torna `> 90`
+  inequivocamente prorrogação. **Portão de confiança**: só reconstrói quando a lista de gols do jogo
+  bate exatamente com o placar consolidado (lista incompleta inventaria empates); senão mantém o
+  consolidado. `score_90` também devolve `et_outcome` (o desfecho real do slot de prorrogação:
+  `penalties`/`home`/`away`), porque calcular isso exige o consolidado que ele mesmo sobrescreve.
+  O `sync` (que preenche o `fixtures.csv`) usa a base **crua**; ninguém lê `reg_*` na mão.
 - `model.py` — `DixonColesModel`: ajuste ponderado (decaimento temporal + peso de torneio + mando),
   filtra seleções não-FIFA; `score_matrix(home, away, neutral, host_away=…)`
   (mando do anfitrião via `host_away`, ver *Mando* abaixo).
@@ -74,10 +83,12 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   A camada 1 é **E[pts]-fiel, empate incluído** (ENG-53, revoga o ENG-32): não há regra especial de
   KO. Banir o empate era inócuo com favorito claro (o maximizador livre já escolhe o decisivo) e
   caro no KO equilibrado, onde o empate É o E[pts]-máximo — na final de 2026, ×4 de peso, custava
-  +1,42 pt. ⚠️ **Não "prove" política de KO com o backtest** enquanto o ENG-54 estiver aberto: a
-  base martj42 grava o placar **com prorrogação**, então o backtest pune o palpite de empate
-  exatamente nos jogos que o bolão (que pontua os 90') premiaria — foi essa medição enviesada que
-  sustentou o ENG-32.
+  +1,42 pt. Os "+70 pts em 4 Copas" que sustentavam o ENG-32 eram **artefato da régua** (a base
+  pontuava o KO com o placar de 120'). Fechado o ENG-54, a política foi re-testada contra a régua
+  certa: o ban vale **+0,23 pt/jogo (t=+0,54; IC95% [-0,62, +1,09])** nos 64 KO das 4 Copas — o
+  placar palpitado diverge em 18 jogos e os pontos mudam em só 15 (ban ganha 9, perde 6). O backtest
+  **não distingue** as políticas; a escolha fiel se sustenta no argumento de E[pts], que vale por
+  construção. Reproduzível: `scripts/eng54_ko_policy_sim.py`.
   `pool_behind` (via `predict --pool-behind [empate|zebra]`, default do flag `empate`): modo endgame
   de bolão, só nos jogos de peso máximo (final) e só quando o usuário está atrás (bolão é jogo
   diferencial). `"empate"` (ENG-39/40, dominante): 90' no melhor empate por E[pts], camadas fiéis;
@@ -96,16 +107,19 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `backtest.py` — valida o modelo nas 4 Copas passadas (`backtest`) e o blend prospectivamente na
   edição viva (`blend-track`): `multiclass_brier`, `reliability_curve` (campo
   `reliability_draw` do resultado), `pooled_draw_calibration` + monitor de regime de empates
-  (z-score). Treina só com jogos anteriores a cada Copa. Sweeps as-of
+  (z-score). Treina só com jogos anteriores a cada Copa, e treina **e pontua** no placar dos 90'
+  (`fetch_data.score_90`, ENG-54) — o bolão mede o slot de 90' contra o tempo normal. O bônus de KO
+  (`_knockout_bonus_for`) credita tanto os pênaltis quanto os jogos decididos por **gol na
+  prorrogação**, que antes do ENG-54 eram invisíveis na fonte e nunca pontuavam. Sweeps as-of
   de calibração: `blend-track --sweep` (blend_weight, ENG-38) e `blend-track --boost-sweep`
   (`edition_boost`, ENG-44) — Brier out-of-sample por valor, só jogos de grupo.
 - `sync.py` — resolve o bracket só com resultados reais e preenche `fixtures.csv`.
-- `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites. Treina com `Edition.score_90`
-  (o placar dos **90'**), não com o consolidado do `fixtures.csv` (ENG-55) — treinar em placar de
-  120' infla o λ e **apaga empates** (um 1×1 decidido na ET vira "vitória"). ⚠️ A **base histórica**
-  ainda sofre disso (ENG-54, aberto): martj42 grava o consolidado, o modelo reproduz a taxa de
-  empate contaminada da base (~24% previsto vs 23,2% da base) e por isso **subestima empate**
-  (grupos 2026: 28% reais). `ingestion_gaps(edition)`
+- `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites. Treina no placar dos **90'** dos
+  **dois** lados da união: da edição via `Edition.score_90` (ENG-55) e da base histórica via
+  `fetch_data.score_90` (ENG-54) — treinar em placar de 120' infla o λ e **apaga empates** (um 1×1
+  decidido na ET vira "vitória"). ⚠️ Corrigir a base **não** explicou o modelo subestimar empate: a
+  contaminação valia só **0,5% do peso** do ajuste (a taxa de empate da base vai de 23,2% para
+  23,5%, não para os ~28% que se supunha) — ver ENG-54/ENG-56. `ingestion_gaps(edition)`
   (ENG-43) lista jogos disputados que **não** entram no ajuste (slot de KO não resolvido ⇒ filtrado
   pelo `.isin(edition.teams)` de `build_training_frame`) — `predict` e `status` avisam se ≠ vazio.
   Antes de devolver, roda `check_prediction_consistency` como **asserção dura** (ENG-52): recusa

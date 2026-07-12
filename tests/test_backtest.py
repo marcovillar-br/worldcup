@@ -8,6 +8,7 @@ import pytest
 from conftest import make_model, mini_historical
 from worldcup import backtest as bt
 from worldcup.edition import load_edition
+from worldcup.knockout import predict_knockout
 
 
 def test_world_cup_hosts_cover_all_backtest_years():
@@ -189,18 +190,92 @@ def test_draw_regime_report_on_2026(monkeypatch):
 # --------------------------------------------------------------- bônus de mata-mata (ENG-12)
 
 
+def _ko_row(home_score: int, away_score: int, minutes: list[tuple[str, int]], penalty_winner: str = ""):
+    """Uma linha da base **como a produção a monta** (normalize → score_90), não fabricada à mão.
+
+    Costura (ENG-48): quem decide o que é "prorrogação" é `fetch_data`; o teste do backtest tem de
+    consumir essa decisão, não reimplementá-la. Foi um teste que fabricava a entrada que deixou o
+    ENG-48 passar despercebido.
+    """
+    from worldcup.fetch_data import normalize, score_90
+
+    games = pd.DataFrame(
+        [
+            {
+                "date": "2022-12-09",
+                "home_team": "Brazil",
+                "away_team": "Argentina",
+                "home_score": home_score,
+                "away_score": away_score,
+                "tournament": "FIFA World Cup",
+                "neutral": True,
+            }
+        ]
+    )
+    goals = pd.DataFrame(
+        [
+            {"date": "2022-12-09", "home_team": "Brazil", "away_team": "Argentina", "team": t, "minute": m}
+            for t, m in minutes
+        ]
+    )
+    shootouts = (
+        pd.DataFrame(
+            [{"date": "2022-12-09", "home_team": "Brazil", "away_team": "Argentina", "winner": penalty_winner}]
+        )
+        if penalty_winner
+        else None
+    )
+    base = normalize(games, cutoff="2006-01-01", shootouts=shootouts, goalscorers=goals)
+    return score_90(base).iloc[0]
+
+
+def _poisson_matrix(lam_home: float, lam_away: float, n: int = 8):
+    import math
+
+    import numpy as np
+
+    ph = np.array([math.exp(-lam_home) * lam_home**k / math.factorial(k) for k in range(n)])
+    pa = np.array([math.exp(-lam_away) * lam_away**k / math.factorial(k) for k in range(n)])
+    m = np.outer(ph, pa)
+    return m / m.sum()
+
+
 def test_knockout_bonus_awarded_on_penalty_shootout():
-    """Jogo decidido nos pênaltis (penalty_winner preenchido) recebe os bônus de KO; senão, zero."""
+    """Jogo decidido nos pênaltis recebe os bônus de KO; decidido nos 90', zero."""
     import numpy as np
 
     award = bt._award_scorer()
     mat = np.zeros((7, 7))
     mat[1, 0] = mat[0, 1] = 0.3  # vitória do mandante / do visitante simétricas
     mat[0, 0] = mat[1, 1] = 0.2  # empates → jogo "vai aos pênaltis", vencedor previsto = mandante
-    base = {"home_team": "Brazil", "away_team": "Argentina"}
-    # acertou a ida aos pênaltis (+3) e o vencedor = mandante (+3) = 6
-    assert bt._knockout_bonus_for(pd.Series({**base, "penalty_winner": "Brazil"}), mat, award) == 6.0
+
+    # 1×1 nos 90', foi a pênaltis: acertou a ida à disputa (+3) e o vencedor = mandante (+3)
+    pens_home = _ko_row(1, 1, [("Brazil", 30), ("Argentina", 70)], penalty_winner="Brazil")
+    assert bt._knockout_bonus_for(pens_home, mat, award) == 6.0
     # vencedor real = visitante → só o bônus de ida aos pênaltis (+3)
-    assert bt._knockout_bonus_for(pd.Series({**base, "penalty_winner": "Argentina"}), mat, award) == 3.0
-    # não foi a pênaltis → sem bônus
-    assert bt._knockout_bonus_for(pd.Series({**base, "penalty_winner": ""}), mat, award) == 0.0
+    pens_away = _ko_row(1, 1, [("Brazil", 30), ("Argentina", 70)], penalty_winner="Argentina")
+    assert bt._knockout_bonus_for(pens_away, mat, award) == 3.0
+    # decidido nos 90' → sem slot de prorrogação, sem bônus
+    in_90 = _ko_row(2, 1, [("Brazil", 30), ("Brazil", 55), ("Argentina", 70)])
+    assert bt._knockout_bonus_for(in_90, mat, award) == 0.0
+
+
+def test_knockout_bonus_awarded_on_a_goal_in_extra_time():
+    """ENG-54: jogo decidido por **gol na prorrogação** também rende o bônus do slot de ET.
+
+    Antes, esses jogos eram invisíveis para o backtest (a fonte não traz fase nem flag de ET) e
+    **nunca** eram creditados — o teto do backtest saía subestimado justamente no mata-mata.
+    """
+    award = bt._award_scorer()
+    mat = _poisson_matrix(2.8, 0.6)  # favorito claro ⇒ o modelo prevê que o mandante vence na ET
+    assert predict_knockout("Brazil", "Argentina", mat, award).extra_time == "home"  # premissa do caso
+
+    # 1×1 nos 90' (gols aos 30' e 70'), decidido por gol do mandante aos 113' ⇒ consolidado 2×1
+    et_home = _ko_row(2, 1, [("Brazil", 30), ("Argentina", 70), ("Brazil", 113)])
+    assert et_home["et_outcome"] == "home"
+    assert bt._knockout_bonus_for(et_home, mat, award) == 3.0  # acertou o slot de prorrogação
+
+    # mesmo jogo, mas quem vence na ET é o visitante ⇒ o palpite ("home") erra o slot
+    et_away = _ko_row(1, 2, [("Brazil", 30), ("Argentina", 70), ("Argentina", 113)])
+    assert et_away["et_outcome"] == "away"
+    assert bt._knockout_bonus_for(et_away, mat, award) == 0.0

@@ -144,12 +144,16 @@ def predict_knockout(
     #   (b) "apoiado numa leve super-estimação de empate no KO": falso. Sem o ban o maximizador
     #       palpita empate em 13% dos KO de 2026, contra 25% de empates reais nos 90' — ele
     #       SUBestima empate, não superestima.
-    # E a evidência que sustentava o ban ("+70 pts realizados em 4 Copas") é inválida: o backtest
-    # pontua contra a base martj42, que grava o placar COM prorrogação (a final de 2022 aparece
-    # 3×3, não 2×2). Um jogo empatado nos 90' e decidido por gol na ET entra lá como decisivo ⇒ o
-    # backtest pune o palpite de empate exatamente onde o bolão real (que pontua os 90') o premia.
-    # Mesma classe do ENG-48. Re-testar a política de KO exige os placares de 90' das Copas
-    # passadas, que a base não tem (ENG-54).
+    # E a evidência que sustentava o ban ("+70 pts realizados em 4 Copas") era **artefato da régua**:
+    # o backtest pontuava contra a base martj42, que grava o placar COM prorrogação (a final de 2022
+    # aparece 3×3, não 2×2), então punia o palpite de empate exatamente onde o bolão real (que pontua
+    # os 90') o premia. Mesma classe do ENG-48.
+    #
+    # Com o ENG-54 fechado (os 90' da base reconstruídos da lista de gols), a política **foi**
+    # re-testada contra a régua certa: o ban vale +0,23 pt/jogo (t=+0,54; IC95% [-0,62, +1,09]) nos
+    # 64 jogos de KO das 4 Copas — as duas políticas divergem em só 15 deles, e o ban ganha 9/perde 6.
+    # Cara-ou-coroa: o backtest **não distingue** as políticas (e certamente não apoia o ban). A
+    # escolha fiel se sustenta no argumento de E[pts], que vale por construção.
     #
     # Modo `empate` (ENG-39) segue forçando a diagonal na final: lá a escolha é diferencial (quem
     # está atrás precisa descorrelacionar do pelotão), não E[pts]-fiel.

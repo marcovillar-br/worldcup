@@ -205,6 +205,51 @@ def test_build_training_frame_trains_on_regulation_time_not_the_consolidated_sco
     assert row["home_score"] == row["away_score"]  # e o empate dos 90' sobrevive ao ajuste
 
 
+def test_build_training_frame_trains_on_the_90_of_the_historical_base_too():
+    """ENG-54: o outro lado da união. Um KO histórico decidido por gol na prorrogação entra no
+    ajuste pelo placar do **tempo normal**, não pelo consolidado da fonte — senão o modelo aprende
+    que empate é mais raro do que é (um 1×1 decidido na ET vira "vitória").
+
+    Costura (ENG-48): o esperado sai de `fetch_data.score_90`, a função de produção que define "o
+    que aconteceu nos 90'" na base — não de um placar fabricado aqui.
+    """
+    import pandas as pd
+
+    from worldcup.fetch_data import normalize, score_90
+    from worldcup.pipeline import build_training_frame
+
+    # Croácia 1×1 Brasil (2022): os dois gols na prorrogação ⇒ 0×0 nos 90'
+    games = pd.DataFrame(
+        [
+            {
+                "date": "2022-12-09",
+                "home_team": "Croatia",
+                "away_team": "Brazil",
+                "home_score": 1,
+                "away_score": 1,
+                "tournament": "FIFA World Cup",
+                "neutral": True,
+            }
+        ]
+    )
+    goals = pd.DataFrame(
+        [
+            {"date": "2022-12-09", "home_team": "Croatia", "away_team": "Brazil", "team": t, "minute": m}
+            for t, m in (("Brazil", 105), ("Croatia", 117))
+        ]
+    )
+    historical = normalize(games, cutoff="2006-01-01", goalscorers=goals)
+    historical["date"] = pd.to_datetime(historical["date"])
+    expected = score_90(historical)  # a produção diz qual é o placar dos 90'
+    assert (expected.iloc[0]["home_score"], expected.iloc[0]["away_score"]) == (0, 0)  # premissa do caso
+
+    ed = load_edition(2026).as_of("2026-06-11")  # pré-torneio: a edição não contribui nada
+    train = build_training_frame(ed, historical)
+    row = train[train["home_team"] == "Croatia"].iloc[0]
+    assert (row["home_score"], row["away_score"]) == (expected.iloc[0]["home_score"], expected.iloc[0]["away_score"])
+    assert row["home_score"] == row["away_score"]  # o empate dos 90' sobrevive ao ajuste
+
+
 def test_ingestion_gaps_healthy_edition_is_empty():
     # ENG-43: na 2026 real o bracket resolve todo KO disputado ⇒ nenhum jogo fica fora do ajuste
     assert pipeline.ingestion_gaps(load_edition(2026)) == []

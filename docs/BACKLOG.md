@@ -72,6 +72,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-54](#eng-54) | P1 | dados/model | ✅ | A base martj42 grava o placar COM prorrogação ⇒ o **modelo treinava em placar de 120'**; os 90' são reconstruídos do `goalscorers.csv` (`minute > 90`), o que também devolve validade ao backtest de KO |
 | [ENG-55](#eng-55) | P1 | pipeline/edition | ✅ | `build_training_frame` alimentava o ajuste com o placar consolidado da edição viva, tendo o 90' em `regulation.csv` |
 | [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,5% do peso): mecanismo desconhecido, sem significância estatística |
+| [ENG-57](#eng-57) | P2 | model/format_engine | 🔴 | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
 
 ---
 
@@ -1999,6 +2000,24 @@ magnitude**. O mecanismo era real e valia 0,5% do peso. Um mecanismo plausível 
 ainda assim ser irrelevante: **medir a magnitude antes de atribuir a causa**. É o mesmo erro que o
 ENG-50 registra do outro lado (explicação pronta imuniza contra investigação).
 
+**🔎 Pista nova (12/07) — o déficit se concentra nos jogos EQUILIBRADOS.** Investigando por que os 4
+jogos restantes saem todos `1×1`, cruzei a probabilidade **da manhã** (snapshots reais de
+`history/`) com o placar dos **90'** (`Edition.score_90`) nos 78 jogos com as duas coisas:
+
+| regime (prob. do lado mais forte) | n | empataram nos 90' | o modelo dizia |
+|---|---|---|---|
+| **equilibrado (< 40%)** | 8 | **50%** | ~31% |
+| intermediário (40–50%) | 14 | 36% | — |
+| favorito claro (≥ 50%) | 56 | 23% | — |
+
+O gradiente é **monotônico** e o desvio não é uniforme: nos jogos com favorito claro o modelo acerta
+a taxa (23%), e o buraco aparece justamente onde os times são parelhos. Isso **reprioriza as
+hipóteses**: um viés global (ruído, `rho` mal ajustado) não produziria um erro concentrado num
+regime. Um candidato natural é a hipótese (c) — jogo grande/parelho é mais travado que a média da
+base —, que atua exatamente aí. ⚠️ **n=8 no bucket crítico**: isto é *pista*, não conclusão (o EP é
+enorme). O teste de aceite abaixo é o que decide, e ele exige poolar várias Copas — o que reforça
+esperar a de 2026 encerrar.
+
 **Hipóteses a testar (nenhuma medida):** (a) ruído — o mais provável, e a hipótese nula honesta;
 (b) `rho` (Dixon–Coles) sub-ajustado, que governa exatamente a massa nos placares baixos (0×0, 1×1);
 (c) jogo de torneio é mais travado que a média da base (que é dominada por eliminatórias e
@@ -2045,3 +2064,31 @@ não mudam. É correção de **princípio** (e de arquitetura), não de resultad
 base (ENG-54), e cresceria numa edição com `edition_boost > 1`.
 **Aceite:** ✅ 212 testes verdes; o teste de costura falha se o treino voltar a usar o consolidado.
 **Commit:** ed493c8
+
+
+## ENG-57
+**`MatrixCache.matrix` aceita seleção inexistente e devolve o "time médio" em silêncio** · P2 ·
+model/format_engine · 🔴 todo
+
+`MatrixCache.matrix("Atlantida", "Narnia", neutral=True)` **não levanta erro**: devolve uma matriz
+normalizada, plausível, do time médio contra o time médio (1×2 = 34,3%/31,4%/34,3%). O mesmo vale
+para um **slot de bracket não resolvido** (`L101`, `W102`) e para qualquer typo de nome canônico.
+
+**Como apareceu (12/07):** ao investigar por que os 4 jogos restantes saem `1×1`, um script de
+análise passou os fixtures crus (com slots) ao cache. J103 e J104 vieram com números **idênticos,
+dígito por dígito, e perfeitamente simétricos** — o que denunciou a fallback. Se os confrontos
+fossem menos óbvios, a análise teria seguido com números inventados sem ninguém notar.
+
+**Por que é da classe do ENG-48:** o valor devolvido é **plausível** e a chamada é **silenciosa**.
+A produção hoje escapa por acidente (o `pipeline` resolve os slots antes de chamar), mas nada no
+contrato do `MatrixCache` obriga isso — é uma mina para todo consumidor novo (scripts de análise,
+backtest, efficiency), e o sintoma é "o número está estranho", não "estourou".
+
+**Refs:** `format_engine.MatrixCache.matrix`, `model.DixonColesModel.score_matrix` (o `_idx` não
+encontra o time e cai no parâmetro médio/zerado).
+**Escopo:** `score_matrix`/`MatrixCache.matrix` **levantam** (`KeyError`/`ValueError` com mensagem
+clara) quando o nome não está em `model.teams`. Quem legitimamente quer o time médio (se é que
+alguém quer) pede explicitamente.
+**Aceite:** um teste que passa um nome inexistente e espera exceção; a suíte segue verde (nenhum
+consumidor de produção dependia da fallback). ⚠️ **Não mexer antes da final (19/07)** — é mudança
+de comportamento no caminho do palpite; ver a decisão de campanha em `data/editions/2026/BOLAO.md`.

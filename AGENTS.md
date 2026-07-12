@@ -65,6 +65,13 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `scoring.py` — `Scorer`: pontos do Sistema I + `best_prediction()` (maximiza pontos esperados);
   `risk` controla a ousadia (0.5 = fiel; >0.5 arrisca mais zebras).
 - `knockout.py` — `predict_knockout()`: 3 camadas (placar 90', prorrogação, pênaltis) + quem avança.
+  A camada 1 é **E[pts]-fiel, empate incluído** (ENG-53, revoga o ENG-32): não há regra especial de
+  KO. Banir o empate era inócuo com favorito claro (o maximizador livre já escolhe o decisivo) e
+  caro no KO equilibrado, onde o empate É o E[pts]-máximo — na final de 2026, ×4 de peso, custava
+  +1,42 pt. ⚠️ **Não "prove" política de KO com o backtest** enquanto o ENG-54 estiver aberto: a
+  base martj42 grava o placar **com prorrogação**, então o backtest pune o palpite de empate
+  exatamente nos jogos que o bolão (que pontua os 90') premiaria — foi essa medição enviesada que
+  sustentou o ENG-32.
   `pool_behind` (via `predict --pool-behind [empate|zebra]`, default do flag `empate`): modo endgame
   de bolão, só nos jogos de peso máximo (final) e só quando o usuário está atrás (bolão é jogo
   diferencial). `"empate"` (ENG-39/40, dominante): 90' no melhor empate por E[pts], camadas fiéis;

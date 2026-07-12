@@ -70,15 +70,24 @@ def test_penalty_winner_and_advancer_follow_the_stronger_side():
     assert kp.advancer == "H"  # avanço segue a lógica condicional existente (inalterado)
 
 
-def test_layer1_never_predicts_a_draw_in_knockout():
-    # ENG-32: num confronto equilibrado e baixo o E[pts]-ótimo livre é um empate (ex.: 0×0), que
-    # zeraria se o jogo fosse decidido nos 90'. A camada 1 do KO usa forbid_draw ⇒ placar com
-    # vencedor. As camadas de prorrogação/pênaltis/avanço (2–3) seguem inalteradas.
+def test_layer1_follows_expected_points_and_may_draw_in_a_balanced_knockout():
+    # ENG-53 (revoga o ENG-32): a camada 1 é E[pts]-fiel, empate incluído. Num KO equilibrado o
+    # empate é o E[pts]-máximo — e é o que o bolão pontua, porque o slot de 90' é medido contra o
+    # tempo normal (um 1×1 decidido na prorrogação pontua o empate cheio).
     m = _poisson_matrix(1.0, 1.0)
-    assert _scorer().best_prediction(m).home_goals == _scorer().best_prediction(m).away_goals  # livre = empate
+    free = _scorer().best_prediction(m)
+    assert free.home_goals == free.away_goals  # premissa do caso: o E[pts]-ótimo livre é um empate
     kp = predict_knockout("H", "A", m, _scorer())
-    assert kp.home_goals != kp.away_goals  # camada 1 nunca empata no KO
+    assert (kp.home_goals, kp.away_goals) == (free.home_goals, free.away_goals)  # camada 1 = E[pts]-fiel
     assert kp.extra_time == "penalties"  # equilíbrio ⇒ pênaltis (camada 2 inalterada)
+
+
+def test_layer1_still_picks_a_winner_when_there_is_a_clear_favourite():
+    # O contrapeso do ENG-53: liberar o empate NÃO faz o tool espalhar 1×1. Com favorito claro o
+    # maximizador de E[pts] escolhe o placar decisivo sozinho — o antigo ban era inócuo aqui.
+    m = _poisson_matrix(2.8, 0.6)
+    kp = predict_knockout("H", "A", m, _scorer())
+    assert kp.home_goals > kp.away_goals
 
 
 def test_pool_behind_zebra_picks_the_underdog_side_with_all_layers():

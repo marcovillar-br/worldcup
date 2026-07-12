@@ -12,6 +12,19 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **Empate volta a ser palpitável no 90' do mata-mata** (ENG-53, revoga o ENG-32): a camada 1 do KO
+  usava `forbid_draw=True` e o tool ficava **proibido** de palpitar empate num jogo eliminatório —
+  daí a saída ser sempre `2x1`/`1x2`. As duas premissas do ban caíram: (i) o ganho de E[pts] do
+  empate **não** é marginal onde importa — com favorito claro o ban é inócuo (o maximizador livre já
+  escolhe o decisivo), mas num KO equilibrado (34%/31%/34%) o empate **é** o E[pts]-máximo, e na
+  final de 2026 (peso ×4) valia **+1,42 pt**; (ii) o modelo **não** super-estima empate no KO — sem
+  o ban ele palpita empate em 13% dos KO de 2026, contra 25% de empates reais nos 90'. A camada 1
+  volta ao `best_prediction` fiel; nenhum limiar novo (o maximizador livre **já** escolhe o empate
+  sse ele for o E[pts]-máximo). `Scorer.best_prediction(forbid_draw=…)` permanece, sem uso em
+  produção. O modo `pool_behind="empate"` (ENG-39) segue forçando a diagonal na final, por motivo
+  diferente (escolha diferencial). Efeito colateral resolvido: nos jogos-moeda o placar forçado
+  divergia de `avança` (J102 saía `1x2` mas "avança Inglaterra"); agora sai `1x1`, coerente.
+
 - **Chaveamento e palpite escolhiam vencedores diferentes no mesmo KO** (ENG-51): o blend com odds
   (ENG-19) só entrava na geração do palpite exibido; o `deterministic_bracket` (quem joga o próximo
   jogo) e o `monte_carlo` (probabilidades de campeão) seguiam no modelo puro. Quando o mercado
@@ -26,6 +39,12 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   na saída do `predict`.
 
 ### Adicionado
+- **Aviso: backtest de política de KO é inválido** (ENG-54, aberto): a base martj42 grava o placar
+  **com prorrogação** (a final de 2022 aparece `3×3`; foi `2×2` nos 90'), mas o bolão pontua o slot
+  de 90' contra o **tempo normal**. Um KO empatado nos 90' e decidido por gol na ET entra na base
+  como **decisivo** ⇒ o backtest zera o palpite de empate num jogo que o bolão pontuaria cheio.
+  Viés sistemático **contra o empate** — foi essa medição que "provou" o ENG-32. Registrado em
+  `AGENTS.md`, `docs/MODEL_CARD.md` §9 e `docs/SPEC.md` §6 até que o placar de 90' histórico exista.
 - **Explicação do palpite de campeão no HTML/MD dos palpites** (ENG-52, INV-7): quando o favorito
   por probabilidade de título (o campeão sugerido) **difere** do campeão do bracket determinístico,
   `render_html`/`render_markdown` incluem uma nota explicando que são leituras diferentes (chance de

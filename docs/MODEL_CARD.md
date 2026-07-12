@@ -120,7 +120,16 @@ propósito.
   com os resultados reais.
 - **Empates** são a fraqueza prática: o otimizador raramente crava empate, então numa Copa
   empate-pesada zera mais jogos — **monitorar** via `blend-track`, **não forçar** empate
-  (baixa o E[pts]).
+  (baixa o E[pts]). Mas **não banir** também: até o ENG-53 o palpite de 90' do mata-mata proibia
+  empate, o que custava E[pts] exatamente nos jogos equilibrados e de maior peso (a final). O
+  maximizador fiel já é conservador sozinho — palpita empate em 13% dos KO de 2026, contra 25% de
+  empates reais nos 90'.
+- ⚠️ **Backtest de política de KO é inválido enquanto o ENG-54 estiver aberto.** O
+  `historical_results.csv` (martj42) grava o placar **ao fim da prorrogação**, não dos 90' (a final
+  de 2022 aparece `3×3`, foi `2×2` nos 90'), mas o bolão pontua o slot de 90' contra o **tempo
+  normal**. Todo backtest que pontua palpite de KO contra essa base mede com a régua errada, com
+  viés **sistemático contra o empate**. Não use `backtest` como evidência sobre placar de KO até o
+  placar de 90' histórico existir.
 - **Dependências externas:** qualidade do dataset martj42 e disponibilidade/ToS da The Odds API
   ([`DATA.md`](DATA.md)). Sem rede, o produto degrada para o último estado conhecido.
 - **Revalidação:** re-rodar `backtest` e revisar este cartão a cada bump de versão que toque

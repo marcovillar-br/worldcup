@@ -134,16 +134,31 @@ def predict_knockout(
             p_advance_home=p_home + p_draw * (p_home / (p_home + p_away) if (p_home + p_away) > 0 else 0.5),
         )
 
-    # camada 1: melhor placar dos 90 min. No KO proíbe empate (ENG-32): um palpite de empate zera
-    # sempre que o jogo é decidido no tempo normal, e seu ganho de E[pts] é marginal e apoiado numa
-    # leve super-estimação de empate no KO. Exceção deliberada: modo `empate` (ENG-39) força a
-    # diagonal — na final, a frequência real de empate supera a do modelo E a precificada pelo app.
-    # O desfecho real (ET/pênaltis/avanço) segue nas camadas 2–3.
+    # camada 1: melhor placar dos 90 min — E[pts]-fiel, empate INCLUÍDO (ENG-53, revoga o ENG-32).
+    #
+    # O ENG-32 proibia empate aqui. As duas premissas dele caíram:
+    #   (a) "o ganho de E[pts] é marginal": falso onde os pesos são maiores. Num KO equilibrado
+    #       (34%/31%/34%, típico de SF/final) o empate É o E[pts]-máximo — na final de 2026 valia
+    #       +1,42 pt de peso sobre o melhor decisivo. O ban é inócuo com favorito claro (o
+    #       maximizador livre já escolhe o placar decisivo sozinho) e caro justamente na final.
+    #   (b) "apoiado numa leve super-estimação de empate no KO": falso. Sem o ban o maximizador
+    #       palpita empate em 13% dos KO de 2026, contra 25% de empates reais nos 90' — ele
+    #       SUBestima empate, não superestima.
+    # E a evidência que sustentava o ban ("+70 pts realizados em 4 Copas") é inválida: o backtest
+    # pontua contra a base martj42, que grava o placar COM prorrogação (a final de 2022 aparece
+    # 3×3, não 2×2). Um jogo empatado nos 90' e decidido por gol na ET entra lá como decisivo ⇒ o
+    # backtest pune o palpite de empate exatamente onde o bolão real (que pontua os 90') o premia.
+    # Mesma classe do ENG-48. Re-testar a política de KO exige os placares de 90' das Copas
+    # passadas, que a base não tem (ENG-54).
+    #
+    # Modo `empate` (ENG-39) segue forçando a diagonal na final: lá a escolha é diferencial (quem
+    # está atrás precisa descorrelacionar do pelotão), não E[pts]-fiel.
+    # O desfecho real (ET/pênaltis/avanço) segue nas camadas 2–3, independentes do placar de 90'.
     if pool_behind == "empate":
         eh, ea = _empate_prediction(matrix, scorer)
         pred90 = None
     else:
-        pred90 = scorer.best_prediction(matrix, forbid_draw=True)
+        pred90 = scorer.best_prediction(matrix)
 
     # probabilidade condicional de cada lado vencer um confronto decidido (ET/pênaltis)
     decisive = p_home + p_away

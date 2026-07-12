@@ -68,6 +68,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-50](#eng-50) | P2 | eficiência | ✅ | Anomalia numérica (eficiência > 100%) vira narrativa em vez de gatilho: sem limiar nem ação prescrita, ao contrário do monitor de empates |
 | [ENG-51](#eng-51) | P1 | pipeline/format | ✅ | Bracket (modelo puro) e palpite (blend) escolhem vencedores diferentes no mesmo KO ⇒ tabela auto-contraditória ("X avança a semi" mas "Y joga a final") |
 | [ENG-52](#eng-52) | P2 | pipeline | ✅ | Sem guardião da coerência interna do artefato final: nenhum teste perguntava "a tabela que entrego se contradiz?" |
+| [ENG-53](#eng-53) | P1 | knockout | ✅ | Empate proibido no 90' do KO (ENG-32) custa E[pts] justamente na final: as duas premissas do ban são falsas e a evidência que o sustentava é inválida |
+| [ENG-54](#eng-54) | P1 | dados/backtest | 🔴 | A base martj42 grava o placar COM prorrogação ⇒ nenhum backtest de política de KO é confiável (pune o palpite de empate onde o bolão o premia) |
 
 ---
 
@@ -1815,3 +1817,74 @@ anotação do INV-7 no `predict` responde a pergunta antes de o usuário fazê-l
 **Aceite:** ✅ a saída real passa (104 jogos, 0 violações); injetar o bug do ENG-51 dispara INV-1 nos
 jogos certos (final e 3º lugar); a asserção dura pega a incoerência antes do CSV; 208 testes verdes.
 **Commit:** cead9b0
+
+## ENG-53
+**Empate proibido no 90' do KO custa E[pts] justamente na final** · P1 · knockout · ✅ feito
+
+O ENG-32 fez o palpite de 90' do mata-mata rodar com `forbid_draw=True`: o tool ficava **proibido
+de palpitar empate** num jogo de KO. Encontrado quando o usuário estranhou "todos os resultados
+palpitados são 2x1 ou 1x2" — que é consequência direta do ban (sobra só placar decisivo).
+
+**As duas premissas do ban são falsas.**
+
+1. *"O ganho de E[pts] é marginal (~0,04/jogo)"* — falso onde os pesos são maiores. Com favorito
+   claro o ban é **inócuo** (o maximizador livre já escolhe o decisivo sozinho); num KO equilibrado
+   (34%/31%/34%, típico de SF/final) o **empate é o E[pts]-máximo**. Medido nos 4 jogos restantes de
+   2026: J102 +0,58, J103 +0,71, **J104 (final, peso ×4) +1,42** — total **+2,71 pt** deixados na
+   mesa pelo ban, concentrados no jogo mais valioso do torneio.
+2. *"Apoiado numa leve super-estimação de empate no KO"* — falso, e no sentido oposto. Sem o ban o
+   maximizador de E[pts] palpita empate em **13%** dos KO de 2026 (4/30), contra **25%** de empates
+   reais nos 90' (7/28). Ele **subestima** empate no KO.
+
+**E a evidência que sustentava o ban ("+70 pts realizados em 4 Copas") é inválida** — ver ENG-54: o
+backtest pontua contra a base martj42, que grava o placar **com prorrogação**, então pune o palpite
+de empate exatamente nos jogos em que o bolão real (que pontua os 90') o **premiaria**.
+
+Efeito colateral do ban, agora resolvido: nos jogos-moeda o placar de 90' (decisivo, forçado)
+divergia de `avança` (probabilístico) — a divergência que o INV-descartado do ENG-52 legitima. Ela
+era **sintoma do ban**, não uma propriedade desejável: liberado o empate, J102 vira `1×1` + avança
+Inglaterra, coerente.
+
+**Refs:** `knockout.predict_knockout` (camada 1), `scoring.Scorer.best_prediction` (o parâmetro
+`forbid_draw` **permanece** — capacidade legítima, apenas sem uso em produção),
+`tests/test_knockout.py`.
+**Resolução.** A camada 1 do KO volta a usar a regra fiel de E[pts] (`best_prediction(matrix)`, sem
+`forbid_draw`) — a mesma de todo o resto do tool. Nenhum limiar novo: o maximizador livre **já** é a
+regra condicional desejada (escolhe o empate **sse** ele for o E[pts]-máximo). O modo `pool_behind
+= "empate"` (ENG-39) segue forçando a diagonal na final, por outro motivo (escolha **diferencial**,
+não fiel).
+**Aceite:** ✅ 211 testes verdes; o novo par de testes fixa os dois lados da regra (KO equilibrado ⇒
+camada 1 = E[pts]-fiel, pode empatar; favorito claro ⇒ ainda escolhe vencedor).
+**Commit:** (esta rodada)
+
+## ENG-54
+**A base grava o placar COM prorrogação ⇒ backtest de política de KO não é confiável** · P1 ·
+dados/backtest · 🔴 todo
+
+`data/historical_results.csv` (martj42) grava o placar **ao fim da prorrogação**, não dos 90':
+a final de 2022 aparece como `Argentina 3×3 França` (foi **2×2** nos 90') e `Croácia 1×1 Brasil`
+(foi **0×0** nos 90'). Mas o bolão pontua o slot de 90' contra o **tempo normal** — foi por isso que
+o `regulation.csv` (ENG-45) precisou existir para a edição viva.
+
+**Consequência:** todo backtest que pontua palpite de KO contra essa base está medindo com a régua
+errada. Um jogo empatado nos 90' e decidido por **gol na ET** entra na base como **decisivo** ⇒ o
+backtest **zera o palpite de empate** num jogo que o bolão real pontuaria **cheio**. O viés é
+sistemático e unidirecional (**contra** o empate): em 2026, 3 dos 7 empates de 90' do KO (J82, J99,
+J100) seriam contabilizados como decisivos. Foi essa medição enviesada que "provou" o ENG-32
+(ENG-53).
+
+Mesma classe do ENG-48 (chave `datetime64` × `str`): produtor e consumidor **concordam sobre o
+formato e discordam sobre o significado**, e os testes ficam verdes o tempo todo porque ninguém
+pergunta *contra o que* o número está sendo medido.
+
+**Refs:** `backtest.run_backtest` (pontua `home_score`/`away_score` da base), `fetch_data`,
+`edition.Edition.regulation` (a solução análoga na edição viva), `docs/DATA.md`.
+**Escopo:** (a) adquirir o placar de **90'** dos jogos de KO das 4 Copas de backtest (fonte a
+definir; martj42 não tem a coluna) e materializá-lo como um `regulation` histórico; (b) fazer o
+`run_backtest` pontuar o slot de 90' contra ele; (c) **só então** re-testar políticas de KO
+(incluindo reavaliar se algum ban de empate se justifica). Enquanto (a) não existir, **nenhuma
+conclusão de backtest sobre placar de KO deve ser usada como evidência** — anotar isso no
+`MODEL_CARD.md`.
+**Aceite:** o backtest reproduz os pontos do bolão para os KO das Copas passadas contra o placar de
+90'; a política de KO passa a ser calibrável (sweep), como `blend_weight` (ENG-38) e
+`edition_boost` (ENG-44).

@@ -420,13 +420,21 @@ Cada jogo eliminatório tem 3 palpites independentes. A partir da matriz e de
 `cond_home = P(mandante) / (P(mandante)+P(visitante))` (prob. condicional de vencer um jogo
 decidido):
 
-- **Camada 1 — placar dos 90'**: mesmo `best_prediction` da §5, mas com `forbid_draw=True`
-  (ENG-32): a otimização exclui a diagonal e o palpite dos 90' **nunca é empate** — palpitar
-  vitória cobre os slots de vencedor/saldo e domina o empate em E[pts] no Sistema I. Exceção:
-  o modo endgame `pool_behind="empate"` (ENG-39/40) força o melhor **empate** por E[pts] nos 90'
-  do jogo de peso máximo (final), mantendo as camadas 2–3 e o avanço fiéis; `pool_behind="zebra"`
-  (ENG-36, superado) vira o lado azarão nas 3 camadas. Só quando o usuário está atrás no bolão
-  (`predict --pool-behind`, default do flag `empate`).
+- **Camada 1 — placar dos 90'**: exatamente o `best_prediction` da §5 — **E[pts]-fiel, empate
+  incluído** (ENG-53). Não há regra especial de KO. O ENG-32 excluía a diagonal aqui
+  (`forbid_draw=True`), com dois argumentos que **não se sustentaram**: (i) o ganho de E[pts] do
+  empate seria marginal — mas com favorito claro o ban é inócuo (o maximizador livre já escolhe o
+  decisivo) e num KO equilibrado (34%/31%/34%, típico de SF/final) o empate **é** o E[pts]-máximo
+  (na final de 2026, +1,42 pt de peso); (ii) o modelo super-estimaria empate no KO — mas sem o ban
+  o maximizador palpita empate em 13% dos KO de 2026 contra 25% de empates reais nos 90', ou seja,
+  **subestima**. A evidência de backtest que sustentava o ban é inválida (ENG-54: a base grava o
+  placar **com prorrogação**, então pune o palpite de empate justamente nos jogos que o bolão —
+  que pontua os 90' — premiaria). O parâmetro `forbid_draw` segue existindo no `Scorer`, sem uso em
+  produção. Exceção: o modo endgame `pool_behind="empate"` (ENG-39/40) força o melhor **empate** por
+  E[pts] nos 90' do jogo de peso máximo (final) — por um motivo **diferente** (escolha diferencial
+  de quem está atrás, não E[pts] fiel) —, mantendo as camadas 2–3 e o avanço fiéis;
+  `pool_behind="zebra"` (ENG-36, superado) vira o lado azarão nas 3 camadas. Só quando o usuário
+  está atrás no bolão (`predict --pool-behind`, default do flag `empate`).
 - **Camada 2 — prorrogação** (ENG-29): modela a prorrogação (30 min) como **Poisson independente**
   com taxa = taxa de 90' × 30/90 por lado (as taxas saem dos gols esperados da matriz) e escolhe o
   desfecho **mais provável** entre `mandante vence` / `empate → vai aos pênaltis` /

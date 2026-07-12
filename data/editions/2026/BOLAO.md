@@ -57,6 +57,14 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   Passamos a rodar `predict --pool-behind empate` (ENG-39/40): a final sai no melhor **empate**.
   Coincidência favorável: com o ENG-53 o empate na final também é o **maior E[pts]** (+1,42), então
   fiel e diferencial concordam pela primeira vez — a jogada não custa nada em pontos esperados.
+- **Decisão de campanha (12/07): congelar o modelo até a final — o ENG-56 fica para depois de
+  19/07.** É o único item aberto do backlog (o modelo subestima empate; mecanismo desconhecido).
+  Mexer nele
+  agora significa mexer na **calibração** — o que muda os palpites dos 4 jogos que restam e o teto
+  congelado do `ceiling.csv`, no exato momento em que não há amostra nova para validar a mudança.
+  O ganho seria de calibração, não de pontos: com 84 de gap, nenhuma correção de ~5 pp na taxa de
+  empate vira o bolão. **Regra: nenhuma mudança de modelo/calibração até a final.** Correção de bug
+  (como ENG-53/54) é outra coisa e continua valendo — o que está vedado é *tunar* com a Copa viva.
 - **Bug ENG-53 encontrado e corrigido nesta rodada** (você estranhou "todos os palpites são 2×1 ou
   1×2"): o tool estava **proibido de palpitar empate** no 90' do mata-mata (ENG-32, `forbid_draw`).
   As duas premissas do ban eram falsas — o empate é o **E[pts]-máximo** num KO equilibrado (custava

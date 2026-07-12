@@ -2007,6 +2007,14 @@ amistosos) — um efeito de "peso de torneio" no λ, não só no peso da amostra
 decida entre (a) e (b)/(c); se houver viés real, corrigi-lo na calibração — **não** com uma regra
 especial de empate.
 
+⏸️ **Adiado por decisão de campanha (12/07): não mexer antes da final (19/07).** Resolver este item
+é mexer na **calibração**, e a Copa está viva: a mudança alteraria os palpites dos 4 jogos restantes
+e o teto congelado do `ceiling.csv` justamente quando não há amostra nova para validá-la. O ganho é
+de calibração, não de pontos (com 84 de gap, ~5 pp na taxa de empate não viram o bolão). **Correção
+de bug segue permitida** (foi o caso de ENG-53/54); o que está vedado é *tunar* o modelo com o
+torneio em andamento — e este item, por construção, exige poolar **várias** Copas, o que a de 2026
+só vai poder alimentar depois de encerrada. Ver `data/editions/2026/BOLAO.md` (Estado atual).
+
 
 ## ENG-55
 **O ajuste era alimentado com o placar consolidado da edição viva** · P1 · pipeline/edition ·

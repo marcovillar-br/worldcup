@@ -12,15 +12,57 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-11)
+## Estado atual (atualizado em 2026-07-12)
 
-- **98 de 104 jogos disputados.** Em 10/07 fechou a 2ª quarta: **J98 Espanha 2×1 Bélgica**
-  (tool **cravou o placar exato**, 2×1, Espanha avança). Hoje (11/07) jogam **J99 Noruega ×
-  Inglaterra** (palpite **1×2**, Inglaterra avança; 24%/26%/50%) e **J100 Argentina × Suíça**
-  (palpite **2×1**, Argentina avança; 56%/27%/17%). Odds re-sincronizadas (2 atualizadas, 73 no
-  `odds.csv`); `blend-track` inalterado (só grupos, 49 jogos): blend melhor (Brier 0,4074 vs
-  0,4091), regime de empates dentro da variância (z=+0,80). Config: `risk 0.5` + `blend 0.8`.
-  **Bug ENG-51 encontrado e corrigido nesta rodada** (você perguntou "no J101 a Espanha perde?"):
+- **100 de 104 jogos disputados — quartas encerradas.** Em 11/07 fecharam as duas últimas, **ambas
+  na prorrogação**: **J99 Noruega 1×2 Inglaterra** (1×1 nos 90', Bellingham decide aos 93') e
+  **J100 Argentina 3×1 Suíça** (1×1 nos 90'; Suíça com 10 desde os 72'). O tool acertou **os dois
+  vencedores** (Inglaterra e Argentina, ambos como "avança"), mas nenhum dos placares de 90'. Como
+  os dois tiveram gol na ET, o 90' foi registrado em `regulation.csv` (J99 `1,1`; J100 `1,1`) —
+  senão o teto de eficiência infla (ENG-45). A fonte pública (martj42) ainda não tinha os jogos:
+  registrados à mão, com placar **e** 90' confirmados em ≥2 fontes (FIFA/ESPN e ESPN/Al Jazeera).
+  Restam **4 jogos**: SF J101 França × Espanha (14/07), SF J102 Inglaterra × Argentina (15/07),
+  3º lugar (18/07) e final (19/07). Odds re-sincronizadas (74 jogos no `odds.csv`); `blend-track`
+  inalterado (só grupos, 49 jogos): blend melhor (Brier 0,4074 vs 0,4091), regime de empates dentro
+  da variância (z=+0,80). Config: `risk 0.5` + `blend 0.8`. **As 4 seleções vivas estão num
+  quase-empate**: Espanha 27,6%, França 26,9%, Argentina 23,8%, Inglaterra 21,7% — nenhuma semi
+  passa de 39% no 1×2, e por isso o palpite de 90' diverge de "avança" em J102 e J104 (o placar
+  segue E[pts], que premia a zebra; "avança" segue a probabilidade — divergência permitida por
+  design, `consistency.py:47`).
+- **Placar (12/07): 425 pts, 19º. Líder 509 — gap de 84 com 4 jogos.** Ontem você **não pontuou**:
+  os dois jogos terminaram **1×1 nos 90'** e o tool palpitou decisivo (`1×2`, `2×1`) nos dois. **Não
+  foi execução nem defeito:** a reconstrução as-of de 11/07 mostra que, mesmo com o empate liberado,
+  o tool teria palpitado o mesmo (o empate valia **menos** E[pts] — −0,83 e −1,22 — porque via
+  favoritos claros, Inglaterra 50% e Argentina 56%). Dois favoritos segurados no 1×1: azar puro.
+  Eficiência segue **96,8%** do teto do tool (439) — o teto **não subiu**, ou seja, seguir o tool à
+  risca também renderia zero ontem.
+- **Decisão de campanha (12/07): jogar DIFERENCIAL até o fim.** Com 84 de gap e ~26 pontos esperados
+  nos 4 jogos restantes, maximizar E[pts] **não alcança o líder** — é matematicamente insuficiente.
+  Passamos a rodar `predict --pool-behind empate` (ENG-39/40): a final sai no melhor **empate**.
+  Coincidência favorável: com o ENG-53 o empate na final também é o **maior E[pts]** (+1,42), então
+  fiel e diferencial concordam pela primeira vez — a jogada não custa nada em pontos esperados.
+- **Bug ENG-53 encontrado e corrigido nesta rodada** (você estranhou "todos os palpites são 2×1 ou
+  1×2"): o tool estava **proibido de palpitar empate** no 90' do mata-mata (ENG-32, `forbid_draw`).
+  As duas premissas do ban eram falsas — o empate é o **E[pts]-máximo** num KO equilibrado (custava
+  +1,42 na final, de peso ×4) e o modelo **subestima** empate no KO (13% palpitados vs 25%
+  reais). Pior:
+  a evidência de backtest que sustentava o ban é **inválida** (ENG-54) — a base martj42 grava o
+  placar **com prorrogação**, então o backtest pune o palpite de empate justamente nos jogos que o
+  bolão (que pontua os 90') premiaria. Mesma classe do ENG-48. Palpites agora: J102 e J104 saem
+  `1×1`.
+- **E a sua pergunta seguinte achou um bug maior (ENG-55/54)**: "nas simulações estamos usando o
+  placar consolidado?". **Estávamos.** O `build_training_frame` mandava o placar do `fixtures.csv`
+  (com ET) para o **ajuste do modelo**, tendo o 90' no `regulation.csv` — J82, J99 e J100 eram
+  ensinados ao modelo como *vitórias*, sendo empates nos 90'. Corrigido (`Edition.score_90` vira
+  fonte única; efeito em 2026 é pequeno — Espanha 27,6→28,4%, palpites iguais). **O dano grande é a
+  base histórica (ENG-54, aberto):** martj42 grava o consolidado, e a digital é inequívoca — a base
+  tem **23,2%** de empates e o modelo prevê **~24%** (aprendeu a taxa contaminada), mas o real nos
+  90' é **28%** (grupos 2026) / **25%** (KO 2026). ~4,6% do peso do ajuste está afetado. **O monitor
+  de regime de empates vinha chamando isso de "variância" (z=+0,80) — não é: é viés de rótulo.**
+  Não dá para consertar sem o placar de 90' histórico (os jogos decididos por gol na ET são
+  invisíveis na base). Enquanto isso: trate a probabilidade de empate do modelo como um **piso**.
+- **Histórico da rodada anterior (11/07):**
+  **Bug ENG-51 encontrado e corrigido** (você perguntou "no J101 a Espanha perde?"):
   o chaveamento e o campeão rodavam no modelo puro enquanto o palpite exibido rodava blendado — na
   SF J101 França × Espanha o mercado inverte o favorito do modelo, e a tabela se autocontradizia
   ("avança França" mas "final Espanha × Argentina"). Corrigido: bracket e campeão agora blendam os

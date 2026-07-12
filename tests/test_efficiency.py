@@ -242,15 +242,15 @@ def test_weighted_ko_bonus_is_doubled_in_r32():
 # ── sondas: contradição de fonte (ENG-49) e canário de caminho morto (ENG-50) ──────────────────
 
 
-def _score(ko: bool, real: str, act_et: str | None = None) -> dict:
-    return {"ko": ko, "real": real, "act_et": act_et}
+def _score(ko: bool, real: str, act_et: str | None = None, in_source: bool = True) -> dict:
+    return {"ko": ko, "real": real, "act_et": act_et, "in_source": in_source}
 
 
 def test_cross_source_ko_check_separa_latencia_de_contradicao():
     # a edição afirma pênaltis no J74 e gol na prorrogação no J82; nada sobre o J96
     ed = SimpleNamespace(shootouts={74: "Paraguay"}, regulation={82: (2, 2)})
     scores = {
-        74: _score(True, "1x1", None),  # edição afirma, fonte não confirma → CONTRADIÇÃO (ENG-48)
+        74: _score(True, "1x1", None),  # fonte TEM o jogo e não confirma → CONTRADIÇÃO (ENG-48)
         96: _score(True, "0x0", None),  # ninguém afirma → latência genuína (fonte não ingeriu)
         82: _score(True, "2x2", "penalties"),  # edição diz ET, fonte diz pênaltis → CONTRADIÇÃO
         75: _score(True, "1x1", "away"),  # fonte resolveu, edição silente → ok
@@ -260,6 +260,25 @@ def test_cross_source_ko_check_separa_latencia_de_contradicao():
     latency, contradiction = efficiency.cross_source_ko_check(ed, scores)
     assert latency == [96]
     assert contradiction == [74, 82]
+
+
+def test_jogo_ainda_fora_da_fonte_e_latencia_mesmo_com_a_edicao_ja_afirmando():
+    """ENG-49: curadoria manual corre NA FRENTE da fonte — isso é latência, não contradição.
+
+    O martj42 publica com ~1 dia de atraso. Um KO de ontem, já curado no `regulation.csv`, ainda
+    não está na base: a fonte não tem o que confirmar. Antes, a sonda só olhava "a edição afirma e
+    a fonte não confirma" e cuspia `🚨 contradição … NÃO é latência: bug de lookup, curadoria
+    errada` — mandando investigar curadoria correta (aconteceu com J99/J100 em 12/07). Uma sonda
+    que grita erro no caso banal é uma sonda que será ignorada quando gritar de verdade.
+    """
+    ed = SimpleNamespace(shootouts={}, regulation={99: (1, 1), 100: (1, 1)})
+    scores = {
+        99: _score(True, "1x1", None, in_source=False),  # jogado ontem; a fonte ainda não o tem
+        100: _score(True, "1x1", None, in_source=False),
+    }
+    latency, contradiction = efficiency.cross_source_ko_check(ed, scores)
+    assert contradiction == []  # nada a investigar: a fonte simplesmente não chegou lá
+    assert latency == [99, 100]
 
 
 def test_dead_path_canary_conta_populacao_nao_caso():

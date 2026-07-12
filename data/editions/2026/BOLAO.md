@@ -25,11 +25,13 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   3º lugar (18/07) e final (19/07). Odds re-sincronizadas (74 jogos no `odds.csv`); `blend-track`
   inalterado (só grupos, 49 jogos): blend melhor (Brier 0,4074 vs 0,4091), regime de empates dentro
   da variância (z=+0,80). Config: `risk 0.5` + `blend 0.8`. **As 4 seleções vivas estão num
-  quase-empate**: Espanha 28,6%, França 26,6%, Argentina 22,6%, Inglaterra 22,2% (após o ENG-54) —
+  quase-empate**: Espanha 28,0%, França 27,3%, Argentina 23,3%, Inglaterra 21,3% (após o ENG-54 e a
+  re-sincronização das odds das duas semis em 12/07) —
   nenhuma semi passa de 39% no 1×2, e por isso o palpite de 90' diverge de "avança" (o placar segue
   E[pts], que num jogo-moeda premia o empate; "avança" segue a probabilidade — divergência permitida
   por design, `consistency.py:47`). **Com o ENG-54, J101 passou de `2×1` a `1×1`**: agora os 4 jogos
-  restantes saem `1×1`.
+  restantes saem `1×1` (e os 4 saem "vai aos pênaltis"). **Palpite de campeão: Espanha** (favorito
+  por probabilidade; o bracket determinístico dá França — leituras diferentes, não contradição).
 - **Placar (12/07): 425 pts, 19º. Líder 509 — gap de 84 com 4 jogos.** Ontem você **não pontuou**:
   os dois jogos terminaram **1×1 nos 90'** e o tool palpitou decisivo (`1×2`, `2×1`) nos dois. **Não
   foi execução nem defeito:** a reconstrução as-of de 11/07 mostra que, mesmo com o empate liberado,
@@ -37,6 +39,19 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   favoritos claros, Inglaterra 50% e Argentina 56%). Dois favoritos segurados no 1×1: azar puro.
   Eficiência segue **96,8%** do teto do tool (439) — o teto **não subiu**, ou seja, seguir o tool à
   risca também renderia zero ontem.
+- **Medição de eficiência (12/07): 425/439 = 96,8%. O líder (509) está ACIMA do teto do tool.** Isso
+  encerra a dúvida sobre execução: mesmo tendo seguido o tool com perfeição, você teria 439 e ainda
+  estaria 70 atrás. **O gargalo é a qualidade do palpite, não a sua disciplina** — e ele tem nome: o
+  ENG-32 proibia o tool de palpitar empate no mata-mata, e o mata-mata teve **7 jogos empatados nos
+  90'**, justamente onde o peso é ×2/×4. O tool com o ENG-53/54 teria feito ~466 (o `drift` do
+  `ceiling.csv` mostra J75 6→26, J88 12→26, J90 6→14). Não recongele o teto (`--reset-ceiling`):
+  os tetos congelados refletem o tool que **de fato apareceu** naquelas manhãs, que é o que mede
+  execução; recongelar te creditaria palpites que o tool nunca exibiu.
+- **Ainda dá para virar?** Os 4 jogos restantes valem no limite absoluto **170 pts** (semis e 3º ×2,
+  final ×4, cravando placar raro + bônus de pênaltis em todos) contra um gap de **84**.
+  Matematicamente vivo, na prática improvável. E não há jogada extra: o `--pool-behind` forçaria
+  empate na final — que é **exatamente o que o palpite fiel já dá** agora que o ENG-53 liberou o
+  empate. Seguir o tool é a jogada.
 - **Decisão de campanha (12/07): jogar DIFERENCIAL até o fim.** Com 84 de gap e ~26 pontos esperados
   nos 4 jogos restantes, maximizar E[pts] **não alcança o líder** — é matematicamente insuficiente.
   Passamos a rodar `predict --pool-behind empate` (ENG-39/40): a final sai no melhor **empate**.

@@ -12,6 +12,19 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **A sonda de contradição de fonte acusava erro em latência banal** (ENG-49, `efficiency.py`):
+  `cross_source_ko_check` classificava como **contradição** ("NÃO é latência: bug de lookup,
+  curadoria errada, ou fonte corrigida") todo KO em que a edição afirmava o desfecho e a fonte não
+  confirmava — **sem checar se o jogo sequer estava na fonte**. Mas o martj42 publica com ~1 dia de
+  atraso e a curadoria manual corre **na frente** dele por design: um KO de ontem, já curado no
+  `regulation.csv`, cai exatamente nesse caso. Aconteceu com J99/J100 em 12/07, mandando investigar
+  uma curadoria correta. Fix: `asof_scores` grava `in_source` (a presença da chave em
+  `_penalty_lookup` é o que diz se o jogo chegou à fonte) e a sonda o consulta — fonte **sem** o
+  jogo ⇒ latência; fonte **com** o jogo e discordando ⇒ contradição. A leitura é **estrita**
+  (`s["in_source"]`) de propósito: com `.get()`, um produtor que parasse de emitir a chave faria
+  tudo virar "latência" e a sonda apagaria em silêncio — a falha do ENG-48. Uma sonda que grita erro
+  no caso banal é uma sonda que será ignorada quando gritar de verdade, que é justamente o fracasso
+  que o ENG-49 existe para evitar.
 - **A base histórica gravava o placar COM prorrogação — o modelo treinava em placar de 120'**
   (ENG-54): o `results.csv` (martj42) registra o placar consolidado (a final de 2022 aparece `3×3`;
   foi `2×2` nos 90'), então o `DixonColesModel` aprendia taxas de gol de 120' como se fossem de 90'

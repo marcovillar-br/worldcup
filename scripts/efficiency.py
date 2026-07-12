@@ -166,18 +166,33 @@ def cross_source_ko_check(edition: Edition, scores: dict[int, dict]) -> tuple[li
     `penalty_winner`. O `efficiency.py` **lê** só a martj42 (ENG-27), mas discordância entre as
     duas nunca deve passar em silêncio:
 
-    - **latência**: nenhuma das duas afirma o desfecho ⇒ a fonte ainda não ingeriu o jogo (normal);
-    - **contradição**: a edição afirma um desfecho que a fonte não confirma (ou confirma diferente)
-      ⇒ **erro** — bug de lookup, curadoria errada, ou fonte corrigida. Investigar, não narrar.
+    - **latência**: a fonte ainda **não ingeriu o jogo** (`in_source` falso) ⇒ ela não tem o que
+      confirmar. Normal, e é o caso comum na véspera: o martj42 publica com ~1 dia de atraso, e a
+      curadoria manual da edição corre **na frente** da fonte por design;
+    - **contradição**: a fonte **tem o jogo** e ainda assim não confirma o desfecho que a edição
+      afirma (ou confirma um diferente) ⇒ **erro** — bug de lookup, curadoria errada, ou fonte
+      corrigida. Investigar, não narrar.
+
+    O `in_source` é decidido por quem lê a fonte (`asof_scores`), não re-derivado aqui. Sem essa
+    distinção, um jogo **de ontem** — ausente da fonte, mas já curado — era acusado de
+    "contradição … NÃO é latência" (aconteceu com J99/J100 em 12/07, e a mensagem manda investigar
+    curadoria). Uma sonda que grita erro em latência banal é uma sonda que será ignorada quando
+    gritar de verdade — exatamente o fracasso que o ENG-49 existe para evitar.
     """
     latency: list[int] = []
     contradiction: list[int] = []
     for mid in tied_ko_ids(scores):
         claims_pens = mid in edition.shootouts
         claims_et = mid in edition.regulation
-        act_et = scores[mid].get("act_et")
-        if act_et is None:  # a fonte não confirmou nada
-            (contradiction if (claims_pens or claims_et) else latency).append(mid)
+        s = scores[mid]
+        act_et = s.get("act_et")
+        if act_et is None:
+            # a fonte não confirmou: só é erro se ela **tem** o jogo; senão é latência, mesmo com a
+            # edição já afirmando o desfecho. Indexação **estrita** de propósito: se o produtor
+            # (`asof_scores`) parar de emitir a chave, um `.get()` faria tudo virar "latência" e a
+            # sonda apagaria **em silêncio** — a falha exata do ENG-48. Melhor estourar.
+            in_source = bool(s["in_source"])
+            (contradiction if (in_source and (claims_pens or claims_et)) else latency).append(mid)
         elif (claims_pens and act_et != "penalties") or (claims_et and act_et == "penalties"):
             contradiction.append(mid)  # ambas falam, e discordam
     return latency, contradiction
@@ -255,6 +270,10 @@ def asof_scores(edition: Edition, sims: int) -> dict[int, dict]:
                 "ko": not f.is_group,
                 "act_et": act_et,
                 "act_pen": act_pen,
+                # o jogo já chegou à fonte? A **presença da chave** em `pens` é o que diz (ver
+                # `_penalty_lookup`); é o fato que separa latência de contradição (ENG-49), e ele
+                # nasce aqui, onde a fonte é lida — não é re-derivado pela sonda.
+                "in_source": (_date_key(f.date), frozenset({canonical(home), canonical(away)})) in pens,
             }
     return out
 

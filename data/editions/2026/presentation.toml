@@ -12,20 +12,20 @@ as_of = "12 jul 2026"
 jogos_disputados = 100
 pontos = 425
 eficiencia_pct = 96.8
-fase = "quartas de final em andamento"
+fase = "semifinais"
 
 [[campanha.favoritos]]
 nome = "Espanha"
-pct = 28.4
+pct = 28.0
 [[campanha.favoritos]]
 nome = "França"
-pct = 26.6
+pct = 27.3
 [[campanha.favoritos]]
 nome = "Argentina"
-pct = 24.3
+pct = 23.3
 [[campanha.favoritos]]
 nome = "Inglaterra"
-pct = 20.7
+pct = 21.3
 
 [bracket_destaque]
 selecao = "Argentina"
@@ -34,14 +34,14 @@ qf_pct = 55
 sf_rival = "Inglaterra"
 sf_pct = 40
 final_rival = "Espanha"
-jogos_para_ficar_de_olho = "<b>Marrocos × França</b> (QF, 09/07), Noruega × Inglaterra (QF, 11/07)."
+jogos_para_ficar_de_olho = "<b>França × Espanha</b> (SF, 14/07), Inglaterra × Argentina (SF, 15/07)."
 
 [validacao]
-brier_modelo = 0.409
+brier_modelo = 0.407
 brier_modelo_width_pct = 100
 brier_blend = 0.407
 brier_blend_width_pct = 99
 jogos_rastreados = 49
 
 [evolucao]
-melhorias_entregues = 113
+melhorias_entregues = 116

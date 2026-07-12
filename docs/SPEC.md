@@ -608,7 +608,7 @@ para cá._
 - **Taxa de empate acima do previsto (ENG-56, aberto)**: o modelo prevê ~23–28% de empate e os
   empates observados vêm mais altos (grupos de 2026: 28%; KO das Copas passadas: 34,4% nos 90'
   contra 28,2% previstos). A hipótese de que a base contaminada explicava isso foi **medida e
-  refutada** (ENG-54: a correção vale 0,4% do peso e move a base de 23,2% para 23,5%). Cada amostra
+  refutada** (ENG-54: a correção vale 0,5% do peso e move a base de 23,2% para 23,5%). Cada amostra
   isolada fica dentro de ~1 erro-padrão, então **não há evidência significativa** — mas o desvio é
   consistentemente na mesma direção e segue **sem mecanismo conhecido**.
 - **Reconstrução dos 90' depende da lista de gols (ENG-54)**: `fetch_data.regulation_scores` só

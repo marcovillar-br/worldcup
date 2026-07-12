@@ -71,7 +71,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-53](#eng-53) | P1 | knockout | ✅ | Empate proibido no 90' do KO (ENG-32) custa E[pts] justamente na final: as duas premissas do ban são falsas e a evidência que o sustentava é inválida |
 | [ENG-54](#eng-54) | P1 | dados/model | ✅ | A base martj42 grava o placar COM prorrogação ⇒ o **modelo treinava em placar de 120'**; os 90' são reconstruídos do `goalscorers.csv` (`minute > 90`), o que também devolve validade ao backtest de KO |
 | [ENG-55](#eng-55) | P1 | pipeline/edition | ✅ | `build_training_frame` alimentava o ajuste com o placar consolidado da edição viva, tendo o 90' em `regulation.csv` |
-| [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,4% do peso): mecanismo desconhecido, sem significância estatística |
+| [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,5% do peso): mecanismo desconhecido, sem significância estatística |
 
 ---
 
@@ -1995,7 +1995,7 @@ variância.
 
 **Lição de método (a real):** o ENG-54 partiu de um sintoma (empates a mais), encontrou um mecanismo
 **verdadeiro** (a base grava 120'), e concluiu que o mecanismo explicava o sintoma — **sem medir a
-magnitude**. O mecanismo era real e valia 0,4% do peso. Um mecanismo plausível e verdadeiro pode
+magnitude**. O mecanismo era real e valia 0,5% do peso. Um mecanismo plausível e verdadeiro pode
 ainda assim ser irrelevante: **medir a magnitude antes de atribuir a causa**. É o mesmo erro que o
 ENG-50 registra do outro lado (explicação pronta imuniza contra investigação).
 

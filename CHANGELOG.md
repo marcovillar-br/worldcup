@@ -12,6 +12,18 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **O ajuste do modelo treinava com o placar consolidado (com prorrogação)** (ENG-55):
+  `pipeline.build_training_frame` mandava `fixtures.csv::home_goals/away_goals` para o
+  `DixonColesModel` — nos KO decididos por gol na ET esse placar inclui a prorrogação, mesmo com o
+  90' disponível em `regulation.csv` desde o ENG-45. Em 2026, três empates de 90' (J82 `2×2`, J99
+  `1×1`, J100 `1×1`) eram ensinados ao modelo como **vitórias**, no torneio de maior peso do ajuste.
+  Isso infla o λ e **apaga empates** — e envenena a camada de prorrogação, que reescala λ por 30/90
+  assumindo que λ é a taxa de 90'. Causa raiz no estilo ENG-48: a semântica "placar dos 90'" morava
+  num *script* (`efficiency.py`), fora da biblioteca, então o treinador não tinha como consumi-la.
+  Fix: `Edition.score_90()` vira a **fonte única**; treinador e pontuador passam os dois por ela
+  (o `efficiency.py` agora **delega**). Efeito em 2026: pequeno (3 jogos a peso 1,0) — Espanha
+  27,6→28,4%, Inglaterra 21,7→20,7%, palpites inalterados. É correção de princípio; o dano grande
+  está na base histórica (ENG-54).
 - **Empate volta a ser palpitável no 90' do mata-mata** (ENG-53, revoga o ENG-32): a camada 1 do KO
   usava `forbid_draw=True` e o tool ficava **proibido** de palpitar empate num jogo eliminatório —
   daí a saída ser sempre `2x1`/`1x2`. As duas premissas do ban caíram: (i) o ganho de E[pts] do
@@ -39,12 +51,18 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   na saída do `predict`.
 
 ### Adicionado
-- **Aviso: backtest de política de KO é inválido** (ENG-54, aberto): a base martj42 grava o placar
-  **com prorrogação** (a final de 2022 aparece `3×3`; foi `2×2` nos 90'), mas o bolão pontua o slot
-  de 90' contra o **tempo normal**. Um KO empatado nos 90' e decidido por gol na ET entra na base
-  como **decisivo** ⇒ o backtest zera o palpite de empate num jogo que o bolão pontuaria cheio.
-  Viés sistemático **contra o empate** — foi essa medição que "provou" o ENG-32. Registrado em
-  `AGENTS.md`, `docs/MODEL_CARD.md` §9 e `docs/SPEC.md` §6 até que o placar de 90' histórico exista.
+- **Aviso: a base histórica grava o placar COM prorrogação** (ENG-54, aberto): martj42 registra o
+  placar dos **120'** (a final de 2022 aparece `3×3`; foi `2×2` nos 90'). Dois danos.
+  (1) **Treino:** o `DixonColesModel` aprende taxas de gol de 120' como se fossem de 90' e, pior,
+  um empate de 90'
+  decidido na ET vira **vitória** ⇒ o modelo aprende que empate é mais raro do que é. A digital: a
+  base tem **23,2%** de empates e o modelo prevê **~24%** — reproduz fielmente a taxa contaminada,
+  enquanto os grupos de 2026 (90' puro) deram **28%**. É o que o monitor de empates vinha lendo como
+  "variância" (z=+0,80): é viés de rótulo. ~4,6% do **peso efetivo** do ajuste está afetado.
+  (2) **Backtest:** pontuar palpite de KO contra essa base zera o palpite de empate num jogo que o
+  bolão pontuaria cheio — foi essa medição que "provou" o ENG-32 (ENG-53). Os jogos de pênaltis são
+  identificáveis, mas os decididos **por gol na ET não são**: só o placar de 90' histórico resolve.
+  Registrado em `AGENTS.md`, `docs/MODEL_CARD.md` §9 e `docs/SPEC.md` §6.
 - **Explicação do palpite de campeão no HTML/MD dos palpites** (ENG-52, INV-7): quando o favorito
   por probabilidade de título (o campeão sugerido) **difere** do campeão do bracket determinístico,
   `render_html`/`render_markdown` incluem uma nota explicando que são leituras diferentes (chance de

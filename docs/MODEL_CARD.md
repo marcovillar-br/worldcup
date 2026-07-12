@@ -124,12 +124,20 @@ propósito.
   empate, o que custava E[pts] exatamente nos jogos equilibrados e de maior peso (a final). O
   maximizador fiel já é conservador sozinho — palpita empate em 13% dos KO de 2026, contra 25% de
   empates reais nos 90'.
-- ⚠️ **Backtest de política de KO é inválido enquanto o ENG-54 estiver aberto.** O
+- ⚠️ **O modelo treina em placar de 120' (ENG-54, aberto) — viés conhecido contra o empate.** O
   `historical_results.csv` (martj42) grava o placar **ao fim da prorrogação**, não dos 90' (a final
-  de 2022 aparece `3×3`, foi `2×2` nos 90'), mas o bolão pontua o slot de 90' contra o **tempo
-  normal**. Todo backtest que pontua palpite de KO contra essa base mede com a régua errada, com
-  viés **sistemático contra o empate**. Não use `backtest` como evidência sobre placar de KO até o
-  placar de 90' histórico existir.
+  de 2022 aparece `3×3`, foi `2×2`). Consequências: (a) o λ absorve gols de ET como se fossem de
+  90' — e `knockout._extra_time_probs` reescala λ por 30/90 **assumindo** que λ é de 90'; (b) pior,
+  um empate de 90' decidido por gol na ET entra como **vitória**, então o modelo aprende uma taxa de
+  empate baixa demais. **A digital:** a base registra **23,2%** de empates e o modelo prevê **~24%**
+  — reproduz fielmente a taxa **da base contaminada**; o real nos 90' é mais alto (grupos de 2026,
+  90' puro: **28%**). ~4,6% do **peso efetivo** do ajuste está afetado. É o que o monitor de regime
+  de empates vinha lendo como "variância" (z=+0,80): é **viés de rótulo**, não ruído. Trate a
+  probabilidade de empate do modelo como um **piso**, não como uma estimativa não-enviesada.
+- ⚠️ **Não use `backtest` como evidência sobre placar de KO** (mesma raiz): ele pontua contra essa
+  base, então zera o palpite de empate exatamente nos jogos que o bolão (que pontua os 90')
+  premiaria. Foi essa medição enviesada que "provou" o ban de empate do ENG-32, revogado no ENG-53.
+  A edição **viva** já treina no 90' (`Edition.score_90`, ENG-55); a base histórica, não.
 - **Dependências externas:** qualidade do dataset martj42 e disponibilidade/ToS da The Odds API
   ([`DATA.md`](DATA.md)). Sem rede, o produto degrada para o último estado conhecido.
 - **Revalidação:** re-rodar `backtest` e revisar este cartão a cada bump de versão que toque

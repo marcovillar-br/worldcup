@@ -117,6 +117,23 @@ class Edition(BaseModel):
     model_config = {"arbitrary_types_allowed": True}
 
     # ---- consultas convenientes ----
+    def score_90(self, fixture: Fixture) -> tuple[int, int] | None:
+        """Placar dos **90'** (tempo normal) de um jogo disputado; `None` se ainda não foi.
+
+        **Fonte única da verdade sobre "o que aconteceu nos 90'"** (ENG-55). O `fixtures.csv` grava o
+        placar **consolidado**: num KO decidido por gol na prorrogação ele inclui a ET (J82 = `3×2`,
+        mas `2×2` nos 90'). Quem precisa dos 90' — o **ajuste do modelo** (que estima taxas de gol de
+        90' e cuja camada de ET reescala λ por 30/90, logo λ **tem** de ser a taxa de 90') e a
+        **pontuação** (o bolão mede o slot de 90' contra o tempo normal) — deve passar por aqui, não
+        ler `home_goals`/`away_goals` cru.
+
+        `regulation.csv` (ENG-45) cobre exatamente os KO com gol na ET. Jogos de pênaltis puros não
+        precisam de entrada: o gravado já **é** o 90' (o empate está preservado).
+        """
+        if not fixture.played or fixture.home_goals is None or fixture.away_goals is None:
+            return None
+        return self.regulation.get(fixture.match_id, (fixture.home_goals, fixture.away_goals))
+
     @property
     def teams(self) -> list[str]:
         return [t for ts in self.groups.values() for t in ts]

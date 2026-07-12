@@ -56,6 +56,12 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 
 - `edition.py` — modelos **Pydantic v2** + `load_edition()`; carrega e valida a spec.
   `Edition.as_of(data)` devolve a edição como conhecida no início de uma data (base do `--as-of`).
+  `Edition.score_90(fixture)` (ENG-55) é a **fonte única** de "o que aconteceu nos 90'": o
+  `fixtures.csv` grava o placar **consolidado** (num KO com gol na ET, J82 = `3×2`, mas `2×2` nos
+  90'). **Quem precisa dos 90' passa por aqui** — tanto o **ajuste** (o modelo estima taxas de gol
+  de 90', e `knockout._extra_time_probs` reescala λ por 30/90, o que só vale se λ for de 90') quanto
+  a **pontuação** (o bolão mede o slot de 90' contra o tempo normal). Nunca leia
+  `home_goals`/`away_goals` cru para esses fins.
 - `teams.py` — nome canônico (inglês, do dataset) ↔ exibição em português.
 - `fetch_data.py` — baixa `results.csv`/`shootouts.csv` (martj42), normaliza →
   `data/historical_results.csv`.
@@ -94,7 +100,12 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   de calibração: `blend-track --sweep` (blend_weight, ENG-38) e `blend-track --boost-sweep`
   (`edition_boost`, ENG-44) — Brier out-of-sample por valor, só jogos de grupo.
 - `sync.py` — resolve o bracket só com resultados reais e preenche `fixtures.csv`.
-- `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites. `ingestion_gaps(edition)`
+- `pipeline.py` — orquestra fetch→fit→(realimenta)→simula→palpites. Treina com `Edition.score_90`
+  (o placar dos **90'**), não com o consolidado do `fixtures.csv` (ENG-55) — treinar em placar de
+  120' infla o λ e **apaga empates** (um 1×1 decidido na ET vira "vitória"). ⚠️ A **base histórica**
+  ainda sofre disso (ENG-54, aberto): martj42 grava o consolidado, o modelo reproduz a taxa de
+  empate contaminada da base (~24% previsto vs 23,2% da base) e por isso **subestima empate**
+  (grupos 2026: 28% reais). `ingestion_gaps(edition)`
   (ENG-43) lista jogos disputados que **não** entram no ajuste (slot de KO não resolvido ⇒ filtrado
   pelo `.isin(edition.teams)` de `build_training_frame`) — `predict` e `status` avisam se ≠ vazio.
   Antes de devolver, roda `check_prediction_consistency` como **asserção dura** (ENG-52): recusa

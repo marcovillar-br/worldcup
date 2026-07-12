@@ -94,14 +94,11 @@ def _penalty_lookup(historical) -> dict[tuple[str, frozenset[str]], str]:
 def regulation_90(edition: Edition, fixture) -> tuple[int, int] | None:
     """Placar dos **90'** pelo qual o slot de 90' do bolão é julgado (ENG-45).
 
-    Num KO decidido por **gol na prorrogação**, o placar gravado em `fixtures.csv` inclui a ET e
-    difere do tempo normal — o bolão pontua o 90', então usamos o placar de `regulation.csv`
-    (`Edition.regulation`) quando presente. Caso contrário, o gravado **é** o 90' (jogo resolvido
-    nos 90' ou pênaltis puros com empate preservado). `None` se o jogo não foi disputado.
+    Delega em `Edition.score_90` — **fonte única** da semântica "o que aconteceu nos 90'" (ENG-55),
+    a mesma que alimenta o ajuste do modelo (`pipeline.build_training_frame`). Não reimplemente a
+    regra aqui: pontuador e treinador discordarem sobre o que é "o placar" é exatamente o ENG-48.
     """
-    if fixture.home_goals is None or fixture.away_goals is None:
-        return None
-    return edition.regulation.get(fixture.match_id, (fixture.home_goals, fixture.away_goals))
+    return edition.score_90(fixture)
 
 
 def _actual_ko_outcome(

@@ -66,6 +66,13 @@ def build_training_frame(edition: Edition, historical: pd.DataFrame, boost: floa
     são resolvidos para os nomes reais via `resolve_live_bracket` (só resultados reais) antes de
     entrar. Sem isso escapariam do filtro `.isin(edition.teams)` e o KO só chegaria ao modelo pela
     base histórica (peso 1.0, refém da atualidade dela) — a subponderação do ENG-42.
+
+    O placar que entra é o dos **90'** (`Edition.score_90`, ENG-55), **não** o consolidado do
+    `fixtures.csv`: num KO decidido por gol na prorrogação o consolidado inclui a ET (J82 = `3×2`,
+    mas `2×2` nos 90'). O modelo estima taxas de gol de **90'** — e a camada de ET do `knockout`
+    reescala λ por 30/90, o que só é válido se λ for a taxa de 90'. Treinar com o consolidado infla
+    o λ e, pior, **apaga empates** (um 1×1 decidido na ET vira "vitória"), suprimindo a taxa de
+    empate que o modelo aprende.
     """
     from .sync import resolve_live_bracket
 
@@ -73,15 +80,16 @@ def build_training_frame(edition: Edition, historical: pd.DataFrame, boost: floa
     ko_matchups = resolve_live_bracket(edition)  # {match_id: (mandante, visitante)} real dos KO disputados
     rows = []
     for f in edition.fixtures:
-        if f.played:
+        score = edition.score_90(f)
+        if score is not None:
             home, away = ko_matchups.get(f.match_id, (f.home, f.away))
             rows.append(
                 {
                     "date": pd.Timestamp(f.date),
                     "home_team": home,
                     "away_team": away,
-                    "home_score": f.home_goals,
-                    "away_score": f.away_goals,
+                    "home_score": score[0],
+                    "away_score": score[1],
                     "tournament": "FIFA World Cup",
                     "neutral": f.neutral,
                     "weight_mult": b,

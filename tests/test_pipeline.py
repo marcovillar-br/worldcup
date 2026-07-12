@@ -175,6 +175,36 @@ def test_build_training_frame_feeds_knockout_with_boost():
     assert match.iloc[0]["weight_mult"] == 5.0  # entra no frame boostado (não filtrado como slot órfão)
 
 
+def test_build_training_frame_trains_on_regulation_time_not_the_consolidated_score():
+    """ENG-55: o modelo estima taxas de gol de **90'** (a camada de ET reescala λ por 30/90), então
+    um KO decidido por gol na prorrogação tem de entrar no treino pelo placar do tempo normal — não
+    pelo consolidado do `fixtures.csv`, que inclui a ET e transforma um empate em vitória.
+
+    Costura (ENG-48): o esperado sai de `Edition.score_90`, a função de produção que define "o que
+    aconteceu nos 90'" — não de um placar fabricado à mão aqui.
+    """
+    import pandas as pd
+
+    from worldcup.pipeline import build_training_frame
+    from worldcup.sync import resolve_live_bracket
+
+    ed = load_edition(2026)
+    et_id = next(iter(ed.regulation))  # KO com gol na prorrogação ⇒ consolidado ≠ 90'
+    fx = next(f for f in ed.fixtures if f.match_id == et_id)
+    reg = ed.score_90(fx)
+    assert reg is not None
+    assert reg != (fx.home_goals, fx.away_goals)  # premissa do caso: os dois placares divergem mesmo
+
+    home, away = resolve_live_bracket(ed)[et_id]
+    train = build_training_frame(ed, pd.DataFrame(columns=["date", "home_team", "away_team"]))
+    key = train.apply(lambda r: (str(r["date"])[:10], frozenset((r["home_team"], r["away_team"]))), axis=1)
+    row = train[key == (str(fx.date)[:10], frozenset((home, away)))].iloc[0]
+
+    assert (row["home_score"], row["away_score"]) == reg  # treina no 90'...
+    assert (row["home_score"], row["away_score"]) != (fx.home_goals, fx.away_goals)  # ...não no consolidado
+    assert row["home_score"] == row["away_score"]  # e o empate dos 90' sobrevive ao ajuste
+
+
 def test_ingestion_gaps_healthy_edition_is_empty():
     # ENG-43: na 2026 real o bracket resolve todo KO disputado ⇒ nenhum jogo fica fora do ajuste
     assert pipeline.ingestion_gaps(load_edition(2026)) == []

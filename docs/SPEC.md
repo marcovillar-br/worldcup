@@ -427,9 +427,12 @@ decidido):
   decisivo) e num KO equilibrado (34%/31%/34%, típico de SF/final) o empate **é** o E[pts]-máximo
   (na final de 2026, +1,42 pt de peso); (ii) o modelo super-estimaria empate no KO — mas sem o ban
   o maximizador palpita empate em 13% dos KO de 2026 contra 25% de empates reais nos 90', ou seja,
-  **subestima**. A evidência de backtest que sustentava o ban é inválida (ENG-54: a base grava o
-  placar **com prorrogação**, então pune o palpite de empate justamente nos jogos que o bolão —
-  que pontua os 90' — premiaria). O parâmetro `forbid_draw` segue existindo no `Scorer`, sem uso em
+  **subestima** — e subestima porque **aprendeu** a subestimar: a base de treino grava o placar
+  **com prorrogação**, então um empate de 90' decidido por gol na ET entra como *vitória* e o modelo
+  aprende uma taxa de empate baixa demais (ENG-54; a base tem 23,2% de empates, o modelo prevê ~24%,
+  o real nos 90' é ~25–28%). A mesma contaminação invalida a evidência de backtest que sustentava o
+  ban (pontuar contra essa base pune o palpite de empate justamente nos jogos que o bolão — que
+  pontua os 90' — premiaria). O parâmetro `forbid_draw` segue existindo no `Scorer`, sem uso em
   produção. Exceção: o modo endgame `pool_behind="empate"` (ENG-39/40) força o melhor **empate** por
   E[pts] nos 90' do jogo de peso máximo (final) — por um motivo **diferente** (escolha diferencial
   de quem está atrás, não E[pts] fiel) —, mantendo as camadas 2–3 e o avanço fiéis;

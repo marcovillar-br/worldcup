@@ -91,28 +91,41 @@ def _fx(mid: int, hg: int | None, ag: int | None) -> Fixture:
 
 
 def test_regulation_90_prefers_reg_score_for_et_goal():
-    # ENG-45: KO decidido por gol na ET → o gravado (3x2) inclui a prorrogação; o slot de 90' usa o 90' (2x2)
-    ed = SimpleNamespace(regulation={82: (2, 2)})
-    assert efficiency.regulation_90(ed, _fx(82, 3, 2)) == (2, 2)
+    # ENG-45: KO decidido por gol na ET → o gravado inclui a prorrogação; o slot de 90' usa o 90'.
+    # Costura (ENG-48/55): edição REAL — `regulation_90` delega a `Edition.score_90`, e um dublê
+    # (SimpleNamespace) só testaria a nossa suposição sobre a interface, não a interface.
+    ed = load_edition(2026)
+    et_id = next(iter(ed.regulation))
+    fx = next(f for f in ed.fixtures if f.match_id == et_id)
+    assert efficiency.regulation_90(ed, fx) == ed.regulation[et_id]
+    assert efficiency.regulation_90(ed, fx) != (fx.home_goals, fx.away_goals)  # difere do consolidado
 
 
 def test_regulation_90_falls_back_to_recorded():
-    ed = SimpleNamespace(regulation={})
-    assert efficiency.regulation_90(ed, _fx(76, 2, 1)) == (2, 1)  # sem entrada ⇒ o gravado É o 90'
-    assert efficiency.regulation_90(ed, _fx(91, None, None)) is None  # não disputado
+    ed = load_edition(2026)
+    plain = next(f for f in ed.fixtures if f.played and f.match_id not in ed.regulation)
+    assert efficiency.regulation_90(ed, plain) == (plain.home_goals, plain.away_goals)  # o gravado É o 90'
+    unplayed = next(f for f in ed.fixtures if not f.played)
+    assert efficiency.regulation_90(ed, unplayed) is None
 
 
 def test_eng45_et_goal_scored_against_90_and_gets_bonus():
-    # Regressão ENG-45: o placar de 90' (2x2) faz o jogo cair no caminho de ET (empate nos 90'),
-    # resolvendo o bônus; com o placar GRAVADO (3x2) a lógica antiga o tratava como decidido nos 90'.
-    reg90 = efficiency.regulation_90(SimpleNamespace(regulation={82: (2, 2)}), _fx(82, 3, 2))
+    # Regressão ENG-45: o placar de 90' faz o jogo cair no caminho de ET (empate nos 90'), resolvendo
+    # o bônus; com o placar GRAVADO (com ET) a lógica antiga o tratava como decidido nos 90'.
+    ed = load_edition(2026)
+    fx = next(f for f in ed.fixtures if f.match_id == 82)  # J82: gravado 3x2, mas 2x2 nos 90'
+    reg90 = efficiency.regulation_90(ed, fx)
+    assert reg90 is not None
+    assert reg90[0] == reg90[1]  # premissa do caso: os 90' terminaram empatados
     pens = {("2026-07-01", frozenset({"Belgium", "Senegal"})): ""}  # na fonte, sem shootout ⇒ ET
     assert efficiency._actual_ko_outcome(reg90[0], reg90[1], "2026-07-01", "Belgium", "Belgium", "Senegal", pens) == (
         "home",
         None,
     )
-    # contraste (o bug): usar o gravado 3x2 ⇒ "decidido nos 90'", nenhum bônus de ET e slot pontuado errado
-    assert efficiency._actual_ko_outcome(3, 2, "2026-07-01", "Belgium", "Belgium", "Senegal", pens) == (None, None)
+    # contraste (o bug): usar o gravado (com ET) ⇒ "decidido nos 90'", sem bônus e slot pontuado errado
+    assert efficiency._actual_ko_outcome(
+        fx.home_goals, fx.away_goals, "2026-07-01", "Belgium", "Belgium", "Senegal", pens
+    ) == (None, None)
 
 
 def _recon(pts: float, palpite: str = "2x1", real: str = "2x1") -> dict:

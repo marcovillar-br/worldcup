@@ -69,7 +69,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-51](#eng-51) | P1 | pipeline/format | ✅ | Bracket (modelo puro) e palpite (blend) escolhem vencedores diferentes no mesmo KO ⇒ tabela auto-contraditória ("X avança a semi" mas "Y joga a final") |
 | [ENG-52](#eng-52) | P2 | pipeline | ✅ | Sem guardião da coerência interna do artefato final: nenhum teste perguntava "a tabela que entrego se contradiz?" |
 | [ENG-53](#eng-53) | P1 | knockout | ✅ | Empate proibido no 90' do KO (ENG-32) custa E[pts] justamente na final: as duas premissas do ban são falsas e a evidência que o sustentava é inválida |
-| [ENG-54](#eng-54) | P1 | dados/backtest | 🔴 | A base martj42 grava o placar COM prorrogação ⇒ nenhum backtest de política de KO é confiável (pune o palpite de empate onde o bolão o premia) |
+| [ENG-54](#eng-54) | P1 | dados/model | 🔴 | A base martj42 grava o placar COM prorrogação ⇒ o **modelo treina em placar de 120'** (λ inflado, empates apagados) e nenhum backtest de política de KO é confiável |
+| [ENG-55](#eng-55) | P1 | pipeline/edition | ✅ | `build_training_frame` alimentava o ajuste com o placar consolidado da edição viva, tendo o 90' em `regulation.csv` |
 
 ---
 
@@ -1858,8 +1859,8 @@ camada 1 = E[pts]-fiel, pode empatar; favorito claro ⇒ ainda escolhe vencedor)
 **Commit:** (esta rodada)
 
 ## ENG-54
-**A base grava o placar COM prorrogação ⇒ backtest de política de KO não é confiável** · P1 ·
-dados/backtest · 🔴 todo
+**A base grava o placar COM prorrogação ⇒ o modelo treina em placar de 120'** · P1 · dados/model ·
+🔴 todo
 
 `data/historical_results.csv` (martj42) grava o placar **ao fim da prorrogação**, não dos 90':
 a final de 2022 aparece como `Argentina 3×3 França` (foi **2×2** nos 90') e `Croácia 1×1 Brasil`
@@ -1888,3 +1889,66 @@ conclusão de backtest sobre placar de KO deve ser usada como evidência** — a
 **Aceite:** o backtest reproduz os pontos do bolão para os KO das Copas passadas contra o placar de
 90'; a política de KO passa a ser calibrável (sweep), como `blend_weight` (ENG-38) e
 `edition_boost` (ENG-44).
+
+**Escopo (b): o ajuste do modelo — descoberto depois, e é o dano maior.** O usuário perguntou "nas
+simulações estamos usando o placar consolidado?". Sim. O `DixonColesModel` treina nos
+`home_score`/`away_score` da base, que para os KO com prorrogação são o placar dos **120'**. Três
+danos distintos:
+
+1. **λ inflado**: gols marcados na ET entram como se fossem de 90'.
+2. **Empates apagados** (o pior): um 1×1 nos 90' decidido por gol na ET vira **vitória** na base. O
+   modelo aprende que empate é mais raro do que é.
+3. **Camada de prorrogação envenenada**: `knockout._extra_time_probs` reescala λ por `30/90` —
+   aritmética que **só é válida se λ for a taxa de 90'**. Treinado em 120', o λ já contém parte da
+   ET, e a ET é modelada em cima dela outra vez.
+
+**A digital do viés (medida):** a base registra **23,2%** de empates e o modelo prevê **~24%** — ele
+reproduz fielmente a taxa **da base contaminada**. Mas o real nos 90' é mais alto: grupos de 2026
+(90' puro, sem contaminação possível) deram **28%**, e o KO de 2026 deu **25%** nos 90'. O monitor
+de regime de empates vinha vendo esse desvio (z=+0,80) e classificando como **variância** — não é:
+é viés sistemático de rótulo. É também a causa raiz do sintoma do ENG-53 (sem o ban, o maximizador
+palpita empate em 13% dos KO contra 25% reais: ele subestima empate porque **aprendeu** a
+subestimar).
+
+**Magnitude:** 1,56% da base são jogos identificáveis como ida a pênaltis (**2,29% do peso efetivo**
+do ajuste — vivem nos torneios de peso alto); somando os decididos **por gol** na ET (invisíveis na
+base, ~1:1 com os de pênaltis nesta Copa) chega-se a **~4,6% do peso**, dos quais ~2,3% são empates
+de 90' rotulados como vitória. Consistente com o gap de 2–4 pp observado.
+
+**Por que não dá para consertar sozinho:** os jogos de pênaltis são identificáveis
+(`penalty_winner`) mas os decididos **por gol na ET não são** — a base não tem coluna de rodada nem
+de tempo do gol. Descartar/reponderar os identificáveis **pioraria** (eles carregam o rótulo de
+empate **correto**). Só o dado de 90' resolve.
+**Escopo (c):** com o placar de 90' histórico, re-treinar e reavaliar — a taxa de empate aprendida
+deve subir, o que muda palpite de empate, camada de ET e probabilidades de campeão.
+
+
+## ENG-55
+**O ajuste era alimentado com o placar consolidado da edição viva** · P1 · pipeline/edition ·
+✅ feito
+
+Sub-caso do ENG-54 **dentro do nosso alcance**: `pipeline.build_training_frame` mandava
+`fixture.home_goals`/`away_goals` (placar **consolidado**, com ET) para o modelo — mesmo tendo o 90'
+em `regulation.csv` (ENG-45) desde 30/06. Em 2026: J82 treinava como `3×2` (foi `2×2` nos 90'), J99
+como `1×2` (foi `1×1`) e J100 como `3×1` (foi `1×1`) — três empates de 90' ensinados ao modelo como
+vitórias, no torneio de **maior peso** do ajuste.
+
+A causa é a de sempre (ENG-48): o `regulation.csv` existia e o **pontuador** o usava
+(`scripts/efficiency.py::regulation_90`), mas o **treinador** não — a semântica "o placar dos 90'"
+morava num *script*, fora da biblioteca, então o `pipeline` não tinha como consumi-la. Dois
+consumidores do mesmo fato, um só com a regra certa.
+
+**Refs:** `edition.Edition.score_90` (novo — fonte única), `pipeline.build_training_frame`,
+`scripts/efficiency.py::regulation_90` (passa a **delegar**), `tests/test_pipeline.py`,
+`tests/test_efficiency.py`.
+**Resolução.** `Edition.score_90(fixture)` vira a **fonte única** da semântica, na biblioteca. O
+treinador e o pontuador passam os dois por ela. O teste novo é de **costura**: o esperado sai de
+`Edition.score_90` (função de produção), não de um placar fabricado. No caminho, três testes de
+`test_efficiency.py` que fabricavam a edição com `SimpleNamespace` quebraram — eram dublês que
+passavam **porque** a regra estava duplicada; reescritos contra a `Edition` real.
+**Efeito medido (2026):** pequeno — 3 jogos a peso 1,0 (`edition_boost = 1.0`) contra ~19,8k da
+base. Favoritos ao título: Espanha 27,6 → 28,4%, Inglaterra 21,7 → 20,7%; os 4 palpites restantes
+não mudam. É correção de **princípio** (e de arquitetura), não de resultado: o dano grande é o da
+base (ENG-54), e cresceria numa edição com `edition_boost > 1`.
+**Aceite:** ✅ 212 testes verdes; o teste de costura falha se o treino voltar a usar o consolidado.
+**Commit:** (esta rodada)

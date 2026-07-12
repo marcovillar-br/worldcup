@@ -73,7 +73,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-55](#eng-55) | P1 | pipeline/edition | ✅ | `build_training_frame` alimentava o ajuste com o placar consolidado da edição viva, tendo o 90' em `regulation.csv` |
 | [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,5% do peso): mecanismo desconhecido, sem significância estatística |
 | [ENG-57](#eng-57) | P2 | model/format_engine | 🔴 | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
-| [ENG-58](#eng-58) | P1 | pipeline/apresentação | 🟡 | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
+| [ENG-58](#eng-58) | P1 | pipeline/apresentação | ✅ | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
 
 ---
 
@@ -2096,7 +2096,7 @@ de comportamento no caminho do palpite; ver a decisão de campanha em `data/edit
 
 ## ENG-58
 **O display do KO disputado lia o placar cru: 120' na coluna dos 90' e camadas de ET apagadas** ·
-P1 · pipeline/apresentação · 🟡 fazendo
+P1 · pipeline/apresentação · ✅ feito
 
 `pipeline._final_ko_layers` (e a linha `placar_real`/`palpite` do jogo disputado) liam
 `fixture.home_goals`/`away_goals` **crus** — o placar **consolidado**, que inclui os gols da
@@ -2133,4 +2133,4 @@ tabela mentia. O teste novo carrega a **edição real** e passa pela costura
 **Aceite:** teste de regressão que, a partir da edição real, exige `2×2` nos 90' do J82 com a camada
 de prorrogação preenchida (e `—` nos pênaltis), e as camadas de pênaltis do J96; `predict` regenera
 a tabela com J82/J99/J100 no placar dos 90'. `ruff`/`mypy`/`pytest` verdes.
-**Commit:** —
+**Commit:** dc6f893

@@ -58,9 +58,11 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   `Edition.as_of(data)` devolve a edição como conhecida no início de uma data (base do `--as-of`).
   `Edition.score_90(fixture)` (ENG-55) é a **fonte única** de "o que aconteceu nos 90'": o
   `fixtures.csv` grava o placar **consolidado** (num KO com gol na ET, J82 = `3×2`, mas `2×2` nos
-  90'). **Quem precisa dos 90' passa por aqui** — tanto o **ajuste** (o modelo estima taxas de gol
-  de 90', e `knockout._extra_time_probs` reescala λ por 30/90, o que só vale se λ for de 90') quanto
-  a **pontuação** (o bolão mede o slot de 90' contra o tempo normal). Nunca leia
+  90'). **Quem precisa dos 90' passa por aqui** — o **ajuste** (o modelo estima taxas de gol
+  de 90', e `knockout._extra_time_probs` reescala λ por 30/90, o que só vale se λ for de 90'), a
+  **pontuação** (o bolão mede o slot de 90' contra o tempo normal) e a **exibição** (a coluna
+  "Palpite (90')" da tabela é o slot de 90'; ler o cru fazia um KO decidido na ET parecer decidido
+  no tempo normal e apagava as camadas de prorrogação — ENG-58). Nunca leia
   `home_goals`/`away_goals` cru para esses fins.
 - `teams.py` — nome canônico (inglês, do dataset) ↔ exibição em português.
 - `fetch_data.py` — baixa `results.csv`/`shootouts.csv`/`goalscorers.csv` (martj42), normaliza →

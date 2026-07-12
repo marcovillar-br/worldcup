@@ -12,6 +12,19 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **A tabela mostrava o placar de 120' na coluna "Palpite (90')" e apagava a prorrogação**
+  (ENG-58, `pipeline._final_ko_layers`): nos jogos de mata-mata já disputados, o display lia
+  `home_goals`/`away_goals` **crus** do `fixtures.csv` — o placar **consolidado**, que inclui os
+  gols da prorrogação — em vez de passar por `Edition.score_90` (a fonte única do ENG-55, que o
+  `AGENTS.md` já mandava usar). Efeito: J82 aparecia `3×2` (foi `2×2` nos 90'), J99 `1×2` (`1×1`) e
+  J100 `3×1` (`1×1`); e, como o consolidado está desempatado, as colunas **Prorrogação** e
+  **Pênaltis** saíam `—`/`—`, como se o jogo tivesse acabado no tempo normal. O `regulation.csv`
+  existia e estava correto — só a apresentação não o consultava. Agora as camadas nomeiam o
+  vencedor da prorrogação (com o placar de 120'), a coluna de placar traz o slot de 90' (que é o
+  que o bolão pontua), e um 120' empatado resolve os pênaltis pelo `shootouts.csv` **ou** pelo
+  `ko_outcome` — o que também preenche o J96 (`0×0`, Suíça nos pênaltis), antes em branco. O teste
+  antigo fabricava o `Fixture` à mão e ficou verde o mata-mata inteiro (ENG-48): o novo carrega a
+  edição real e atravessa a costura `regulation.csv` → `Edition.score_90` → camadas.
 - **O `status` exibia um standing de 9 dias atrás, em silêncio** (`cli._read_standing`): a extração
   procurava a palavra `Standing` em qualquer linha do bloco `## Estado atual` do `BOLAO.md` — mas
   esse bloco guarda também as entradas de **histórico**, com standings antigos. A manchete do dia

@@ -55,47 +55,41 @@ def test_pipeline_run_e2e_invariants(monkeypatch):
 
 
 def test_final_ko_layers_real_outcomes():
-    # ENG-30: jogo de KO já disputado mostra prorrogação/pênaltis/quem avançou reais.
-    from worldcup.edition import Fixture
+    """ENG-30/58: camadas de um KO disputado, **da edição real** — nada de Fixture fabricado.
+
+    O teste passa pela costura de verdade (`regulation.csv`/`shootouts.csv` → `Edition.score_90` →
+    camadas): fabricar o `Fixture` à mão testaria a suposição do teste sobre o formato, não o
+    formato (ENG-48) — foi assim que o placar de 120' virou "placar dos 90'" na tabela.
+    """
     from worldcup.pipeline import _final_ko_layers
 
-    def ko(match_id, home, away, hg, ag, winner):
-        return Fixture(
-            match_id=match_id,
-            stage="R32",
-            date="2026-06-29",
-            home=home,
-            away=away,
-            home_goals=hg,
-            away_goals=ag,
-            ko_outcome=winner,
-        )
+    e = load_edition(2026)
+    by_id = {f.match_id: f for f in e.fixtures}
 
-    # decidido nos 90' → "—"/"—", avança o vencedor real (do ko_outcome)
-    assert _final_ko_layers(ko(76, "Brazil", "Japan", 2, 1, "Brazil"), "Brazil", "Japan", {}) == (
-        "—",
-        "—",
-        "Brasil",
-    )
+    # decidido nos 90' → "—"/"—", avança o vencedor real
+    assert _final_ko_layers(e, by_id[76], "Brazil", "Japan") == ("—", "—", "Brasil")
     # decidido nos 90' SEM ko_outcome no fixture (fonte inconsistente) → avança quem fez mais gols
-    assert _final_ko_layers(ko(77, "France", "Sweden", 3, 0, None), "France", "Sweden", {}) == (
-        "—",
-        "—",
-        "França",
-    )
+    assert _final_ko_layers(e, by_id[77], "France", "Sweden") == ("—", "—", "França")
     # empate nos 90' + shootout capturado → "Vai aos pênaltis" + vencedor
-    pen = ko(74, "Germany", "Paraguay", 1, 1, "Paraguay")
-    assert _final_ko_layers(pen, "Germany", "Paraguay", {74: "Paraguay"}) == (
-        "Vai aos pênaltis",
-        "Paraguai",
-        "Paraguai",
-    )
-    # empate nos 90' SEM shootout conhecido → prorrogação/pênaltis vazios, mas avança conhecido
-    assert _final_ko_layers(ko(75, "Netherlands", "Morocco", 1, 1, "Morocco"), "Netherlands", "Morocco", {}) == (
-        "",
-        "",
-        "Marrocos",
-    )
+    assert _final_ko_layers(e, by_id[74], "Germany", "Paraguay") == ("Vai aos pênaltis", "Paraguai", "Paraguai")
+    # J82: 2×2 nos 90' (regulation.csv), 3×2 com o gol na ET → a ET decidiu, NÃO o tempo normal
+    assert e.score_90(by_id[82]) == (2, 2)
+    assert _final_ko_layers(e, by_id[82], "Belgium", "Senegal") == ("Bélgica (3x2)", "—", "Bélgica")
+    # J96: empate 0×0 até os 120' e alguém avançou ⇒ foi aos pênaltis (vencedor = quem avançou)
+    assert _final_ko_layers(e, by_id[96], "Switzerland", "Colombia") == ("Vai aos pênaltis", "Suíça", "Suíça")
+    # jogo ainda não disputado → sem camadas
+    assert _final_ko_layers(e, by_id[104], "Spain", "Argentina") == ("", "", "")
+
+
+def test_played_ko_row_shows_90_minute_score():
+    """ENG-58: a coluna de placar é o slot de **90'** — num KO decidido na ET, não o consolidado."""
+    e = load_edition(2026)
+    by_id = {f.match_id: f for f in e.fixtures}
+    # o consolidado do fixtures.csv (3×2) inclui o gol da prorrogação; o bolão pontua o 90' (2×2)
+    assert (by_id[82].home_goals, by_id[82].away_goals) == (3, 2)
+    assert e.score_90(by_id[82]) == (2, 2)
+    assert e.score_90(by_id[99]) == (1, 1)
+    assert e.score_90(by_id[100]) == (1, 1)
 
 
 def test_edition_loads_shootouts():

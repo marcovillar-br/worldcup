@@ -73,6 +73,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-55](#eng-55) | P1 | pipeline/edition | ✅ | `build_training_frame` alimentava o ajuste com o placar consolidado da edição viva, tendo o 90' em `regulation.csv` |
 | [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,5% do peso): mecanismo desconhecido, sem significância estatística |
 | [ENG-57](#eng-57) | P2 | model/format_engine | 🔴 | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
+| [ENG-58](#eng-58) | P1 | pipeline/apresentação | 🟡 | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
 
 ---
 
@@ -2092,3 +2093,44 @@ alguém quer) pede explicitamente.
 **Aceite:** um teste que passa um nome inexistente e espera exceção; a suíte segue verde (nenhum
 consumidor de produção dependia da fallback). ⚠️ **Não mexer antes da final (19/07)** — é mudança
 de comportamento no caminho do palpite; ver a decisão de campanha em `data/editions/2026/BOLAO.md`.
+
+## ENG-58
+**O display do KO disputado lia o placar cru: 120' na coluna dos 90' e camadas de ET apagadas** ·
+P1 · pipeline/apresentação · 🟡 fazendo
+
+`pipeline._final_ko_layers` (e a linha `placar_real`/`palpite` do jogo disputado) liam
+`fixture.home_goals`/`away_goals` **crus** — o placar **consolidado**, que inclui os gols da
+prorrogação. O `AGENTS.md` já proibia exatamente isso ("quem precisa dos 90' passa por
+`Edition.score_90`"), mas a camada de apresentação nunca foi ligada à fonte única do ENG-55: o
+`regulation.csv` existia, estava correto e era usado pelo `efficiency.py` para o teto — e ignorado
+pela tabela que o usuário lê.
+
+**Sintomas (relatados pelo usuário em 12/07, olhando o `palpites-2026.html`):**
+
+- coluna **"Palpite (90')"** mostrava o placar de 120' nos 3 KO decididos por gol na prorrogação:
+  J82 `3×2` (foi `2×2` nos 90'), J99 `1×2` (`1×1`), J100 `3×1` (`1×1`);
+- como o consolidado está desempatado, a função concluía "decidido no tempo normal" e as colunas
+  **Prorrogação/Pênaltis** saíam `—`/`—` — o jogo *parecia* ter acabado nos 90';
+- J96 (`0×0` até os 120', Suíça avança) ficava com as duas camadas **vazias** por não estar no
+  `shootouts.csv`, embora o `ko_outcome` já dissesse quem passou.
+
+**Correção:** `_final_ko_layers` recebe a `Edition` e decide pelas duas fontes — os 90' de
+`Edition.score_90` e o consolidado do fixture. 90' desempatado ⇒ `—`/`—`; empate nos 90' com
+consolidado diferente ⇒ **gol na prorrogação** (vencedor + placar de 120'); empate também aos 120'
+⇒ pênaltis, com o vencedor vindo do `shootouts.csv` **ou** do `ko_outcome` (quem avança de um 120'
+empatado *é* quem venceu a disputa — não é afirmar sob incerteza, é o que o dado já diz). A coluna
+de placar passa a exibir o 90' (`Edition.score_90`), que é o slot que o bolão pontua.
+
+**Classe do ENG-48 (costura não testada):** o teste que existia **fabricava o `Fixture` à mão** e
+passava um dict de shootouts — testava a suposição do teste sobre o formato, não o formato. Com
+`regulation.csv` fora do caminho, ele ficou verde durante toda a fase de mata-mata enquanto a
+tabela mentia. O teste novo carrega a **edição real** e passa pela costura
+`regulation.csv`/`shootouts.csv` → `Edition.score_90` → camadas.
+
+**Refs:** `pipeline._final_ko_layers`, `pipeline.run` (linha do jogo disputado),
+`edition.Edition.score_90`, `render.render_html`/`render_markdown` (colunas
+`Palpite (90')`/`Prorrogação`/`Pênaltis`).
+**Aceite:** teste de regressão que, a partir da edição real, exige `2×2` nos 90' do J82 com a camada
+de prorrogação preenchida (e `—` nos pênaltis), e as camadas de pênaltis do J96; `predict` regenera
+a tabela com J82/J99/J100 no placar dos 90'. `ruff`/`mypy`/`pytest` verdes.
+**Commit:** —

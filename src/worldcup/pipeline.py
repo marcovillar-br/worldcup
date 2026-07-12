@@ -25,7 +25,7 @@ from .teams import display
 if TYPE_CHECKING:
     import numpy as np
 
-    from .edition import Edition
+    from .edition import Edition, Fixture
 
 logger = logging.getLogger(__name__)
 
@@ -162,28 +162,43 @@ def _ko_layer_text(kp, edition_home: str, edition_away: str) -> tuple[str, str]:
     return et, pen
 
 
-def _final_ko_layers(f, home: str | None, away: str | None, shootouts: dict[int, str]) -> tuple[str, str, str]:
+def _final_ko_layers(edition: Edition, f: Fixture, home: str | None, away: str | None) -> tuple[str, str, str]:
     """(prorrogação, pênaltis, avança) de um jogo de KO **já disputado**, dos resultados reais (ENG-30).
 
     `home`/`away` são os nomes reais (canônicos) das seleções, resolvidos pelo bracket — necessários
-    porque o `fixture` guarda slots. `avança`: `ko_outcome` quando a fonte o traz; senão, **decidido
-    no tempo normal ⇒ quem fez mais gols** (a fonte preenche `ko_outcome` de forma inconsistente em
-    jogo de 90' — o bracket já deriva do placar, o display precisa fazer igual). Desfecho
-    prorrogação/pênaltis: placar dos 90' decidido ⇒ "—"; empate nos 90' + shootout conhecido (fonte
-    ou `shootouts.csv`) ⇒ "Vai aos pênaltis" + vencedor; empate nos 90' sem shootout conhecido ⇒
-    vazio (não afirmar prorrogação sob incerteza/latência da fonte).
+    porque o `fixture` guarda slots.
+
+    O `fixtures.csv` grava o placar **consolidado** (com prorrogação); os 90' vêm de
+    `Edition.score_90` — **fonte única** (ENG-55). Ler `home_goals`/`away_goals` cru aqui fazia um KO
+    decidido por gol na ET (J82: `2×2` nos 90', `3×2` no consolidado) parecer decidido no tempo
+    normal, e as camadas saíam `—`/`—` (ENG-58).
+
+    Camadas: 90' decidido ⇒ `—`/`—`; empate nos 90' com gol na ET ⇒ vencedor da prorrogação (+ placar
+    de 120'), pênaltis `—`; empate também aos 120' ⇒ "Vai aos pênaltis" + vencedor da disputa
+    (`shootouts.csv`, ou o `ko_outcome` — quem avançou de um 120' empatado **é** quem venceu nos
+    pênaltis). Sem nenhum dos dois ⇒ vazio (não afirmar desfecho sob latência da fonte).
+
+    `avança`: `ko_outcome` quando a fonte o traz; senão, quem fez mais gols (a fonte preenche
+    `ko_outcome` de forma inconsistente em jogo de 90' — o bracket já deriva do placar, o display
+    precisa fazer igual).
     """
-    if f.home_goals is None or f.away_goals is None:
+    reg = edition.score_90(f)
+    if reg is None or f.home_goals is None or f.away_goals is None:
         return "", "", display(f.ko_outcome) if f.ko_outcome else ""
-    if f.home_goals != f.away_goals:
-        winner = f.ko_outcome or (home if f.home_goals > f.away_goals else away)  # 90' decide
+    reg_home, reg_away = reg
+    if reg_home != reg_away:
+        winner = f.ko_outcome or (home if reg_home > reg_away else away)  # 90' decide
         return "—", "—", display(winner) if winner else ""
     # empate nos 90'
     avanca = display(f.ko_outcome) if f.ko_outcome else ""
-    pen_winner = shootouts.get(f.match_id)
+    if (f.home_goals, f.away_goals) != (reg_home, reg_away):  # gol na prorrogação decidiu
+        winner = f.ko_outcome or (home if f.home_goals > f.away_goals else away)
+        et = f"{display(winner)} ({f.home_goals}x{f.away_goals})" if winner else ""
+        return et, "—", avanca or (display(winner) if winner else "")
+    pen_winner = edition.shootouts.get(f.match_id) or f.ko_outcome  # 120' empatado ⇒ pênaltis
     if pen_winner:
         return "Vai aos pênaltis", display(pen_winner), avanca or display(pen_winner)
-    return "", "", avanca  # desfecho ET/pênaltis ainda não capturado
+    return "", "", avanca  # desfecho ainda não capturado
 
 
 def _max_ko_weight(edition: Edition) -> float:
@@ -279,11 +294,14 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345, pool_behind: st
         }
 
         if f.played:
+            # A coluna de placar é o slot de **90'** (é o que o bolão pontua): num KO decidido na ET,
+            # o consolidado do `fixtures.csv` não serve — vem de `Edition.score_90` (ENG-55/58).
+            real = edition.score_90(f) or (f.home_goals, f.away_goals)
             row["status"] = "FINAL"
-            row["placar_real"] = f"{f.home_goals}x{f.away_goals}"
-            row["palpite"] = f"{f.home_goals}x{f.away_goals}"
+            row["placar_real"] = f"{real[0]}x{real[1]}"
+            row["palpite"] = row["placar_real"]
             if not f.is_group:  # KO disputado: mostra prorrogação/pênaltis/quem avançou reais (ENG-30)
-                row["prorrogacao"], row["penaltis"], row["avanca"] = _final_ko_layers(f, home, away, edition.shootouts)
+                row["prorrogacao"], row["penaltis"], row["avanca"] = _final_ko_layers(edition, f, home, away)
 
         if home and away and not f.played:
             mat = _matrix(home, away, f)

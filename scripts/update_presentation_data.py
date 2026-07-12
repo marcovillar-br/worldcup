@@ -83,6 +83,15 @@ def render_toml(edition: int, data: dict[str, Any]) -> str:
     favoritos_block = "\n".join(
         f'[[campanha.favoritos]]\nnome = "{f["nome"]}"\npct = {f["pct"]}' for f in c["favoritos"]
     )
+    # o caminho é uma LISTA de passos (não slots fixos qf/sf/final): a seleção em destaque avança de
+    # fase e o passo antigo deixa de existir. Com slots fixos, o deck continuava anunciando "bate a
+    # Suíça (QF, 55%)" depois da Suíça já ter sido eliminada. `pct` é opcional (a final não tem).
+    passos_block = "\n\n".join(
+        "[[bracket_destaque.passos]]\n"
+        + f'fase = "{p["fase"]}"\nrival = "{p["rival"]}"'
+        + (f"\npct = {p['pct']}" if p.get("pct") is not None else "")
+        for p in b["passos"]
+    )
     return f"""# Dados vivos do deck de apresentação (scripts/build_presentation.py --edition {edition}).
 #
 # Números da campanha que mudam a cada rodada — extraídos do código para que o script fique
@@ -103,12 +112,9 @@ fase = "{c["fase"]}"
 
 [bracket_destaque]
 selecao = "{b["selecao"]}"
-qf_rival = "{b["qf_rival"]}"
-qf_pct = {b["qf_pct"]}
-sf_rival = "{b["sf_rival"]}"
-sf_pct = {b["sf_pct"]}
-final_rival = "{b["final_rival"]}"
 jogos_para_ficar_de_olho = "{b["jogos_para_ficar_de_olho"]}"
+
+{passos_block}
 
 [validacao]
 brier_modelo = {v["brier_modelo"]}

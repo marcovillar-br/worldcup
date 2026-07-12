@@ -29,12 +29,16 @@ pct = 21.3
 
 [bracket_destaque]
 selecao = "Argentina"
-qf_rival = "Suíça"
-qf_pct = 55
-sf_rival = "Inglaterra"
-sf_pct = 40
-final_rival = "Espanha"
 jogos_para_ficar_de_olho = "<b>França × Espanha</b> (SF, 14/07), Inglaterra × Argentina (SF, 15/07)."
+
+[[bracket_destaque.passos]]
+fase = "SF"
+rival = "Inglaterra"
+pct = 49
+
+[[bracket_destaque.passos]]
+fase = "final"
+rival = "França ou Espanha"
 
 [validacao]
 brier_modelo = 0.407

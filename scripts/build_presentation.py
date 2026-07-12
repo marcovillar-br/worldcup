@@ -213,6 +213,24 @@ def timeline(items: list[tuple[str, str, str]]) -> str:
 # --------------------------------------------------------------------------- os slides
 
 
+def _bracket_path(passos: list[dict[str, Any]]) -> str:
+    """Caminho da seleção em destaque até a final, como uma sequência de passos.
+
+    As fases **não** são cravadas no HTML: a seleção avança e o passo antigo deixa de existir. Com
+    os slots fixos `qf_*`/`sf_*`/`final_*` que isto substitui, o deck seguia anunciando "bate a
+    Suíça (QF, 55%)" em plena semifinal — um jogo já disputado, apresentado como "o que esperar".
+    O passo da final não traz `pct` (o adversário ainda nem existe).
+    """
+    out = []
+    for p in passos:
+        if p["fase"] == "final":
+            step = f"disputa a final<small>× {p['rival']}</small>"
+        else:
+            step = f"bate {p['rival']}<small>({p['fase']}, {p['pct']}%)</small>"
+        out.append(f'<span class="farr">→</span>\n              <span class="fstep">{step}</span>')
+    return "".join(out)
+
+
 def build_slides(data: dict[str, Any]) -> list[Slide]:
     s: list[Slide] = []
     as_of = data["as_of"]
@@ -427,12 +445,7 @@ def build_slides(data: dict[str, Any]) -> list[Slide]:
           <div class="panel">
             <div class="ptitle">{_IC_TROPHY} o que esperar ({as_of})</div>
             <div class="flow">
-              <span class="fstep accent">{bracket["selecao"]}</span><span class="farr">→</span>
-              <span class="fstep">bate {bracket["qf_rival"]}<small>(QF, {bracket["qf_pct"]}%)</small></span>
-              <span class="farr">→</span>
-              <span class="fstep">bate {bracket["sf_rival"]}<small>(SF, {bracket["sf_pct"]}%)</small></span>
-              <span class="farr">→</span>
-              <span class="fstep">disputa a final<small>× {bracket["final_rival"]}</small></span>
+              <span class="fstep accent">{bracket["selecao"]}</span>{_bracket_path(bracket["passos"])}
             </div>
             <p class="muted">favorita ao título no agregado (Monte Carlo, slide anterior):
               <b class="accent">{bracket["selecao"]}</b> — o caminho jogo a jogo acima é só um

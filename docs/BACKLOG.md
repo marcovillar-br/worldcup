@@ -1857,7 +1857,7 @@ regra condicional desejada (escolhe o empate **sse** ele for o E[pts]-máximo). 
 não fiel).
 **Aceite:** ✅ 211 testes verdes; o novo par de testes fixa os dois lados da regra (KO equilibrado ⇒
 camada 1 = E[pts]-fiel, pode empatar; favorito claro ⇒ ainda escolhe vencedor).
-**Commit:** (esta rodada)
+**Commit:** 3e90869
 
 ## ENG-54
 **A base grava o placar COM prorrogação ⇒ o modelo treina em placar de 120'** · P1 · dados/model ·
@@ -1972,7 +1972,7 @@ reportada com incerteza e **reproduzível** (`scripts/eng54_ko_policy_sim.py`); 
 (novos: reconstrução, portão de confiança contra lista incompleta/minuto ilegível, acréscimo dos 90'
 **não** subtraído, jogo não disputado (placar NaN) sobrevive à reconstrução, costura base→ajuste e
 base→bônus de KO, ambas consumindo `fetch_data.score_90` em vez de fabricar a entrada — ENG-48).
-**Commit:** (esta rodada)
+**Commit:** d38a792
 
 
 ## ENG-56
@@ -2036,4 +2036,4 @@ base. Favoritos ao título: Espanha 27,6 → 28,4%, Inglaterra 21,7 → 20,7%; o
 não mudam. É correção de **princípio** (e de arquitetura), não de resultado: o dano grande é o da
 base (ENG-54), e cresceria numa edição com `edition_boost > 1`.
 **Aceite:** ✅ 212 testes verdes; o teste de costura falha se o treino voltar a usar o consolidado.
-**Commit:** (esta rodada)
+**Commit:** ed493c8

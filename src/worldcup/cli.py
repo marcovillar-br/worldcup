@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import csv
 import logging
+import re
 import sys
 from dataclasses import replace
 from datetime import date
@@ -259,8 +260,31 @@ def _load_picks(year: int) -> dict[int, dict[str, str]]:
         return {int(r["jogo"]): r for r in csv.DictReader(fh)}
 
 
+# Rótulos que abrem a manchete de standing no `BOLAO.md`. São dois porque o arquivo é prosa humana e
+# as duas palavras foram usadas na prática; aceitar só uma fazia o `status` **cair silenciosamente**
+# numa linha de histórico e exibir um standing de 9 dias atrás (12/07: mostrava o de 03/07).
+_STANDING_LABELS = ("Standing", "Placar")
+
+
+def _standing_headline(line: str) -> str | None:
+    """Texto do primeiro trecho em **negrito** da linha (a manchete da entrada), ou `None`.
+
+    Ancorar no negrito — e não em "a linha contém a palavra X" — é o que torna a extração precisa: a
+    manchete é sempre `**Rótulo (data): pontos, posição …**`, então o negrito delimita exatamente o
+    fato, sem arrastar a prosa que vem depois nem casar com uma menção solta no meio do texto.
+    """
+    m = re.search(r"\*\*(.+?)\*\*", line)
+    return m.group(1).strip() if m else None
+
+
 def _read_standing(year: int) -> str | None:
-    """Extrai a linha de standing do bloco `## Estado atual` do `BOLAO.md` (sem markdown)."""
+    """Extrai a manchete de standing do bloco `## Estado atual` do `BOLAO.md` (sem markdown).
+
+    Devolve a **primeira** manchete do bloco — o arquivo lista "entradas novas no topo", então a
+    primeira é a mais recente. As entradas de histórico vivem no mesmo bloco e também trazem
+    standings **antigos**: é justamente por isso que a busca precisa ser ancorada (ver
+    `_standing_headline`) e não um `"Standing" in line`.
+    """
     path = EDITIONS_DIR / str(year) / "BOLAO.md"
     if not path.exists():
         return None
@@ -271,13 +295,16 @@ def _read_standing(year: int) -> str | None:
             continue
         if in_estado and line.startswith("## "):
             break
-        if in_estado and "Standing" in line:
-            txt = line.lstrip("-* ").replace("**", "")
-            txt = txt[txt.find("Standing") :].strip()
-            # remove o rótulo redundante (o format do status já imprime "STANDING:")
-            if txt.lower().startswith("standing"):
-                txt = txt[len("standing") :].lstrip(": ").strip()
-            return txt.rstrip(".") or None
+        if not in_estado:
+            continue
+        headline = _standing_headline(line)
+        if not headline or not headline.startswith(_STANDING_LABELS):
+            continue
+        for label in _STANDING_LABELS:  # tira o rótulo (o `status` já imprime "STANDING:")
+            if headline.startswith(label):
+                headline = headline[len(label) :].lstrip(": ").strip()
+                break
+        return headline.rstrip(".") or None
     return None
 
 

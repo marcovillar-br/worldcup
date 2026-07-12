@@ -148,3 +148,39 @@ def test_blend_track_boost_sweep(monkeypatch, capsys):
     assert "← mínimo" in out
     assert "(em uso)" in out  # marca o boost corrente (edition.scoring.edition_boost)
     assert "boost* = 2.0" in out
+
+
+# ── standing do BOLAO.md (briefing do `status`) ───────────────────────────────────────────────
+
+
+def test_read_standing_pega_a_entrada_mais_recente_nao_uma_do_historico():
+    """O `status` mostrava um standing de 9 dias atrás, em silêncio (12/07 exibia o de 03/07).
+
+    A busca era `"Standing" in line`, e o bloco `## Estado atual` contém também as entradas de
+    **histórico** — que trazem standings antigos. A manchete do dia usava o rótulo `Placar`, então a
+    palavra `Standing` só aparecia lá embaixo, no histórico: o parser casava com ela e devolvia um
+    número velho como se fosse o atual. Um briefing que mente sobre a posição é pior que não ter.
+    """
+    real = cli._read_standing(2026)
+    assert real is not None
+    assert "425" in real  # a entrada de 12/07, a mais recente
+    assert "19" in real
+    assert "325" not in real  # a de 03/07, que vive no histórico do mesmo bloco
+
+
+def test_read_standing_ancora_no_negrito_e_ignora_mencao_solta(tmp_path, monkeypatch):
+    """Ancorar no **negrito** (a manchete) e não em "a linha contém a palavra"."""
+    bolao = tmp_path / "2026" / "BOLAO.md"
+    bolao.parent.mkdir(parents=True)
+    bolao.write_text(
+        "## Estado atual\n"
+        "- o placar consolidado não é o dos 90' — cuidado ao ler o Standing bruto da fonte\n"
+        "- **Placar (12/07): 425 pts, 19º. Líder 509.** prosa que não deve entrar no briefing\n"
+        "- **Standing (03/07): 325 pts, 17º**\n"
+        "## Histórico\n"
+        "- **Standing (01/07): 285 pts, 21º**\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(cli, "EDITIONS_DIR", tmp_path)
+    got = cli._read_standing(2026)
+    assert got == "(12/07): 425 pts, 19º. Líder 509"  # manchete do dia, sem a prosa nem o rótulo

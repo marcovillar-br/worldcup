@@ -12,6 +12,14 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
 ### Corrigido
+- **O `status` exibia um standing de 9 dias atrás, em silêncio** (`cli._read_standing`): a extração
+  procurava a palavra `Standing` em qualquer linha do bloco `## Estado atual` do `BOLAO.md` — mas
+  esse bloco guarda também as entradas de **histórico**, com standings antigos. A manchete do dia
+  usava o rótulo `Placar`, então a palavra `Standing` só aparecia lá embaixo, no histórico: o parser
+  casava com ela e devolvia 325 pts/17º (03/07) como se fosse a posição atual (425 pts/19º). Fix: a
+  busca passa a ancorar no **negrito** (a manchete é sempre `**Rótulo (data): …**`, o que delimita o
+  fato sem arrastar prosa) e aceita `Standing` **ou** `Placar`. Um briefing que mente sobre a
+  posição é pior que não ter briefing.
 - **A sonda de contradição de fonte acusava erro em latência banal** (ENG-49, `efficiency.py`):
   `cross_source_ko_check` classificava como **contradição** ("NÃO é latência: bug de lookup,
   curadoria errada, ou fonte corrigida") todo KO em que a edição afirmava o desfecho e a fonte não

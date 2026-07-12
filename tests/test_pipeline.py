@@ -70,15 +70,37 @@ def test_final_ko_layers_real_outcomes():
     assert _final_ko_layers(e, by_id[76], "Brazil", "Japan") == ("—", "—", "Brasil")
     # decidido nos 90' SEM ko_outcome no fixture (fonte inconsistente) → avança quem fez mais gols
     assert _final_ko_layers(e, by_id[77], "France", "Sweden") == ("—", "—", "França")
-    # empate nos 90' + shootout capturado → "Vai aos pênaltis" + vencedor
-    assert _final_ko_layers(e, by_id[74], "Germany", "Paraguay") == ("Vai aos pênaltis", "Paraguai", "Paraguai")
+    # empate nos 90' + shootout capturado → "Vai aos pênaltis" + vencedor (+ placar da disputa, ENG-59)
+    assert _final_ko_layers(e, by_id[74], "Germany", "Paraguay") == (
+        "Vai aos pênaltis",
+        "Paraguai (3x4)",
+        "Paraguai",
+    )
     # J82: 2×2 nos 90' (regulation.csv), 3×2 com o gol na ET → a ET decidiu, NÃO o tempo normal
     assert e.score_90(by_id[82]) == (2, 2)
     assert _final_ko_layers(e, by_id[82], "Belgium", "Senegal") == ("Bélgica (3x2)", "—", "Bélgica")
     # J96: empate 0×0 até os 120' e alguém avançou ⇒ foi aos pênaltis (vencedor = quem avançou)
-    assert _final_ko_layers(e, by_id[96], "Switzerland", "Colombia") == ("Vai aos pênaltis", "Suíça", "Suíça")
+    assert _final_ko_layers(e, by_id[96], "Switzerland", "Colombia") == (
+        "Vai aos pênaltis",
+        "Suíça (4x3)",
+        "Suíça",
+    )
     # jogo ainda não disputado → sem camadas
     assert _final_ko_layers(e, by_id[104], "Spain", "Argentina") == ("", "", "")
+
+
+def test_penalty_score_is_optional_in_the_layers():
+    """ENG-59: sem placar da disputa capturado, a camada mostra só o vencedor — não quebra nem mente.
+
+    A fonte (martj42) publica apenas `winner`; o placar é curadoria manual e pode faltar (edição nova,
+    jogo recém-terminado). A ausência tem de degradar para o comportamento pré-ENG-59.
+    """
+    from worldcup.pipeline import _final_ko_layers
+
+    e = load_edition(2026)
+    sem_placar = e.model_copy(update={"shootout_scores": {}})
+    j74 = next(f for f in e.fixtures if f.match_id == 74)
+    assert _final_ko_layers(sem_placar, j74, "Germany", "Paraguay") == ("Vai aos pênaltis", "Paraguai", "Paraguai")
 
 
 def test_played_ko_row_shows_90_minute_score():

@@ -11,6 +11,18 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
 
+### Adicionado
+- **Placar da disputa de pênaltis no relatório** (ENG-59): o `shootouts.csv` da edição ganha as
+  colunas **opcionais** `pen_home,pen_away` (ordem mandante × visitante), carregadas em
+  `Edition.shootout_scores`, e a coluna Pênaltis passa a mostrar "Paraguai (3x4)" em vez de só
+  "Paraguai". O placar é **captura manual por definição** — a fonte (martj42) publica apenas o
+  vencedor da disputa (`winner`/`first_shooter`), nunca o placar — e é **informativo**: o bolão
+  pontua o vencedor, não o placar, então nada muda em palpite, pontuação ou teto. Ortogonal ao
+  vencedor: linha sem placar segue válida, e `shootouts.csv` antigos continuam carregando.
+  Capturados na edição 2026 (≥2 fontes por jogo): J74 Alemanha 3×4 Paraguai · J75 Holanda 2×3
+  Marrocos · J88 Austrália 2×4 Egito · J96 Suíça 4×3 Colômbia — este último também ganhou a linha de
+  vencedor, que faltava.
+
 ### Corrigido
 - **A tabela mostrava o placar de 120' na coluna "Palpite (90')" e apagava a prorrogação**
   (ENG-58, `pipeline._final_ko_layers`): nos jogos de mata-mata já disputados, o display lia

@@ -178,13 +178,18 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   Veredito de blend reproduzível localmente. Mantenha arquivo (não apague); **nunca** versione odds
   nem chave (em `.env`).
 - `shootouts.csv` — **opcional** (ENG-30): `match_id,winner`
-  (vencedor de disputa de pênaltis, nome canônico). Carregado em `Edition.shootouts`; usado para
+  (vencedor de disputa de pênaltis, nome canônico), mais as colunas **opcionais**
+  `pen_home,pen_away` — o **placar da disputa** (ENG-59), na ordem mandante × visitante.
+  Carregado em `Edition.shootouts` / `Edition.shootout_scores`; usado para
   mostrar o desfecho real (prorrogação/pênaltis/quem avançou) dos jogos de KO **já disputados**
-  quando a fonte oficial ainda tem latência (ENG-15). **Captura manual:** preencha
-  **só com placares verificados em ≥2 fontes confiáveis**
+  quando a fonte oficial ainda tem latência (ENG-15). O **placar** dos pênaltis é *sempre* captura
+  manual: a fonte (martj42) publica só `winner`/`first_shooter`, nunca o placar. É **informativo**
+  (o bolão pontua o vencedor da disputa, não o placar dela) e **ortogonal** ao vencedor — linha com
+  vencedor e sem placar é válida (arquivos antigos, sem as colunas, seguem carregando).
+  **Captura manual:** preencha **só com placares verificados em ≥2 fontes confiáveis**
   (regra `confirmar-placares-multiplas-fontes`). Versionado (fato público, durável); linhas sem
-  vencedor são ignoradas. `Edition.as_of()` descarta os shootouts de jogos a partir da data
-  (consistência).
+  vencedor são ignoradas. `Edition.as_of()` descarta os shootouts (e seus placares) de jogos a
+  partir da data (consistência).
 - `regulation.csv` — **opcional** (ENG-45): `match_id,reg_home,reg_away`
   (placar do **tempo normal**, 90'). Só para KO decididos por **gol na prorrogação**, em que o
   placar gravado em `fixtures.csv` inclui a ET e difere do 90' (ex.: J82 gravado `3×2`, mas `2×2`

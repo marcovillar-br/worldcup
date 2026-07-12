@@ -80,9 +80,19 @@ def test_load_shootouts(tmp_path):
     # ENG-30: match_id,winner (canônico); linhas sem vencedor ignoradas; ausente ⇒ vazio
     path = tmp_path / "shootouts.csv"
     path.write_text("match_id,winner\n74,Paraguay\n75,Morocco\n88,\n")
-    sh = _load_shootouts(path)
-    assert sh == {74: "Paraguay", 75: "Morocco"}  # 88 (sem vencedor) ignorado
-    assert _load_shootouts(tmp_path / "nope.csv") == {}
+    winners, scores = _load_shootouts(path)
+    assert winners == {74: "Paraguay", 75: "Morocco"}  # 88 (sem vencedor) ignorado
+    assert scores == {}  # arquivo antigo, sem as colunas de placar, segue válido
+    assert _load_shootouts(tmp_path / "nope.csv") == ({}, {})
+
+
+def test_load_shootouts_penalty_scores(tmp_path):
+    # ENG-59: pen_home/pen_away são OPCIONAIS e ortogonais ao vencedor (a fonte não publica o placar)
+    path = tmp_path / "shootouts.csv"
+    path.write_text("match_id,winner,pen_home,pen_away\n74,Paraguay,3,4\n88,Egypt,,\n96,Switzerland,4,3\n")
+    winners, scores = _load_shootouts(path)
+    assert winners == {74: "Paraguay", 88: "Egypt", 96: "Switzerland"}  # vencedor sem placar é válido
+    assert scores == {74: (3, 4), 96: (4, 3)}  # 88 (sem placar) fica de fora, sem perder o vencedor
 
 
 def test_load_regulation(tmp_path):

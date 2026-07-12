@@ -294,7 +294,10 @@ def render_html(run: PredictionRun) -> str:
         '<b style="color:var(--home)">■</b> mandante · '
         '<b style="color:var(--draw)">■</b> empate · '
         '<b style="color:var(--away)">■</b> visitante. '
-        "Linhas em cinza são jogos já disputados (placar real). "
+        "Linhas em cinza são jogos já disputados (placar real, no slot de 90'). "
+        "Nas colunas de prorrogação e pênaltis, o nome é de quem venceu e o placar entre parênteses "
+        "vem na ordem <b>mandante × visitante</b> (como o resto da tabela) — "
+        "ex.: <i>Paraguai (3x4)</i> = Alemanha 3, Paraguai 4 nos pênaltis. "
         "Cada palpite no app fecha 5 minutos antes do jogo.</p>"
     )
     parts.append("</body></html>")

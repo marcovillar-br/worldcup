@@ -108,6 +108,11 @@ class Edition(BaseModel):
     # vencedores de disputas de pênaltis por jogo de KO (match_id -> seleção canônica), capturados
     # à mão quando a fonte oficial ainda não tem (latência). De shootouts.csv se existir (ENG-30).
     shootouts: dict[int, str] = Field(default_factory=dict)
+    # placar da **disputa de pênaltis** (match_id -> (mandante, visitante)), das colunas opcionais
+    # pen_home/pen_away do MESMO shootouts.csv (ENG-59). A fonte (martj42) publica só o *vencedor*,
+    # então isto é captura manual; é **informativo** (o bolão pontua o vencedor, não o placar da
+    # disputa) e pode faltar — vencedor sem placar segue válido.
+    shootout_scores: dict[int, tuple[int, int]] = Field(default_factory=dict)
     # placar dos **90'** (tempo normal) de jogos de KO decididos por **gol na prorrogação** — nesses,
     # o placar gravado em fixtures inclui a ET e difere do 90' (ENG-45). O bolão pontua o slot de 90'
     # contra o tempo normal, então guardamos o 90' aqui (match_id -> (mandante, visitante)). De
@@ -162,8 +167,16 @@ class Edition(BaseModel):
         ]
         future = {f.match_id for f in self.fixtures if f.date >= cutoff}
         shootouts = {mid: w for mid, w in self.shootouts.items() if mid not in future}
+        pen_scores = {mid: s for mid, s in self.shootout_scores.items() if mid not in future}
         regulation = {mid: s for mid, s in self.regulation.items() if mid not in future}
-        return self.model_copy(update={"fixtures": fixtures, "shootouts": shootouts, "regulation": regulation})
+        return self.model_copy(
+            update={
+                "fixtures": fixtures,
+                "shootouts": shootouts,
+                "shootout_scores": pen_scores,
+                "regulation": regulation,
+            }
+        )
 
     # ---- validação estrutural ----
     @model_validator(mode="after")
@@ -272,24 +285,34 @@ def _load_totals(path: Path) -> dict[int, tuple[float, float, float]]:
     return totals
 
 
-def _load_shootouts(path: Path) -> dict[int, str]:
-    """Lê `shootouts.csv` (opcional): `match_id,winner` (vencedor dos pênaltis). Ausente ⇒ vazio.
+def _load_shootouts(path: Path) -> tuple[dict[int, str], dict[int, tuple[int, int]]]:
+    """Lê `shootouts.csv` (opcional): `match_id,winner` + as colunas **opcionais** `pen_home,pen_away`
+    (placar da disputa, ENG-59). Ausente ⇒ vazios. Devolve `(vencedores, placares)`.
 
-    Captura manual para a edição viva quando a fonte oficial ainda não trouxe o shootout (ENG-30).
-    Linhas sem vencedor são ignoradas; o nome é normalizado para o canônico.
+    Captura manual para a edição viva quando a fonte oficial ainda não trouxe o shootout (ENG-30) —
+    e, no caso do placar, **sempre**: a fonte (martj42) só publica `winner`/`first_shooter`, nunca o
+    placar da disputa. Linhas sem vencedor são ignoradas; o nome é normalizado para o canônico. O
+    placar é opcional e ortogonal (vencedor sem placar segue válido — arquivos antigos, sem as
+    colunas, continuam carregando). Ordem do placar: **mandante × visitante**, como toda a tabela.
     """
     if not path.exists():
-        return {}
+        return {}, {}
     from .teams import canonical
 
-    out: dict[int, str] = {}
+    winners: dict[int, str] = {}
+    scores: dict[int, tuple[int, int]] = {}
     with path.open(newline="") as fh:
         for row in csv.DictReader(fh):
             winner = (row.get("winner") or "").strip()
             if not winner:
                 continue
-            out[int(row["match_id"])] = canonical(winner)
-    return out
+            mid = int(row["match_id"])
+            winners[mid] = canonical(winner)
+            ph = (row.get("pen_home") or "").strip()
+            pa = (row.get("pen_away") or "").strip()
+            if ph and pa:
+                scores[mid] = (int(ph), int(pa))
+    return winners, scores
 
 
 def _load_regulation(path: Path) -> dict[int, tuple[int, int]]:
@@ -326,7 +349,7 @@ def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
     fixtures = _load_fixtures(directory / "fixtures.csv")
     odds = _load_odds(directory / "odds.csv")
     totals = _load_totals(directory / "odds.csv")
-    shootouts = _load_shootouts(directory / "shootouts.csv")
+    shootouts, shootout_scores = _load_shootouts(directory / "shootouts.csv")
     regulation = _load_regulation(directory / "regulation.csv")
     return Edition(
         spec=spec,
@@ -337,5 +360,6 @@ def load_edition(year: int, base_dir: Path = EDITIONS_DIR) -> Edition:
         odds=odds,
         totals=totals,
         shootouts=shootouts,
+        shootout_scores=shootout_scores,
         regulation=regulation,
     )

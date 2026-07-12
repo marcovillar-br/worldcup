@@ -176,7 +176,9 @@ def _final_ko_layers(edition: Edition, f: Fixture, home: str | None, away: str |
     Camadas: 90' decidido ⇒ `—`/`—`; empate nos 90' com gol na ET ⇒ vencedor da prorrogação (+ placar
     de 120'), pênaltis `—`; empate também aos 120' ⇒ "Vai aos pênaltis" + vencedor da disputa
     (`shootouts.csv`, ou o `ko_outcome` — quem avançou de um 120' empatado **é** quem venceu nos
-    pênaltis). Sem nenhum dos dois ⇒ vazio (não afirmar desfecho sob latência da fonte).
+    pênaltis), com o **placar da disputa** entre parênteses quando capturado (ENG-59; a fonte não o
+    publica, então ele pode faltar — vencedor sem placar é válido). Sem nenhum dos dois ⇒ vazio (não
+    afirmar desfecho sob latência da fonte). Todo placar sai na ordem **mandante × visitante**.
 
     `avança`: `ko_outcome` quando a fonte o traz; senão, quem fez mais gols (a fonte preenche
     `ko_outcome` de forma inconsistente em jogo de 90' — o bracket já deriva do placar, o display
@@ -197,7 +199,9 @@ def _final_ko_layers(edition: Edition, f: Fixture, home: str | None, away: str |
         return et, "—", avanca or (display(winner) if winner else "")
     pen_winner = edition.shootouts.get(f.match_id) or f.ko_outcome  # 120' empatado ⇒ pênaltis
     if pen_winner:
-        return "Vai aos pênaltis", display(pen_winner), avanca or display(pen_winner)
+        pen = edition.shootout_scores.get(f.match_id)  # placar da disputa: opcional (ENG-59)
+        pen_txt = f"{display(pen_winner)} ({pen[0]}x{pen[1]})" if pen else display(pen_winner)
+        return "Vai aos pênaltis", pen_txt, avanca or display(pen_winner)
     return "", "", avanca  # desfecho ainda não capturado
 
 

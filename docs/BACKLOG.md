@@ -74,6 +74,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,5% do peso): mecanismo desconhecido, sem significância estatística |
 | [ENG-57](#eng-57) | P2 | model/format_engine | 🔴 | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
 | [ENG-58](#eng-58) | P1 | pipeline/apresentação | ✅ | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
+| [ENG-59](#eng-59) | P3 | dados/apresentação | 🟡 | O relatório não mostrava o **placar da disputa de pênaltis** (a fonte martj42 só publica o vencedor): colunas opcionais `pen_home,pen_away` no `shootouts.csv`, por captura manual |
 
 ---
 
@@ -2134,3 +2135,35 @@ tabela mentia. O teste novo carrega a **edição real** e passa pela costura
 de prorrogação preenchida (e `—` nos pênaltis), e as camadas de pênaltis do J96; `predict` regenera
 a tabela com J82/J99/J100 no placar dos 90'. `ruff`/`mypy`/`pytest` verdes.
 **Commit:** dc6f893
+
+## ENG-59
+**Placar da disputa de pênaltis não aparecia no relatório (a fonte não o publica)** ·
+P3 · dados/apresentação · 🟡 fazendo
+
+Fechado o ENG-58, a coluna **Pênaltis** passou a nomear o vencedor da disputa — mas não o **placar**
+dela (`4×3`). O dado não existia em lugar nenhum do projeto: a fonte martj42 publica o
+`shootouts.csv` com `date,home_team,away_team,winner,first_shooter` — **quem venceu** e quem bateu
+primeiro, nunca o placar. Não era um dado disponível e não exibido (como o `regulation.csv` no
+ENG-58); era um dado **nunca coletado**.
+
+**Correção:** duas colunas **opcionais** no `shootouts.csv` da edição — `pen_home,pen_away`, na
+ordem mandante × visitante, como todo placar da tabela. `Edition.shootout_scores` as carrega;
+`_final_ko_layers` põe o placar entre parênteses na camada de pênaltis ("Paraguai (3x4)"), e a
+legenda do HTML explica a ordem (o nome é do vencedor, o placar segue a orientação da linha).
+
+**Natureza do dado:** captura manual **por definição** (a fonte nunca vai trazê-lo), sob a regra
+`confirmar-placares-multiplas-fontes` (≥2 fontes). É **informativo**: o bolão pontua o *vencedor* da
+disputa, não o placar dela, e o modelo não treina em pênaltis — não afeta palpite, pontuação nem
+teto. Por isso o placar é **ortogonal** ao vencedor: linha com vencedor e sem placar é válida, e
+`shootouts.csv` antigos (sem as colunas) seguem carregando.
+
+**Capturado na edição 2026** (FIFA + Sky Sports/ESPN/Al Jazeera, ≥2 fontes por jogo): J74
+Alemanha 3×4 Paraguai · J75 Holanda 2×3 Marrocos · J88 Austrália 2×4 Egito · J96 Suíça 4×3 Colômbia
+(o J96 também ganhou sua linha de vencedor, que faltava).
+
+**Refs:** `edition._load_shootouts`, `edition.Edition.shootout_scores`, `edition.Edition.as_of`
+(descarta placares de jogos futuros), `pipeline._final_ko_layers`, `render.render_html` (legenda).
+**Aceite:** carga do `shootouts.csv` com e sem as colunas novas (vencedor sem placar segue válido);
+as camadas do J74/J96 saem com o placar da disputa a partir da **edição real**; a ausência do placar
+degrada para o comportamento pré-ENG-59. `ruff`/`mypy`/`pytest` verdes.
+**Commit:** —

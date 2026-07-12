@@ -74,7 +74,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,5% do peso): mecanismo desconhecido, sem significância estatística |
 | [ENG-57](#eng-57) | P2 | model/format_engine | 🔴 | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
 | [ENG-58](#eng-58) | P1 | pipeline/apresentação | ✅ | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
-| [ENG-59](#eng-59) | P3 | dados/apresentação | 🟡 | O relatório não mostrava o **placar da disputa de pênaltis** (a fonte martj42 só publica o vencedor): colunas opcionais `pen_home,pen_away` no `shootouts.csv`, por captura manual |
+| [ENG-59](#eng-59) | P3 | dados/apresentação | ✅ | O relatório não mostrava o **placar da disputa de pênaltis** (a fonte martj42 só publica o vencedor): colunas opcionais `pen_home,pen_away` no `shootouts.csv`, por captura manual |
 
 ---
 
@@ -2138,7 +2138,7 @@ a tabela com J82/J99/J100 no placar dos 90'. `ruff`/`mypy`/`pytest` verdes.
 
 ## ENG-59
 **Placar da disputa de pênaltis não aparecia no relatório (a fonte não o publica)** ·
-P3 · dados/apresentação · 🟡 fazendo
+P3 · dados/apresentação · ✅ feito
 
 Fechado o ENG-58, a coluna **Pênaltis** passou a nomear o vencedor da disputa — mas não o **placar**
 dela (`4×3`). O dado não existia em lugar nenhum do projeto: a fonte martj42 publica o
@@ -2166,4 +2166,4 @@ Alemanha 3×4 Paraguai · J75 Holanda 2×3 Marrocos · J88 Austrália 2×4 Egito
 **Aceite:** carga do `shootouts.csv` com e sem as colunas novas (vencedor sem placar segue válido);
 as camadas do J74/J96 saem com o placar da disputa a partir da **edição real**; a ausência do placar
 degrada para o comportamento pré-ENG-59. `ruff`/`mypy`/`pytest` verdes.
-**Commit:** —
+**Commit:** 67f1070

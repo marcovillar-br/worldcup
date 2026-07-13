@@ -12,8 +12,21 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-12)
+## Estado atual (atualizado em 2026-07-13)
 
+- **13/07: dia sem jogos — semifinais amanhã (14/07).** Nada a registrar (`sync-results`: 0 novos).
+  Odds re-sincronizadas (as 2 semis atualizadas; 74 jogos no `odds.csv`) e palpites regenerados com
+  snapshot do dia. **Favoritos ao título:** Espanha 28,6%, França 26,3%, Argentina 24,2%,
+  Inglaterra 20,9% — o quase-empate das 4 seguiu (nenhuma semi passa de 39% no 1×2). Os 4 jogos
+  restantes seguem `1×1` nos 90' + "vai aos pênaltis"; palpite de campeão **Espanha** (bracket
+  determinístico: França). Config inalterada: `risk 0.5` + `blend 0.8`.
+- **Correção de exibição (13/07, ENG-58): a tabela vinha mentindo sobre o mata-mata disputado.** A
+  coluna "Palpite (90')" mostrava o placar **de 120'** nos jogos decididos na prorrogação (J82 saía
+  `3×2`, foi `2×2` nos 90'; J99 `1×2`, foi `1×1`; J100 `3×1`, foi `1×1`) e, por consequência, as
+  colunas Prorrogação/Pênaltis saíam `—`, como se os jogos tivessem acabado no tempo normal. Era só
+  **apresentação** (o `regulation.csv` já estava certo e o `efficiency.py` já o usava): **pontos,
+  teto e eficiência não mudam**. Também entrou o **placar das disputas de pênaltis** (ENG-59): J74
+  Alemanha 3×4 Paraguai, J75 Holanda 2×3 Marrocos, J88 Austrália 2×4 Egito, J96 Suíça 4×3 Colômbia.
 - **100 de 104 jogos disputados — quartas encerradas.** Em 11/07 fecharam as duas últimas, **ambas
   na prorrogação**: **J99 Noruega 1×2 Inglaterra** (1×1 nos 90', Bellingham decide aos 93') e
   **J100 Argentina 3×1 Suíça** (1×1 nos 90'; Suíça com 10 desde os 72'). O tool acertou **os dois

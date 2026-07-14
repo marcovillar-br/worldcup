@@ -12,8 +12,14 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-13)
+## Estado atual (atualizado em 2026-07-14)
 
+- **14/07: dia da 1ª semifinal (J101 França × Espanha) — palpite atualizado antes do jogo.**
+  `sync-results`: 0 novos (o jogo ainda não aconteceu; seguem 100/104). Odds re-sincronizadas (as 2
+  semis) e palpites regenerados com snapshot do dia. **Favoritos ao título:** Espanha 28,9%, França
+  27,1%, Argentina 23,5%, Inglaterra 20,5% — segue o quase-empate das 4. **Pontos inalterados** (425
+  pts, 19º; líder 509) — sem jogos novos, não há eficiência a remedir. Config inalterada:
+  `risk 0.5` + `blend 0.8`.
 - **13/07: dia sem jogos — semifinais amanhã (14/07).** Nada a registrar (`sync-results`: 0 novos).
   Odds re-sincronizadas (as 2 semis atualizadas; 74 jogos no `odds.csv`) e palpites regenerados com
   snapshot do dia. **Favoritos ao título:** Espanha 28,6%, França 26,3%, Argentina 24,2%,

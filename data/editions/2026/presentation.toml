@@ -6,7 +6,7 @@
 # scripts/update_presentation_data.py; os demais (pontos, eficiencia_pct, fase, bracket_destaque)
 # exigem input do usuário ou curadoria editorial — revise-os manualmente a cada rodada.
 
-as_of = "13 jul 2026"
+as_of = "14 jul 2026"
 
 [campanha]
 jogos_disputados = 100
@@ -16,16 +16,16 @@ fase = "semifinais"
 
 [[campanha.favoritos]]
 nome = "Espanha"
-pct = 28.6
+pct = 28.9
 [[campanha.favoritos]]
 nome = "França"
-pct = 26.3
+pct = 27.1
 [[campanha.favoritos]]
 nome = "Argentina"
-pct = 24.2
+pct = 23.5
 [[campanha.favoritos]]
 nome = "Inglaterra"
-pct = 20.9
+pct = 20.5
 
 [bracket_destaque]
 selecao = "Argentina"

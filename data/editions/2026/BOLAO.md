@@ -12,8 +12,21 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-14)
+## Estado atual (atualizado em 2026-07-15)
 
+- **15/07: 2ª semifinal (J102 Inglaterra × Argentina) — palpite atualizado; 1ª semi já resolvida.**
+  `sync-results`: +1 KO (J101 **França 0×2 Espanha** → Espanha na final; 101/104). Odds
+  re-sincronizadas e palpites regenerados com snapshot do dia. **Favoritos ao título:** a vitória
+  convincente da Espanha disparou a favorita — **Espanha 62,1%**, Argentina 21,2%, Inglaterra 16,7%
+  (acabou o quase-empate das 4). J102 segue `1×1` nos 90' + pênaltis → **Inglaterra** avança;
+  final palpitada **Espanha 1×0 Inglaterra**. Config inalterada: `risk 0.5` + `blend 0.8`.
+- **Eficiência remedida (15/07):** pontos **425 (20º)**, líder **509** — gap de **84 com 3 jogos**
+  (pesos ×2/×2/×4). Foi preciso **recongelar o teto** (`--reset-ceiling`): os 100 tetos estavam
+  congelados sob **código diferente** do atual (sonda suja ENG-50 — as correções ENG-58/59 mudaram
+  a impressão digital). Pós-recongelamento: **teto 472 · eficiência 90,0%** (era 96,8% sob o teto
+  velho). ⚠️ Ainda **2 sondas sujas**: J99/J100 sem bônus de KO por latência da fonte (martj42) e
+  30 jogos com teto só reconstruído (não verificável) — o líder (509) **acima** do teto estimado
+  (472) é sintoma disso, **não** de execução ruim minha. Eficiência é estimativa (±), não cravada.
 - **14/07: dia da 1ª semifinal (J101 França × Espanha) — palpite atualizado antes do jogo.**
   `sync-results`: 0 novos (o jogo ainda não aconteceu; seguem 100/104). Odds re-sincronizadas (as 2
   semis) e palpites regenerados com snapshot do dia. **Favoritos ao título:** Espanha 28,9%, França

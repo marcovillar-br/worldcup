@@ -12,8 +12,24 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-15)
+## Estado atual (atualizado em 2026-07-16)
 
+- **16/07: as duas semifinais encerradas — só final e 3º lugar restam.** `sync-results`: +1 KO
+  (J102 **Inglaterra 1×2 Argentina**, tempo normal, sem prorrogação/pênaltis → Argentina na final;
+  102/104). Odds re-sincronizadas (76 jogos no `odds.csv`, +2 novos: 3º lugar e final) e palpites
+  regenerados com snapshot do dia. **Favoritos ao título:** virou disputa a 2 —
+  **Espanha 60,9%**, Argentina 39,1% (Inglaterra caiu do páreo). Palpites dos 2 jogos restantes:
+  3º lugar **França 2×1 Inglaterra** → avança França; final **Espanha 1×1 Argentina** (pênaltis)
+  → avança Espanha. `blend-track`: Brier blend levemente melhor que modelo puro (0,4071 vs 0,4075,
+  Δ=+0,0004); regime de empates dentro da variância (20/72 = 28% vs 24% esperado, z=+0,71 — não
+  atinge o gatilho de 2σ). Config inalterada: `risk 0.5` + `blend 0.8`.
+- **Eficiência remedida (16/07):** pontos **425 (20º)** — inalterados desde 15/07 (sem jogos novos
+  meus desde então); líder subiu para **509**. Teto do tool (congelado, ENG-34) **472 pts** →
+  **eficiência 90,0%** (igual à medição anterior — nenhum jogo novo pontuado no teto desde então).
+  🚨 **Sonda suja confirmada de novo**: líder (509) segue **acima** do teto (472) — as mesmas 2
+  sondas do dia 15/07 continuam sujas (J99/J100 sem bônus de KO por latência da fonte martj42; 30
+  jogos com teto só reconstruído). **Não é indício de execução minha abaixo do tool** — é o teto
+  subestimado por essas lacunas, não a minha jogada. Captura do teto teórico (oráculo): 35,1%.
 - **15/07: 2ª semifinal (J102 Inglaterra × Argentina) — palpite atualizado; 1ª semi já resolvida.**
   `sync-results`: +1 KO (J101 **França 0×2 Espanha** → Espanha na final; 101/104). Odds
   re-sincronizadas e palpites regenerados com snapshot do dia. **Favoritos ao título:** a vitória

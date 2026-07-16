@@ -6,27 +6,24 @@
 # scripts/update_presentation_data.py; os demais (pontos, eficiencia_pct, fase, bracket_destaque)
 # exigem input do usuário ou curadoria editorial — revise-os manualmente a cada rodada.
 
-as_of = "15 jul 2026"
+as_of = "16 jul 2026"
 
 [campanha]
-jogos_disputados = 101
+jogos_disputados = 102
 pontos = 425
 eficiencia_pct = 90.0
-fase = "semifinais"
+fase = "final"
 
 [[campanha.favoritos]]
 nome = "Espanha"
-pct = 62.1
+pct = 60.9
 [[campanha.favoritos]]
 nome = "Argentina"
-pct = 21.2
-[[campanha.favoritos]]
-nome = "Inglaterra"
-pct = 16.7
+pct = 39.1
 
 [bracket_destaque]
 selecao = "Argentina"
-jogos_para_ficar_de_olho = "<b>França × Espanha</b> (SF, 14/07), Inglaterra × Argentina (SF, 15/07)."
+jogos_para_ficar_de_olho = "<b>Espanha × Argentina</b> (final, 19/07)."
 
 [[bracket_destaque.passos]]
 fase = "SF"
@@ -35,7 +32,8 @@ pct = 49
 
 [[bracket_destaque.passos]]
 fase = "final"
-rival = "França ou Espanha"
+rival = "Espanha"
+pct = 43
 
 [validacao]
 brier_modelo = 0.407

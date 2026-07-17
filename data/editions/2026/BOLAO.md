@@ -12,8 +12,22 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-16)
+## Estado atual (atualizado em 2026-07-17)
 
+- **17/07: dia sem jogos — nada mudou no bracket.** `sync-results`: +0 jogos (102/104, os mesmos
+  de ontem). Odds re-sincronizadas (76 jogos no `odds.csv`, 2 atualizados: 3º lugar e final) e
+  palpites regenerados com snapshot do dia. **Favoritos ao título:** **Espanha 60,8%**,
+  Argentina 39,2% (variação de simulação em relação aos 60,9%/39,1% de ontem). Palpites dos 2
+  jogos restantes inalterados: 3º lugar **França 2×1 Inglaterra** (18/07) → avança França; final
+  **Espanha 1×1 Argentina** (19/07, pênaltis) → avança Espanha. Config inalterada:
+  `risk 0.5` + `blend 0.8`.
+- **Eficiência remedida (17/07):** pontos **425 (20º)**, líder **509** — inalterados desde 15/07
+  (sem jogos meus novos). Teto do tool (congelado, ENG-34) **472 pts** → **eficiência 90,0%**
+  (idêntica às duas medições anteriores; nenhum jogo novo pontuado). 🚨 **Mesma sonda suja pela 3ª
+  vez**: líder (509) segue acima do teto (472) — as 2 sondas estruturais continuam sujas (J99/J100
+  sem bônus de KO por latência da fonte martj42; 30 jogos com teto só reconstruído). **Não é
+  execução minha abaixo do tool** — teto subestimado por essas lacunas. Captura do teto teórico
+  (oráculo): 35,1%. Gap de 84 para o líder se decide nos 2 jogos restantes (pesos ×2/×4).
 - **16/07: as duas semifinais encerradas — só final e 3º lugar restam.** `sync-results`: +1 KO
   (J102 **Inglaterra 1×2 Argentina**, tempo normal, sem prorrogação/pênaltis → Argentina na final;
   102/104). Odds re-sincronizadas (76 jogos no `odds.csv`, +2 novos: 3º lugar e final) e palpites

@@ -12,8 +12,17 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-17)
+## Estado atual (atualizado em 2026-07-18)
 
+- **18/07: dia da disputa de 3º lugar (J103 França × Inglaterra) — palpite atualizado antes do
+  jogo.** `sync-results`: +0 jogos (102/104; J103 ainda não disputado na fonte). Odds
+  re-sincronizadas (76 jogos no `odds.csv`, 2 atualizados: 3º lugar e final) e palpites regenerados
+  com snapshot do dia. **Favoritos ao título:** **Espanha 61,8%**, Argentina 38,2% (variação de
+  simulação em relação aos 60,8%/39,2% de ontem). Palpites dos 2 jogos restantes inalterados:
+  3º lugar **França 2×1 Inglaterra** (49%/25%/26%) → avança França; final **Espanha 1×1 Argentina**
+  (42%/32%/26%, pênaltis) → avança Espanha. Config inalterada: `risk 0.5` + `blend 0.8`.
+  **Pontos inalterados** (425, 19º/20º; líder 509) — sem jogos meus novos, não há eficiência a
+  remedir.
 - **17/07: dia sem jogos — nada mudou no bracket.** `sync-results`: +0 jogos (102/104, os mesmos
   de ontem). Odds re-sincronizadas (76 jogos no `odds.csv`, 2 atualizados: 3º lugar e final) e
   palpites regenerados com snapshot do dia. **Favoritos ao título:** **Espanha 60,8%**,

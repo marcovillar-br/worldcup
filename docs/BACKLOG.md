@@ -77,7 +77,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-59](#eng-59) | P3 | dados/apresentação | ✅ | O relatório não mostrava o **placar da disputa de pênaltis** (a fonte martj42 só publica o vencedor): colunas opcionais `pen_home,pen_away` no `shootouts.csv`, por captura manual |
 | [ENG-60](#eng-60) | P2 | eficiência/arquitetura | ✅ | Núcleo do `efficiency.py` (682 linhas de lógica de pontuação/teto) vive fora do pacote — fora do mypy e da cobertura; foi o palco do ENG-48 |
 | [ENG-61](#eng-61) | P2 | sync/dados | ✅ | `sync-results` confia na fonte única sem portão de integridade: correção retroativa (ou linha adulterada) da base martj42 entra silenciosa no refit |
-| [ENG-62](#eng-62) | P3 | format_engine/observabilidade | 🔴 | P(título) reportada com resolução (0,1 p.p.) abaixo do ruído de Monte Carlo (~0,7 p.p. em 5000 sims) — campanha narra variação de simulação como se fosse sinal |
+| [ENG-62](#eng-62) | P3 | format_engine/observabilidade | ✅ | P(título) reportada com resolução (0,1 p.p.) abaixo do ruído de Monte Carlo (~0,7 p.p. em 5000 sims) — campanha narra variação de simulação como se fosse sinal |
 | [ENG-63](#eng-63) | P2 | eficiência/dados | ✅ | KO decidido por gol na ET com `ko_outcome` vazio: `_actual_ko_outcome` devolve "sem desfecho" quando a fonte ingere o jogo — sonda acusa contradição (J99/J100) e o bônus fica fora do teto |
 
 ---
@@ -2239,7 +2239,7 @@ sync, por design, nunca corrigiria sozinho.
 
 ## ENG-62
 **P(título) reportada além da resolução do instrumento: 0,1 p.p. de precisão com ~0,7 p.p. de
-ruído de Monte Carlo** · P3 · format_engine/observabilidade · 🔴 todo
+ruído de Monte Carlo** · P3 · format_engine/observabilidade · ✅ feito
 
 Com `n_sims=5000`, o erro-padrão de uma probabilidade ~50% é `√(0,5·0,5/5000) ≈ 0,7 p.p.` — e o
 resumo imprime "Espanha 61,2%". Efeito documentado no `BOLAO.md`: dias seguidos narrando
@@ -2255,7 +2255,12 @@ P(título) no resumo/tabela, calibrando o leitor; (b) elevar as sims só do head
 **Aceite:** o resumo de campeão sai com incerteza explícita (ou com sims elevadas a ponto de o
 IC95 ficar ≤ ±0,2 p.p.); teste cobrindo o formato novo; tempo total do `predict` não cresce mais
 que ~50%. `ruff`/`mypy`/`pytest` verdes.
-**Commit:** —
+**Como fechou:** pela via (a) — incerteza explícita, sem elevar sims (tempo do `predict`
+inalterado, folga sobre o teto de ~50%). `format_engine.mc_ci95` (meia-largura binomial ×1,96) +
+`n_sims` em `SimulationResult`/`PredictionRun`; console, Markdown e HTML mostram "60,7% ±1,4"
+com o nº de sims no cabeçalho. `n_sims=0` (chamador antigo) degrada para o formato sem barra.
+Testes do helper e das três superfícies.
+**Commit:** 34dd88f
 
 ## ENG-63
 **KO decidido por gol na ET com `ko_outcome` vazio: desfecho real invisível para a eficiência —

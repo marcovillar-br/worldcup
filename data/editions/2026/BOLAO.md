@@ -23,8 +23,9 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   Argentina 38,8%. Palpite da final inalterado: **Espanha 1×1 Argentina** (42%/32%/26%),
   prorrogação empatada → pênaltis → **avança Espanha**. `blend-track` (49 jogos com odds): Brier
   blend 0,4071 vs modelo 0,4075 — blend marginalmente melhor; regime de empates z=+0,71
-  (variância, não agir). Config inalterada: `risk 0.5` + `blend 0.8`. **Pontos:** aguardando
-  atualização pós-J103 (a medir com efficiency.py quando o usuário passar os pontos).
+  (variância, não agir). Config inalterada: `risk 0.5` + `blend 0.8`. **Pontos: 425, 20º**
+  (líder 509) — J103 não rendeu ponto (palpite França 2×1, real 4×6); eficiência 90,0%
+  (ver Histórico 19/07).
 - **18/07: dia da disputa de 3º lugar (J103 França × Inglaterra) — palpite atualizado antes do
   jogo.** `sync-results`: +0 jogos (102/104; J103 ainda não disputado na fonte). Odds
   re-sincronizadas (76 jogos no `odds.csv`, 2 atualizados: 3º lugar e final) e palpites regenerados
@@ -380,7 +381,18 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
-- 2026-07-08
+- 2026-07-19
+  — **Eficiência (103 jogos): 90,0% do teto do tool** (seus 425 / teto 472, as-of risk 0.5 +
+  blend 0.8; teto congelado ENG-34, 73 jogos de snapshot real). **20º** (caiu de 19º sem perder
+  ponto — J103 zerou p/ você e alguém te passou). Oráculo 1230; captura do tool 38,4%.
+  **Líder 509 ACIMA do teto (472)** — sondas ENG-50 rodadas antes de interpretar: (a) latência
+  de J99/J100 investigada e **inócua**: os dois foram decididos por gol na ET e o tool palpitava
+  pênaltis nas duas manhãs — camada errada, bônus zero mesmo quando a fonte atualizar; (b) 30
+  jogos só reconstruídos seguem não-verificáveis, mas no subconjunto verificável a reconstrução
+  **superestima** (+15), então subestimação ali é improvável. Sondas limpas ⇒ leitura legítima:
+  o líder capturou variância de placar exato que o tool não tinha (ele não segue o tool; o teto
+  só limita quem segue). Gap de 84 com 1 jogo (final ×4) — matematicamente aberto só com placar
+  exato + bônus e o líder zerando; na prática, encerrado.
   — **Eficiência (96 jogos): 102,6% do teto do tool** (seus 397 / teto 387, as-of risk 0.5 +
   blend 0.8) — **primeira vez acima de 100% de forma mais folgada**, indicando sorte de placar
   exato a seu favor, não só execução em linha. **Caiu para 17º** (de 13º) apesar da eficiência

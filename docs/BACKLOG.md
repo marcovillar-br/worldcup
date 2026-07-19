@@ -75,9 +75,10 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-57](#eng-57) | P2 | model/format_engine | 🔴 | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
 | [ENG-58](#eng-58) | P1 | pipeline/apresentação | ✅ | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
 | [ENG-59](#eng-59) | P3 | dados/apresentação | ✅ | O relatório não mostrava o **placar da disputa de pênaltis** (a fonte martj42 só publica o vencedor): colunas opcionais `pen_home,pen_away` no `shootouts.csv`, por captura manual |
-| [ENG-60](#eng-60) | P2 | eficiência/arquitetura | 🔴 | Núcleo do `efficiency.py` (682 linhas de lógica de pontuação/teto) vive fora do pacote — fora do mypy e da cobertura; foi o palco do ENG-48 |
+| [ENG-60](#eng-60) | P2 | eficiência/arquitetura | ✅ | Núcleo do `efficiency.py` (682 linhas de lógica de pontuação/teto) vive fora do pacote — fora do mypy e da cobertura; foi o palco do ENG-48 |
 | [ENG-61](#eng-61) | P2 | sync/dados | ✅ | `sync-results` confia na fonte única sem portão de integridade: correção retroativa (ou linha adulterada) da base martj42 entra silenciosa no refit |
 | [ENG-62](#eng-62) | P3 | format_engine/observabilidade | 🔴 | P(título) reportada com resolução (0,1 p.p.) abaixo do ruído de Monte Carlo (~0,7 p.p. em 5000 sims) — campanha narra variação de simulação como se fosse sinal |
+| [ENG-63](#eng-63) | P2 | eficiência/dados | 🔴 | KO decidido por gol na ET com `ko_outcome` vazio: `_actual_ko_outcome` devolve "sem desfecho" quando a fonte ingere o jogo — sonda acusa contradição (J99/J100) e o bônus fica fora do teto |
 
 ---
 
@@ -2173,7 +2174,7 @@ degrada para o comportamento pré-ENG-59. `ruff`/`mypy`/`pytest` verdes.
 
 ## ENG-60
 **Núcleo do `efficiency.py` fora do pacote: 682 linhas de lógica de pontuação/teto sem mypy nem
-cobertura** · P2 · eficiência/arquitetura · 🔴 todo
+cobertura** · P2 · eficiência/arquitetura · ✅ feito
 
 O `scripts/efficiency.py` reimplementa semântica adjacente ao `Scorer` — teto por jogo, bônus de
 KO, peso de fase, congelamento (`ceiling.csv`), sondas de anomalia — fora de `src/worldcup/`: fora
@@ -2195,7 +2196,15 @@ novos.
 CLI byte-idêntica (ou diff justificado) numa medição de regressão da edição 2026;
 `ceiling.csv` existente segue sendo lido sem recongelamento forçado. `ruff`/`mypy`/`pytest`
 verdes.
-**Commit:** —
+**Como fechou:** tudo menos o `main()` virou `worldcup.efficiency` (docstring e semântica
+preservadas); o script importa do pacote. Saída do CLI **byte-idêntica** à baseline pré-refactor
+(mesmos argumentos, mesmo `ceiling.csv` — diff vazio) e cache intacto. Os testes trocaram o hack
+de `importlib` pelo import do pacote, e o mypy — agora cobrindo o núcleo — acusou na entrada um
+`str | None` implícito no `knockout_bonus` (inócuo: `None ≡ ""` na comparação; explicitado).
+`CEILING_CODE_FILES` acompanha o move: o wrapper de CLI ficou fora da impressão digital
+(impressão não decide teto). No processo, a sonda de contradição expôs um bug pré-existente de
+medição — registrado como [[ENG-63]] (ver detalhe), não corrigido aqui para manter o move puro.
+**Commit:** 104aada
 
 ## ENG-61
 **`sync-results` confia na fonte única sem portão de integridade: mudança retroativa da base
@@ -2246,4 +2255,34 @@ P(título) no resumo/tabela, calibrando o leitor; (b) elevar as sims só do head
 **Aceite:** o resumo de campeão sai com incerteza explícita (ou com sims elevadas a ponto de o
 IC95 ficar ≤ ±0,2 p.p.); teste cobrindo o formato novo; tempo total do `predict` não cresce mais
 que ~50%. `ruff`/`mypy`/`pytest` verdes.
+**Commit:** —
+
+## ENG-63
+**KO decidido por gol na ET com `ko_outcome` vazio: desfecho real invisível para a eficiência —
+sonda acusa contradição e o bônus fica fora do teto** · P2 · eficiência/dados · 🔴 todo
+
+`efficiency._actual_ko_outcome` deriva o desfecho da camada de ET de um KO empatado nos 90'
+assim: shootout na fonte ⇒ pênaltis; sem shootout ⇒ vencedor = `ko_outcome` do fixture. Mas o
+`sync` só preenche `ko_outcome` quando o placar consolidado **empata** (aí precisa dizer quem
+avançou); num KO decidido por **gol na prorrogação** o consolidado já decide (J99 `1×2`, J100
+`3×1`) e o campo fica **vazio** — então a função devolve "sem desfecho" (`None, None`).
+
+Enquanto a fonte martj42 não tinha os jogos, o caminho nunca rodava (latência, sonda ✗ honesta).
+Em 19/07 o `fetch` trouxe J99/J100 e o sintoma virou **contradição reportada** (ENG-49): a edição
+afirma gol na ET (`regulation.csv`) e a "fonte não confirma" — mas a fonte confirma, sim; é o
+leitor que ignora o placar consolidado do fixture, que contém o vencedor. Efeito no teto: o bônus
+de ET desses jogos fica fora (hoje inócuo — o tool palpitou pênaltis nas duas manhãs, bônus 0 de
+qualquer forma —, mas só por sorte do caso).
+
+**Correção proposta:** em `_actual_ko_outcome` (ou no chamador `asof_scores`), quando o 90' é
+empate, a fonte tem o jogo sem shootout e `ko_outcome` está vazio, derivar o vencedor do placar
+**consolidado** do fixture (`home_goals`/`away_goals` — que difere do 90' exatamente porque houve
+gol na ET). `Edition.score_90`/`regulation.csv` garantem os dois placares.
+
+**Refs:** `efficiency._actual_ko_outcome`, `efficiency.asof_scores` (passa `real.ko_outcome`),
+`efficiency.cross_source_ko_check` (a sonda que gritou), `sync.sync_results` (quem deixa
+`ko_outcome` vazio nos decididos pelo consolidado).
+**Aceite:** teste de regressão com KO de gol na ET e `ko_outcome` vazio ⇒ `("home"/"away", None)`;
+na edição 2026 real, a sonda de contradição volta a zero e o canário reporta bônus creditado em
+7 de 7 KOs empatados nos 90'. `ruff`/`mypy`/`pytest` verdes.
 **Commit:** —

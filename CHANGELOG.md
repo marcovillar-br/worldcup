@@ -13,6 +13,13 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes, 
 no mata-mata (ENG-12..ENG-59).
 
 ### Adicionado
+- **Portão de integridade da base histórica** (ENG-61): antes de sobrescrever
+  `data/historical_results.csv`, o `fetch` compara a base recém-baixada com a cópia local anterior
+  (`fetch_data.base_diff`, chave `(data, par)` — a mesma do dedup do ajuste) e **reporta** linhas
+  históricas alteradas/removidas pela fonte, que antes entravam no refit em silêncio. Churn na
+  janela recente (14 dias) e linhas novas são só contados; report-only, o download nunca é
+  bloqueado. No primeiro disparo real, o portão expôs o J91 gravado com o placar pré-correção da
+  fonte (Brasil `0×2` → `1×2` Noruega), corrigido na sequência via `record`.
 - **Placar da disputa de pênaltis no relatório** (ENG-59): o `shootouts.csv` da edição ganha as
   colunas **opcionais** `pen_home,pen_away` (ordem mandante × visitante), carregadas em
   `Edition.shootout_scores`, e a coluna Pênaltis passa a mostrar "Paraguai (3x4)" em vez de só

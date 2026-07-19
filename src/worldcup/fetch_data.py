@@ -13,6 +13,7 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
 
@@ -296,12 +297,132 @@ def _merge_penalty_winner(games: pd.DataFrame, shootouts: pd.DataFrame | None) -
     return pd.Series(merged["winner"].fillna("").to_numpy(), index=games.index)
 
 
+# --------------------------------------------------- portão de integridade da base (ENG-61)
+@dataclass(frozen=True)
+class BaseDiff:
+    """Relatório (report-only) do que a fonte mudou em relação à base local anterior.
+
+    A regra `confirmar-placares-multiplas-fontes` protege o `record` manual; este relatório cobre o
+    caminho automático: uma correção (ou adulteração) **retroativa** na fonte mudaria o treino do
+    modelo em silêncio. Mudança sem ação do usuário vira relatório, não silêncio — o mesmo
+    princípio do teto congelado (ENG-34), aplicado à entrada. Não bloqueia o fetch.
+    """
+
+    changed: list[str]  # linhas históricas (fora da janela recente) cujo conteúdo mudou
+    removed: list[str]  # linhas históricas que sumiram da fonte
+    recent_changed: int  # mudanças/remoções na janela recente (churn esperado — só contado)
+    added: int  # linhas novas (crescimento normal — só contado)
+
+    @property
+    def is_empty(self) -> bool:
+        """Sem mudança retroativa reportável (churn recente e adições não contam)."""
+        return not self.changed and not self.removed
+
+
+_DIFF_PAYLOAD = [c for c in OUTPUT_COLUMNS if c != "date"]
+_DIFF_LOG_CAP = 20  # máximo de linhas detalhadas no log (o resto vira "e mais N")
+
+
+def _canon_cell(value: object) -> str:
+    """Célula em forma canônica p/ comparação estável através do round-trip CSV (NaN≡"", 2.0≡2)."""
+    if pd.isna(value):
+        return ""
+    if isinstance(value, np.bool_ | bool):
+        return str(bool(value))
+    if isinstance(value, float) and value.is_integer():
+        return str(int(value))
+    return str(value)
+
+
+def _keyed_payloads(df: pd.DataFrame) -> dict[tuple[str, frozenset[str]], list[tuple[str, ...]]]:
+    """Linhas agrupadas pela chave (data, par não-ordenado) — a mesma do dedup do ajuste (ENG-41)."""
+    out: dict[tuple[str, frozenset[str]], list[tuple[str, ...]]] = {}
+    frame = df.reindex(columns=OUTPUT_COLUMNS)
+    for row in frame.itertuples(index=False):
+        date = pd.Timestamp(row.date).strftime("%Y-%m-%d")
+        key = (date, frozenset((str(row.home_team), str(row.away_team))))
+        payload = tuple(_canon_cell(v) for v in row[1:])  # OUTPUT_COLUMNS sem a data
+        out.setdefault(key, []).append(payload)
+    return out
+
+
+def _describe_change(date: str, old: list[tuple[str, ...]], new: list[tuple[str, ...]]) -> str:
+    home, away = old[0][0], old[0][1]
+    if len(old) == 1 and len(new) == 1:
+        diffs = [f"{c} {o}→{n}" for c, o, n in zip(_DIFF_PAYLOAD, old[0], new[0], strict=True) if o != n]
+        return f"{date} {home} × {away}: {', '.join(diffs)}"
+    return f"{date} {home} × {away}: conjunto de linhas duplicadas divergente"
+
+
+def base_diff(old: pd.DataFrame, new: pd.DataFrame, *, recent_days: int = 14) -> BaseDiff:
+    """Compara a base local anterior com a recém-baixada e reporta mudanças retroativas (ENG-61).
+
+    A janela dos últimos `recent_days` (relativos à data mais nova da base **anterior**) é churn
+    esperado — a fonte corrige placares recentes rotineiramente — e entra só como contagem
+    (`recent_changed`). Fora dela, linha alterada ou removida é anomalia: vai nominalmente para o
+    relatório. Linhas novas (`added`) são crescimento normal e nunca disparam o relatório.
+    """
+    old_k = _keyed_payloads(old)
+    new_k = _keyed_payloads(new)
+    added = sum(len(v) for k, v in new_k.items() if k not in old_k)
+    if not old_k:
+        return BaseDiff(changed=[], removed=[], recent_changed=0, added=added)
+    boundary = (pd.Timestamp(max(k[0] for k in old_k)) - pd.Timedelta(days=recent_days)).strftime("%Y-%m-%d")
+    changed: list[str] = []
+    removed: list[str] = []
+    recent = 0
+    for key, payloads in old_k.items():
+        date, _pair = key
+        if key not in new_k:
+            if date > boundary:
+                recent += 1
+            else:
+                h, a = payloads[0][0], payloads[0][1]
+                hs, as_ = payloads[0][2], payloads[0][3]
+                removed.append(f"{date} {h} {hs}×{as_} {a} removido da fonte")
+        elif sorted(payloads) != sorted(new_k[key]):
+            if date > boundary:
+                recent += 1
+            else:
+                changed.append(_describe_change(date, payloads, new_k[key]))
+    return BaseDiff(changed=sorted(changed), removed=sorted(removed), recent_changed=recent, added=added)
+
+
+def _report_base_diff(previous_path: Path, norm: pd.DataFrame) -> None:
+    """Loga o relatório de integridade antes de sobrescrever a base local (report-only)."""
+    try:
+        previous = load_historical(previous_path)
+    except Exception as err:  # base anterior ilegível não pode bloquear o fetch — mas fica registrado
+        logger.warning("Base anterior ilegível (%s); relatório de integridade (ENG-61) pulado.", err)
+        return
+    diff = base_diff(previous, norm)
+    if diff.is_empty:
+        logger.info("Integridade da base (ENG-61): sem mudança retroativa (%d linha(s) nova(s)).", diff.added)
+        return
+    lines = diff.changed + diff.removed
+    logger.warning(
+        "⚠️  A fonte mudou %d linha(s) HISTÓRICA(s) da base (%d alterada(s), %d removida(s)) — "
+        "mudança retroativa entra no ajuste do modelo; confira se é correção legítima (ENG-61):",
+        len(lines),
+        len(diff.changed),
+        len(diff.removed),
+    )
+    for line in lines[:_DIFF_LOG_CAP]:
+        logger.warning("   • %s", line)
+    if len(lines) > _DIFF_LOG_CAP:
+        logger.warning("   … e mais %d linha(s).", len(lines) - _DIFF_LOG_CAP)
+
+
 def fetch(
     urls: list[str] | None = None,
     cutoff: str = DEFAULT_CUTOFF,
     out_path: Path = HISTORICAL_CSV,
 ) -> Path:
-    """Baixa, normaliza e grava a base (resultados + pênaltis + 90'). Retorna o caminho salvo."""
+    """Baixa, normaliza e grava a base (resultados + pênaltis + 90'). Retorna o caminho salvo.
+
+    Antes de sobrescrever uma base existente, compara com ela e **reporta** mudanças retroativas
+    da fonte (`base_diff`, ENG-61) — report-only: o fetch nunca é bloqueado.
+    """
     df = download_from_urls(urls or [DEFAULT_URL])
     shootouts = _try_download_shootouts()
     goalscorers = _try_download_goalscorers()
@@ -309,6 +430,8 @@ def fetch(
     et = int(((norm["reg_home_score"] != norm["home_score"]) | (norm["reg_away_score"] != norm["away_score"])).sum())
     logger.info("Placar dos 90' reconstruído: %d jogo(s) com gol na prorrogação corrigido(s) (ENG-54).", et)
     out_path.parent.mkdir(parents=True, exist_ok=True)
+    if out_path.exists():
+        _report_base_diff(out_path, norm)
     norm.to_csv(out_path, index=False)
     return out_path
 

@@ -105,7 +105,10 @@ ficam fora do git (`.gitignore`); só os runs reais (`--archive`) são versionad
 - `src/worldcup/` — código (modelo, pontuação, simulação, CLI).
 - `data/editions/<ano>/` — spec do formato + jogos + pontuação de cada edição (orientado a dados),
   mais `BOLAO.md`, o diário de campanha do bolão (decisões não rederiváveis dos dados).
-- `data/historical_results.csv` — base histórica compartilhada, baixada pelo `fetch-data`.
+- `data/historical_results.csv` — base histórica compartilhada, baixada pelo `fetch-data`. Ao
+  re-baixar, o portão de integridade (ENG-61) compara com a cópia anterior e **avisa** se a fonte
+  alterou/removeu linhas históricas (mudança retroativa afetaria o ajuste em silêncio); é
+  report-only — o download nunca é bloqueado.
 - `docs/SPEC.md` — **especificação técnica e metodologia**
   (matemática do modelo, fórmula de pontuação, simulação, validação) com derivações e exemplos
   numéricos.

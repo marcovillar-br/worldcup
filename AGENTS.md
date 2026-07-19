@@ -66,8 +66,13 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   `home_goals`/`away_goals` cru para esses fins.
 - `teams.py` — nome canônico (inglês, do dataset) ↔ exibição em português.
 - `fetch_data.py` — baixa `results.csv`/`shootouts.csv`/`goalscorers.csv` (martj42), normaliza →
-  `data/historical_results.csv`. `score_90(base)` (ENG-54) é a **fonte única** de "o que aconteceu
-  nos 90'" na base histórica — o gêmeo do `Edition.score_90` para os jogos de fora da edição. A
+  `data/historical_results.csv`. **Portão de integridade** (ENG-61): antes de sobrescrever a base
+  local, `base_diff` compara com ela (chave = (data, par), a mesma do dedup do ajuste) e **reporta**
+  linha histórica alterada/removida pela fonte — mudança retroativa entra no refit em silêncio sem
+  isso; churn na janela recente (14d) e linhas novas são só contados. Report-only, nunca bloqueia.
+  No 1º disparo real (19/07) pegou o J91 gravado com placar pré-correção da fonte (`0×2` → `1×2`).
+  `score_90(base)` (ENG-54) é a **fonte única** de "o que aconteceu nos 90'" na base histórica —
+  o gêmeo do `Edition.score_90` para os jogos de fora da edição. A
   fonte grava o placar **consolidado** (a final de 2022 aparece `3×3`, foi `2×2` nos 90'), então
   `regulation_scores` reconstrói o tempo normal subtraindo os gols de `minute > 90` do
   `goalscorers.csv` — a fonte achata o acréscimo dos 90' no minuto 90, o que torna `> 90`

@@ -291,3 +291,122 @@ def test_regulation_score_survives_an_unplayed_game():
     assert (played["reg_home_score"], played["reg_away_score"]) == (0, 0)  # Croácia×Brasil: 90' reconstruído
     assert pd.isna(unplayed["reg_home_score"])  # jogo futuro: sem placar, sem 90' a reconstruir
     assert pd.isna(unplayed["reg_away_score"])
+
+
+# --------------------------------------------------- portão de integridade da base (ENG-61)
+def _base_frame(rows: str):
+    import pandas as pd
+
+    header = (
+        "date,home_team,away_team,home_score,away_score,tournament,neutral,"
+        "penalty_winner,reg_home_score,reg_away_score\n"
+    )
+    return pd.read_csv(StringIO(header + rows), keep_default_na=False, na_values=[""])
+
+
+_OLD_BASE = (
+    "2010-06-12,Brazil,France,2,1,FIFA World Cup,True,,2,1\n"
+    "2014-07-08,Germany,Brazil,7,1,FIFA World Cup,False,,7,1\n"
+    "2026-06-11,Mexico,South Africa,2,0,FIFA World Cup,False,,2,0\n"  # dentro da janela recente
+)
+
+
+def test_base_diff_identical_bases_report_nothing():
+    diff = fetch_data.base_diff(_base_frame(_OLD_BASE), _base_frame(_OLD_BASE))
+    assert diff.is_empty
+    assert (diff.recent_changed, diff.added) == (0, 0)
+
+
+def test_base_diff_flags_altered_historical_row():
+    new = _base_frame(_OLD_BASE.replace("2010-06-12,Brazil,France,2,1", "2010-06-12,Brazil,France,3,1"))
+    diff = fetch_data.base_diff(_base_frame(_OLD_BASE), new)
+    assert not diff.is_empty
+    assert len(diff.changed) == 1
+    assert not diff.removed
+    assert "2010-06-12" in diff.changed[0]
+    assert "home_score 2→3" in diff.changed[0]
+
+
+def test_base_diff_flags_removed_historical_row():
+    new = _base_frame(_OLD_BASE.replace("2014-07-08,Germany,Brazil,7,1,FIFA World Cup,False,,7,1\n", ""))
+    diff = fetch_data.base_diff(_base_frame(_OLD_BASE), new)
+    assert not diff.is_empty
+    assert len(diff.removed) == 1
+    assert not diff.changed
+    assert "Germany" in diff.removed[0]
+    assert "removido" in diff.removed[0]
+
+
+def test_base_diff_counts_recent_churn_without_listing_it():
+    # correção dentro da janela (14 dias da data mais nova da base anterior) é churn esperado
+    new = _base_frame(_OLD_BASE.replace("2026-06-11,Mexico,South Africa,2,0", "2026-06-11,Mexico,South Africa,2,1"))
+    diff = fetch_data.base_diff(_base_frame(_OLD_BASE), new)
+    assert diff.is_empty  # não dispara o relatório...
+    assert diff.recent_changed == 1  # ...mas é contado
+
+
+def test_base_diff_added_rows_never_trigger_the_report():
+    new = _base_frame(_OLD_BASE + "2018-07-15,France,Croatia,4,2,FIFA World Cup,True,,4,2\n")
+    diff = fetch_data.base_diff(_base_frame(_OLD_BASE), new)
+    assert diff.is_empty
+    assert diff.added == 1
+
+
+def test_base_diff_is_orientation_sensitive_but_csv_roundtrip_stable(tmp_path):
+    # o round-trip CSV (int→float→"2.0", NaN→"") não pode fabricar diferenças espúrias
+    import pandas as pd
+
+    old = _base_frame(_OLD_BASE)
+    path = tmp_path / "base.csv"
+    old.to_csv(path, index=False)
+    reloaded = pd.read_csv(path)
+    reloaded["date"] = pd.to_datetime(reloaded["date"])  # como o load_historical devolve
+    assert fetch_data.base_diff(reloaded, old).is_empty
+
+
+def _fetch_with_fake_source(monkeypatch, tmp_path, csv_body: str):
+    """Roda o fetch() real com a fonte simulada — a costura, não uma entrada fabricada (ENG-48)."""
+    monkeypatch.setattr(fetch_data, "download_from_urls", _make_fake_raw(csv_body))
+    monkeypatch.setattr(fetch_data, "_try_download_shootouts", lambda: None)
+    monkeypatch.setattr(fetch_data, "_try_download_goalscorers", lambda: None)
+    return fetch_data.fetch(out_path=tmp_path / "historical.csv")
+
+
+_SOURCE_V1 = (
+    "date,home_team,away_team,home_score,away_score,tournament,neutral\n"
+    "2010-06-12,Brazil,France,2,1,FIFA World Cup,True\n"
+    "2014-07-08,Germany,Brazil,7,1,FIFA World Cup,False\n"
+    "2026-06-11,Mexico,South Africa,2,0,FIFA World Cup,False\n"
+)
+
+
+def test_fetch_reports_retroactive_change_and_removal_but_completes(monkeypatch, tmp_path, caplog):
+    import logging
+
+    _fetch_with_fake_source(monkeypatch, tmp_path, _SOURCE_V1)
+    tampered = (  # linha histórica alterada (Brasil 2×1 → 0×1), o 7×1 removido, uma linha nova
+        "date,home_team,away_team,home_score,away_score,tournament,neutral\n"
+        "2010-06-12,Brazil,France,0,1,FIFA World Cup,True\n"
+        "2010-06-13,Spain,Portugal,1,0,FIFA World Cup,True\n"
+        "2026-06-11,Mexico,South Africa,2,0,FIFA World Cup,False\n"
+    )
+    with caplog.at_level(logging.WARNING, logger="worldcup.fetch_data"):
+        path = _fetch_with_fake_source(monkeypatch, tmp_path, tampered)
+    assert path.exists()  # report-only: o fetch completa e sobrescreve
+    log = caplog.text
+    assert "ENG-61" in log
+    assert "Brazil × France" in log  # alterada, acusada...
+    assert "home_score 2→0" in log  # ...com o campo nomeado
+    assert "Germany 7×1 Brazil removido da fonte" in log  # removida, acusada
+    assert "Spain" not in log  # linha nova não é anomalia
+
+
+def test_fetch_unchanged_source_reports_nothing_and_rewrites_identical(monkeypatch, tmp_path, caplog):
+    import logging
+
+    first = _fetch_with_fake_source(monkeypatch, tmp_path, _SOURCE_V1)
+    before = first.read_bytes()
+    with caplog.at_level(logging.WARNING, logger="worldcup.fetch_data"):
+        again = _fetch_with_fake_source(monkeypatch, tmp_path, _SOURCE_V1)
+    assert again.read_bytes() == before  # saída idêntica
+    assert "ENG-61" not in caplog.text  # relatório vazio ⇒ silêncio

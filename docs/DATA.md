@@ -60,6 +60,11 @@ termos próprios, tratados aqui.
 
 - **Resultados:** sob demanda, via `fetch-data`/`sync-results` (a fonte atualiza poucas horas após
   cada jogo). Sem agendamento automático (decisão de campanha: execução manual — `BOLAO.md`).
+  **Portão de integridade** (`fetch_data.base_diff`, ENG-61): antes de sobrescrever a base local,
+  o `fetch` compara com a cópia anterior e **reporta** linhas históricas alteradas/removidas pela
+  fonte (a martj42 corrige linhas retroativamente de tempos em tempos, e a correção entraria no
+  ajuste em silêncio). Report-only: o download nunca é bloqueado; churn dos últimos 14 dias e
+  linhas novas são só contados.
 - **Odds:** sob demanda, antes de cada rodada, via `fetch_odds.py`.
 
 ## 4. Política de versionamento (o que entra no git)

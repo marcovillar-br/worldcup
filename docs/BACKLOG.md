@@ -75,6 +75,9 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-57](#eng-57) | P2 | model/format_engine | 🔴 | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
 | [ENG-58](#eng-58) | P1 | pipeline/apresentação | ✅ | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
 | [ENG-59](#eng-59) | P3 | dados/apresentação | ✅ | O relatório não mostrava o **placar da disputa de pênaltis** (a fonte martj42 só publica o vencedor): colunas opcionais `pen_home,pen_away` no `shootouts.csv`, por captura manual |
+| [ENG-60](#eng-60) | P2 | eficiência/arquitetura | 🔴 | Núcleo do `efficiency.py` (682 linhas de lógica de pontuação/teto) vive fora do pacote — fora do mypy e da cobertura; foi o palco do ENG-48 |
+| [ENG-61](#eng-61) | P2 | sync/dados | 🔴 | `sync-results` confia na fonte única sem portão de integridade: correção retroativa (ou linha adulterada) da base martj42 entra silenciosa no refit |
+| [ENG-62](#eng-62) | P3 | format_engine/observabilidade | 🔴 | P(título) reportada com resolução (0,1 p.p.) abaixo do ruído de Monte Carlo (~0,7 p.p. em 5000 sims) — campanha narra variação de simulação como se fosse sinal |
 
 ---
 
@@ -2167,3 +2170,73 @@ Alemanha 3×4 Paraguai · J75 Holanda 2×3 Marrocos · J88 Austrália 2×4 Egito
 as camadas do J74/J96 saem com o placar da disputa a partir da **edição real**; a ausência do placar
 degrada para o comportamento pré-ENG-59. `ruff`/`mypy`/`pytest` verdes.
 **Commit:** 67f1070
+
+## ENG-60
+**Núcleo do `efficiency.py` fora do pacote: 682 linhas de lógica de pontuação/teto sem mypy nem
+cobertura** · P2 · eficiência/arquitetura · 🔴 todo
+
+O `scripts/efficiency.py` reimplementa semântica adjacente ao `Scorer` — teto por jogo, bônus de
+KO, peso de fase, congelamento (`ceiling.csv`), sondas de anomalia — fora de `src/worldcup/`: fora
+do mypy estrito, do gate de cobertura e da rede de testes principal. Não é risco hipotético: o
+pior bug do projeto (ENG-48, bônus de KO nunca creditado por chave `datetime64` vs `str`,
+invisível por 10 dias) aconteceu exatamente nessa costura script↔pacote. O `code_fingerprint`
+(ENG-50) mitiga o drift, mas é sintoma do acoplamento por fora, não cura.
+
+**Correção proposta:** promover o núcleo de medição (teto, congelamento, sondas) a um módulo do
+pacote (ex.: `worldcup.efficiency`), sob mypy/cobertura; `scripts/efficiency.py` vira wrapper
+fino de CLI (parsing + impressão). Os testes da costura `history/`→`ceiling.csv` passam a chamar
+as funções reais (disciplina ENG-48). Recalcular o escopo do `code_fingerprint` para os módulos
+novos.
+
+**Refs:** `scripts/efficiency.py` (núcleo atual), `scoring.Scorer.weighted_points`,
+`scoring.Scorer.knockout_bonus`, `fetch_data.score_90`, `edition.Edition.score_90`.
+**Aceite:** lógica de teto/congelamento/sondas importável de `worldcup.*` e coberta por
+`uv run mypy` e `pytest` (cobertura conta); o script remanescente só orquestra I/O; saída do
+CLI byte-idêntica (ou diff justificado) numa medição de regressão da edição 2026;
+`ceiling.csv` existente segue sendo lido sem recongelamento forçado. `ruff`/`mypy`/`pytest`
+verdes.
+**Commit:** —
+
+## ENG-61
+**`sync-results` confia na fonte única sem portão de integridade: mudança retroativa da base
+entra silenciosa no refit** · P2 · sync/dados · 🔴 todo
+
+A regra `confirmar-placares-multiplas-fontes` protege o `record` manual, mas o caminho automático
+(`sync-results`/`fetch-data`) reescreve `data/historical_results.csv` a partir da fonte martj42
+sem comparar com a cópia local anterior. A martj42 corrige linhas históricas de vez em quando —
+e uma correção (ou adulteração) retroativa muda o treino do modelo **sem nenhum aviso**, o mesmo
+modo de dano do incidente J64 (placar invertido contaminando refit, favoritos e chaveamento),
+só que invisível. É o princípio do teto congelado (ENG-34) aplicado à **entrada**: mudança sem
+ação do usuário deve virar relatório, não silêncio.
+
+**Correção proposta:** no fetch, diffar a base nova contra a cópia local anterior (mesma chave
+de dedup `(data, par)` do pipeline) e **reportar**: linhas históricas alteradas/removidas e
+volume anômalo de mudanças fora da janela recente. Report-only (não bloquear o sync); o log do
+`predict`/`status` ecoa o resumo quando ≠ vazio, como o `ingestion_gaps` (ENG-43).
+
+**Refs:** `fetch_data.download_and_normalize` (ponto do diff), `sync.sync_results`,
+`pipeline.build_training_frame` (chave de dedup), `pipeline.ingestion_gaps` (padrão de aviso).
+**Aceite:** teste de regressão com base anterior fixada e fonte simulada trazendo (a) linha
+histórica alterada e (b) linha removida — o sync completa e o relatório acusa ambas; base
+inalterada ⇒ relatório vazio e saída idêntica à atual. `ruff`/`mypy`/`pytest` verdes.
+**Commit:** —
+
+## ENG-62
+**P(título) reportada além da resolução do instrumento: 0,1 p.p. de precisão com ~0,7 p.p. de
+ruído de Monte Carlo** · P3 · format_engine/observabilidade · 🔴 todo
+
+Com `n_sims=5000`, o erro-padrão de uma probabilidade ~50% é `√(0,5·0,5/5000) ≈ 0,7 p.p.` — e o
+resumo imprime "Espanha 61,2%". Efeito documentado no `BOLAO.md`: dias seguidos narrando
+"60,8% → 61,8% (variação de simulação)" — prosa gasta explicando ruído abaixo da resolução. A
+seed fixa dá reprodutibilidade do run, mas qualquer mudança de entrada re-amostra o ruído junto
+com o sinal.
+
+**Correção proposta (uma das duas, ou ambas):** (a) imprimir o ±IC95 de Monte Carlo ao lado de
+P(título) no resumo/tabela, calibrando o leitor; (b) elevar as sims só do headline de campeão
+(as matrizes são cacheadas via `MatrixCache`; 50k sims custam segundos) mantendo 5000 no resto.
+
+**Refs:** `format_engine.monte_carlo`, `cli` (resumo de campeão), `render.render_markdown`.
+**Aceite:** o resumo de campeão sai com incerteza explícita (ou com sims elevadas a ponto de o
+IC95 ficar ≤ ±0,2 p.p.); teste cobrindo o formato novo; tempo total do `predict` não cresce mais
+que ~50%. `ruff`/`mypy`/`pytest` verdes.
+**Commit:** —

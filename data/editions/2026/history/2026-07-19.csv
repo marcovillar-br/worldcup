@@ -89,7 +89,7 @@ jogo,data,fase,grupo,mandante,palpite,visitante,P_mandante,P_empate,P_visitante,
 88,2026-07-03,R32,,Austrália,1x1,Egito,,,,,,Vai aos pênaltis,Egito (2x4),Egito,FINAL,1x1
 89,2026-07-04,R16,,Canadá,0x3,Marrocos,,,,,,—,—,Marrocos,FINAL,0x3
 90,2026-07-04,R16,,Paraguai,0x1,França,,,,,,—,—,França,FINAL,0x1
-91,2026-07-05,R16,,Brasil,0x2,Noruega,,,,,,—,—,Noruega,FINAL,0x2
+91,2026-07-05,R16,,Brasil,1x2,Noruega,,,,,,—,—,Noruega,FINAL,1x2
 92,2026-07-05,R16,,México,2x3,Inglaterra,,,,,,—,—,Inglaterra,FINAL,2x3
 93,2026-07-06,R16,,Portugal,0x1,Espanha,,,,,,—,—,Espanha,FINAL,0x1
 94,2026-07-06,R16,,Estados Unidos,1x4,Bélgica,,,,,,—,—,Bélgica,FINAL,1x4
@@ -102,4 +102,4 @@ jogo,data,fase,grupo,mandante,palpite,visitante,P_mandante,P_empate,P_visitante,
 101,2026-07-14,SF,,França,0x2,Espanha,,,,,,—,—,Espanha,FINAL,0x2
 102,2026-07-15,SF,,Inglaterra,1x2,Argentina,,,,,,—,—,Argentina,FINAL,1x2
 103,2026-07-18,3rd_place,,França,4x6,Inglaterra,,,,,,—,—,Inglaterra,FINAL,4x6
-104,2026-07-19,final,,Espanha,1x1,Argentina,42%,32%,26%,,,Vai aos pênaltis,Espanha,Espanha,PREVISTO,
+104,2026-07-19,final,,Espanha,1x1,Argentina,41%,32%,27%,,,Vai aos pênaltis,Espanha,Espanha,PREVISTO,

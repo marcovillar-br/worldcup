@@ -16,10 +16,10 @@ fase = "final"
 
 [[campanha.favoritos]]
 nome = "Espanha"
-pct = 61.2
+pct = 60.7
 [[campanha.favoritos]]
 nome = "Argentina"
-pct = 38.8
+pct = 39.3
 
 [bracket_destaque]
 selecao = "Argentina"
@@ -36,11 +36,11 @@ rival = "Espanha"
 pct = 43
 
 [validacao]
-brier_modelo = 0.407
+brier_modelo = 0.409
 brier_modelo_width_pct = 100
 brier_blend = 0.407
 brier_blend_width_pct = 99
 jogos_rastreados = 49
 
 [evolucao]
-melhorias_entregues = 120
+melhorias_entregues = 122

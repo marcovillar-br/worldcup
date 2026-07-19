@@ -14,6 +14,14 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Estado atual (atualizado em 2026-07-19)
 
+- **19/07 (2ª entrada): J91 corrigido — Brasil 1×2 Noruega (era 0×2).** O portão de integridade
+  novo (ENG-61) acusou no 1º disparo que a fonte corrigiu o placar em 07/07 (pênalti de Neymar
+  aos 90+10') e o `sync` — por design — nunca sobrescreve fixture preenchido. Confirmado em
+  FIFA/ESPN/Al Jazeera (≥2 fontes) e registrado via `record`. Repalpitado com snapshot: final
+  segue **Espanha 1×1 Argentina** (pênaltis → Espanha); campeão Espanha 60,7% (dentro do ruído
+  de simulação). Sem efeito em pontos/eficiência: o palpite do J91 errou o lado nas duas versões
+  do placar (0 pts em ambas).
+
 - **19/07: dia da FINAL (J104 Espanha × Argentina) — palpite atualizado antes do jogo.**
   `sync-results`: +1 jogo de KO (103/104): J103 **França 4×6 Inglaterra** — Inglaterra leva o
   bronze num jogo de 10 gols, tudo nos 90' (4×0 no intervalo, reação com 2 de Mbappé, hat-trick

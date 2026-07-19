@@ -32,6 +32,10 @@ no mata-mata (ENG-12..ENG-59).
   vencedor, que faltava.
 
 ### Corrigido
+- **J91 da edição 2026 gravado com placar pré-correção da fonte** (achado do ENG-61): a martj42
+  corrigiu Brasil × Noruega de `0×2` para `1×2` dois dias depois do jogo, e o `sync` — por design —
+  não toca fixture preenchido. Corrigido via `record` após confirmação em ≥2 fontes
+  (FIFA/ESPN/Al Jazeera); sem efeito em pontos (palpite errou o lado nas duas versões).
 - **Auditoria documental (código como fonte de verdade)**: PRD RF-06 descrevia o palpite de 90'
   do KO com o comportamento revogado (`forbid_draw`/ENG-32; o vivo é ENG-53, empate incluído);
   docstring de `scoring.best_prediction` idem (carregava a justificativa refutada do ENG-32);

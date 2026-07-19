@@ -76,7 +76,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-58](#eng-58) | P1 | pipeline/apresentação | ✅ | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
 | [ENG-59](#eng-59) | P3 | dados/apresentação | ✅ | O relatório não mostrava o **placar da disputa de pênaltis** (a fonte martj42 só publica o vencedor): colunas opcionais `pen_home,pen_away` no `shootouts.csv`, por captura manual |
 | [ENG-60](#eng-60) | P2 | eficiência/arquitetura | 🔴 | Núcleo do `efficiency.py` (682 linhas de lógica de pontuação/teto) vive fora do pacote — fora do mypy e da cobertura; foi o palco do ENG-48 |
-| [ENG-61](#eng-61) | P2 | sync/dados | 🔴 | `sync-results` confia na fonte única sem portão de integridade: correção retroativa (ou linha adulterada) da base martj42 entra silenciosa no refit |
+| [ENG-61](#eng-61) | P2 | sync/dados | ✅ | `sync-results` confia na fonte única sem portão de integridade: correção retroativa (ou linha adulterada) da base martj42 entra silenciosa no refit |
 | [ENG-62](#eng-62) | P3 | format_engine/observabilidade | 🔴 | P(título) reportada com resolução (0,1 p.p.) abaixo do ruído de Monte Carlo (~0,7 p.p. em 5000 sims) — campanha narra variação de simulação como se fosse sinal |
 
 ---
@@ -2199,7 +2199,7 @@ verdes.
 
 ## ENG-61
 **`sync-results` confia na fonte única sem portão de integridade: mudança retroativa da base
-entra silenciosa no refit** · P2 · sync/dados · 🔴 todo
+entra silenciosa no refit** · P2 · sync/dados · ✅ feito
 
 A regra `confirmar-placares-multiplas-fontes` protege o `record` manual, mas o caminho automático
 (`sync-results`/`fetch-data`) reescreve `data/historical_results.csv` a partir da fonte martj42
@@ -2214,12 +2214,19 @@ de dedup `(data, par)` do pipeline) e **reportar**: linhas históricas alteradas
 volume anômalo de mudanças fora da janela recente. Report-only (não bloquear o sync); o log do
 `predict`/`status` ecoa o resumo quando ≠ vazio, como o `ingestion_gaps` (ENG-43).
 
-**Refs:** `fetch_data.download_and_normalize` (ponto do diff), `sync.sync_results`,
-`pipeline.build_training_frame` (chave de dedup), `pipeline.ingestion_gaps` (padrão de aviso).
+**Refs:** `fetch_data.base_diff`, `fetch_data.BaseDiff`, `fetch_data.fetch` (`_report_base_diff`),
+`pipeline.build_training_frame` (chave de dedup espelhada).
 **Aceite:** teste de regressão com base anterior fixada e fonte simulada trazendo (a) linha
 histórica alterada e (b) linha removida — o sync completa e o relatório acusa ambas; base
 inalterada ⇒ relatório vazio e saída idêntica à atual. `ruff`/`mypy`/`pytest` verdes.
-**Commit:** —
+**Como fechou:** o portão vive no `fetch()` (único ponto que regrava a base local — o
+`sync-results` só preenche `fixtures.csv`, protegido pelo "já preenchido → pula"). O eco em
+`predict`/`status` proposto ficou de fora deliberadamente: o diff só existe no momento do fetch
+(a cópia anterior é sobrescrita); persistir relatório seria artefato novo sem demanda. **No 1º
+disparo real** o portão acusou 4 linhas históricas e expôs o J91 (`fixtures.csv`) gravado com o
+placar pré-correção da fonte — Brasil `0×2` → **`1×2`** Noruega (FIFA/ESPN/Al Jazeera) — que o
+sync, por design, nunca corrigiria sozinho.
+**Commit:** 192d683
 
 ## ENG-62
 **P(título) reportada além da resolução do instrumento: 0,1 p.p. de precisão com ~0,7 p.p. de

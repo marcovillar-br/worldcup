@@ -39,7 +39,7 @@ final = 4.0
 # Parâmetros do Sistema I ("O mais justo e equilibrado"), valores oficiais do app.
 # Pontos base variam com a probabilidade do resultado (1 a 13). Os níveis de acerto de placar são
 # HIERÁRQUICOS, não cumulativos: o app concede só o MAIOR atingido — exato(5) > gols_vencedor(3) >
-# saldo(2) > gols_perdedor(1). A goleada(1) empilha como extra. (Ver docs/SPEC.md §4.)
+# saldo(2) > gols_perdedor(1). A goleada(1) empilha como extra sobre o exato. (docs/SPEC.md §4.)
 [sistema_i]
 base_min = 1.0          # pontos base mínimos (favorito óbvio)
 base_max = 13.0         # pontos base máximos (zebra acertada)
@@ -48,7 +48,7 @@ exact = 5.0          # +5 placar exato
 winner_goals = 3.0   # +3 acertar os gols do vencedor ("Placar Vencedor")
 goal_diff = 2.0      # +2 acertar a diferença de gols (saldo)
 loser_goals = 1.0    # +1 acertar os gols do perdedor
-goleada = 1.0        # +1 acertar uma goleada (margem >= 3)
+goleada = 1.0        # +1 cravar o placar exato de uma goleada (margem >= 3; só com o exato)
 extra_time = 3.0     # +3 acertar a prorrogação (mata-mata)
 penalties = 3.0      # +3 acertar os pênaltis (mata-mata)
 max_goals = 6        # placar máximo considerado na otimização (0..6 gols por lado)

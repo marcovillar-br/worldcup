@@ -103,7 +103,7 @@ def devig_pair(over: float, under: float) -> tuple[float, float]:
     """Odds decimais de over/under → probabilidades implícitas sem a margem (des-vig proporcional).
 
     Mesma normalização do `devig` de 1×2, em 2 vias. Linhas inteiras (push) e quarter-lines são
-    tratadas como o limiar contínuo mais próximo — aproximação documentada (ver SPEC §8).
+    tratadas como o limiar contínuo mais próximo — aproximação documentada (ver SPEC §3.5).
     """
     if over <= 1.0 or under <= 1.0:
         raise ValueError(f"odds decimais devem ser > 1.0, recebido ({over}, {under})")

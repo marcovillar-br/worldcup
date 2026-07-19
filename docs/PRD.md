@@ -78,12 +78,14 @@ mantém atualizado.
 - **RF-04** — Pontuar pelo **Sistema I**: base **1–13** por probabilidade
   (`base = 1 + 7,55·log10(1/p)`, truncada a [1,13]) **+ bônus de placar hierárquico** (só o maior
   nível conta) — exato +5 > gols do vencedor +3 > saldo +2 > gols do perdedor +1; goleada (margem
-  ≥3) +1 empilha; prorrogação +3 e pênaltis +3 no mata-mata. *(`scoring.toml [sistema_i]`)*
+  ≥3) +1 empilha sobre o exato (só com placar cravado); prorrogação +3 e pênaltis +3 no mata-mata.
+  *(`scoring.toml [sistema_i]`)*
 - **RF-05** — Aplicar **peso por fase** (Equilíbrio gradual: grupos 1×, mata-mata 2×, final 4×) ao
   sinalizar onde arriscar mais decide o ranking. *(`scoring.toml [phase_weights]`)*
-- **RF-06** — Para o **mata-mata**, prever em 3 camadas — placar dos 90' (sem empate,
-  `forbid_draw` — ENG-32), prorrogação e pênaltis — e **quem avança**; modo endgame opcional
-  `--pool-behind [empate|zebra]` no jogo de peso máximo quando o usuário está atrás no bolão
+- **RF-06** — Para o **mata-mata**, prever em 3 camadas — placar dos 90' (E[pts]-fiel,
+  **empate incluído** — ENG-53, revoga o ENG-32), prorrogação e pênaltis — e **quem avança**;
+  modo endgame opcional `--pool-behind [empate|zebra]` no jogo de peso máximo quando o usuário
+  está atrás no bolão
   (ENG-36/39/40). *(`knockout.predict_knockout`; SPEC §6)*
 - **RF-07** — Simular o torneio (**Monte Carlo**, 5000 sims default) para produzir **standings**,
   **chaveamento determinístico** e **P(título)** por seleção. *(`format_engine`; SPEC §7)*

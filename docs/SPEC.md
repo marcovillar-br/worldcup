@@ -268,7 +268,8 @@ Só contam se o **resultado (1×2) estiver certo** (errou o lado → 0). Os quat
 placar — **exato (+5) > gols do vencedor (+3) > saldo (+2) > gols do perdedor (+1)** — são
 **hierárquicos, não cumulativos**: o app concede **apenas o maior nível atingido**, não a soma. Os
 três níveis "decididos" são mutuamente exclusivos com o exato (acertar dois ⇒ é o exato). A
-**goleada (+1)** é um extra que empilha. (Confirmado nas telas "Pontos por Jogo" do app: Curaçao 0×2
+**goleada (+1)** é um extra que empilha sobre o **exato** — só é concedida com o placar cravado
+(ver o pseudocódigo em §4.2). (Confirmado nas telas "Pontos por Jogo" do app: Curaçao 0×2
 cravado = base(2)+5 = **7**, não base+11 — ver §4.3.)
 
 ### 4.1 Pontos base (régua fiel do app)

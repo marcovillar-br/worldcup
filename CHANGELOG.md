@@ -9,7 +9,8 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 ## [Não lançado]
 
-Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (ENG-12..ENG-23).
+Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes, e a régua dos 90'
+no mata-mata (ENG-12..ENG-59).
 
 ### Adicionado
 - **Placar da disputa de pênaltis no relatório** (ENG-59): o `shootouts.csv` da edição ganha as
@@ -24,6 +25,15 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes (
   vencedor, que faltava.
 
 ### Corrigido
+- **Auditoria documental (código como fonte de verdade)**: PRD RF-06 descrevia o palpite de 90'
+  do KO com o comportamento revogado (`forbid_draw`/ENG-32; o vivo é ENG-53, empate incluído);
+  docstring de `scoring.best_prediction` idem (carregava a justificativa refutada do ENG-32);
+  C4 Nível 3 omitia o componente `consistency` e a aresta `pipeline→consistency`; GLOSSARIO/PRD/
+  SPEC/`scoring.toml` diziam que a goleada (+1) "empilha" sem citar que **só é concedida com o
+  placar exato**; GLOSSARIO omitia o arredondamento a inteiro da base; MODEL_CARD atribuía a
+  `FitConfig` parâmetros que vivem fora dela (pesos de torneio, mando, cutoff); docstring de
+  `blend.devig_pair` apontava SPEC §8 em vez de §3.5; subtítulo do `[Não lançado]` congelado em
+  "(ENG-12..ENG-23)".
 - **A tabela mostrava o placar de 120' na coluna "Palpite (90')" e apagava a prorrogação**
   (ENG-58, `pipeline._final_ko_layers`): nos jogos de mata-mata já disputados, o display lia
   `home_goals`/`away_goals` **crus** do `fixtures.csv` — o placar **consolidado**, que inclui os

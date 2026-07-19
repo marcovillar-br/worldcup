@@ -20,9 +20,10 @@ limites — para uma validação de modelo. Números reproduzidos das fontes can
 - **Camada de decisão (produto):** `scoring.best_prediction` escolhe o placar que maximiza
   `E[pts]·(1/P)^(2·risk−1)` sob a régua do **Sistema I** (SPEC §4–5). O modelo (probabilidades) e a
   estratégia (escolha do palpite) são **desacoplados**.
-- **Parâmetros de ajuste** (`FitConfig`): decaimento temporal **meia-vida 2,0 anos**; pesos de
-  torneio (Copa 1,0 … amistoso 0,5); **mando** do anfitrião; regularização **ridge 0,10**; recorte
-  de treino **≥ 2006-01-01**; mínimo **10 jogos** por seleção; filtra seleções não-FIFA.
+- **Parâmetros de ajuste**: decaimento temporal **meia-vida 2,0 anos**, regularização
+  **ridge 0,10** e mínimo **10 jogos** por seleção (`FitConfig`); pesos de torneio (Copa 1,0 …
+  amistoso 0,5 — `_TOURNAMENT_WEIGHTS`); **mando** do anfitrião (parâmetro estimado no ajuste);
+  recorte de treino **≥ 2006-01-01** (`fetch_data.DEFAULT_CUTOFF`); filtra seleções não-FIFA.
 - **Blend opcional (ENG-19):** quando há `odds.csv`, funde a matriz com o mercado (des-vig → pool
   logarítmico → reescala; com totals registrados, também tilting da taxa total à linha de
   over/under — ENG-35), peso `blend_weight` (2026 = **0,8**, prior 0,6 elevado com dado via

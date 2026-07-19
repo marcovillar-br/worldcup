@@ -16,12 +16,13 @@ seção do SPEC ou o módulo de `src/worldcup/` que materializa o conceito.
 - **Palpite** — o placar escolhido para um jogo (ex.: `2×1`). Não é o placar mais provável, e sim o
   de maior **valor esperado** de pontos. Em mata-mata inclui prorrogação/pênaltis e quem avança.
 - **Régua de pontos / base** — os pontos-base de um palpite acertado, função da probabilidade `p` do
-  resultado: `base = 1 + 7,55·log10(1/p)`, truncada a **[1, 13]**. Fiel ao Simulador do app
-  (SPEC §4).
+  resultado: `base = 1 + 7,55·log10(1/p)`, **arredondada ao inteiro** e truncada a **[1, 13]**.
+  Fiel ao Simulador do app (SPEC §4).
 - **Bônus de placar (hierárquicos)** — somados à base, mas o app concede
   **só o maior nível atingido**, não a soma: **exato** +5 > **gols do vencedor** +3 > **saldo**
   (diferença de gols) +2 > **gols do perdedor** +1. A **goleada** (margem ≥3) +1 é um extra que
-  empilha. No mata-mata, **prorrogação** +3 e **pênaltis** +3 são camadas à parte (também somadas).
+  empilha **sobre o exato** (só é concedida quando o placar exato foi cravado). No mata-mata,
+  **prorrogação** +3 e **pênaltis** +3 são camadas à parte (também somadas).
 - **Zebra** — resultado improvável (favorito tropeça). Como a base cresce com `1/p`, cravar a zebra
   rende muito mais pontos — daí a estratégia não ser sempre o favorito.
 - **Peso por fase / Equilíbrio gradual** — multiplicador da pontuação por etapa: grupos **1×**,

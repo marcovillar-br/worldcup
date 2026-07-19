@@ -10,6 +10,7 @@ from __future__ import annotations
 import html
 from typing import TYPE_CHECKING
 
+from .format_engine import mc_ci95
 from .teams import display
 
 if TYPE_CHECKING:
@@ -46,6 +47,12 @@ CSV_COLUMNS = [
 ]
 
 
+def _ci_text(p: float, n_sims: int) -> str:
+    """Sufixo ` ±x.x` (p.p.) do IC95 de Monte Carlo — vazio quando as sims são desconhecidas (ENG-62)."""
+    ci = mc_ci95(p, n_sims)
+    return f" ±{ci * 100:.1f}" if ci else ""
+
+
 def _bracket_champion(run: PredictionRun) -> str:
     """Campeão do **bracket determinístico** = quem avança na final (nome de exibição; '' se não há)."""
     final = next((r for r in run.rows if r["fase"] == "final"), None)
@@ -77,8 +84,9 @@ def render_markdown(run: PredictionRun) -> str:
 
     champ = sorted(run.champion_prob.items(), key=lambda x: -x[1])[:8]
     if champ:
-        out += ["## 🏆 Probabilidade de título (Monte Carlo)", ""]
-        out += [f"- **{display(t)}** — {p * 100:.1f}%" for t, p in champ]
+        sims_note = f", {run.n_sims} sims; ± = IC95" if run.n_sims else ""
+        out += [f"## 🏆 Probabilidade de título (Monte Carlo{sims_note})", ""]
+        out += [f"- **{display(t)}** — {p * 100:.1f}%{_ci_text(p, run.n_sims)}" for t, p in champ]
         out += ["", f"_Palpite de campeão sugerido: **{display(champ[0][0])}**._", ""]
         note = _champion_note(display(champ[0][0]), _bracket_champion(run))
         if note:
@@ -212,14 +220,15 @@ def render_html(run: PredictionRun) -> str:
     champ = sorted(run.champion_prob.items(), key=lambda x: -x[1])[:8]
     if champ:
         top = champ[0][1]
-        parts.append("<section><h2>Probabilidade de título (Monte Carlo)</h2>")
+        html_sims = f" ({run.n_sims} sims; ± = IC95)" if run.n_sims else ""
+        parts.append(f"<section><h2>Probabilidade de título (Monte Carlo{html_sims})</h2>")
         parts.append('<div class="champ">')
         for team, p in champ:
             width = (p / top * 100) if top else 0
             parts.append(
                 f'<div class="row"><span class="name">{_esc(display(team))}</span>'
                 f'<span class="track"><span class="fill" style="width:{width:.1f}%"></span></span>'
-                f'<span class="val">{p * 100:.1f}%</span></div>'
+                f'<span class="val">{p * 100:.1f}%{_ci_text(p, run.n_sims)}</span></div>'
             )
         parts.append("</div>")
         parts.append(f'<p class="pick">Palpite de campeão sugerido: <b>{_esc(display(champ[0][0]))}</b></p>')

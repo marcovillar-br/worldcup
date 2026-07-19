@@ -153,6 +153,7 @@ class PredictionRun:
     champion_prob: dict[str, float]
     advance_prob: dict[str, float]
     edition: Edition
+    n_sims: int = 0  # sims que geraram champion_prob — dimensiona o ±IC95 exibido (ENG-62)
 
 
 def _ko_layer_text(kp, edition_home: str, edition_away: str) -> tuple[str, str]:
@@ -356,4 +357,5 @@ def run(edition: Edition, n_sims: int = 5000, seed: int = 12345, pool_behind: st
         champion_prob=sim.champion_prob,
         advance_prob=sim.advance_prob,
         edition=edition,
+        n_sims=sim.n_sims,
     )

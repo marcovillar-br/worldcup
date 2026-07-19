@@ -14,6 +14,7 @@ from worldcup.format_engine import (
     _assign_thirds,
     deterministic_bracket,
     group_standings,
+    mc_ci95,
     monte_carlo,
 )
 
@@ -247,3 +248,10 @@ def test_monte_carlo_ko_blend_shifts_champion():
     blend = {("S0", "S3", True): _one_sided_matrix(away_wins=True)}
     tilted = monte_carlo(edition, model, cache, n_sims=400, seed=3, ko_blend=blend).champion_prob
     assert tilted.get("S3", 0) > base.get("S3", 0)
+
+
+def test_mc_ci95_is_the_binomial_half_width():
+    # ENG-62: 1,96·√(p(1−p)/n) — em 5000 sims, p=0,5 carrega ±~1,4 p.p.
+    assert abs(mc_ci95(0.5, 5000) - 0.01386) < 1e-4
+    assert mc_ci95(0.0, 5000) == 0.0  # p degenerado: sem variância
+    assert mc_ci95(0.5, 0) == 0.0  # sims desconhecidas → sem barra (compat)

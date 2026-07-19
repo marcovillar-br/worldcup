@@ -13,6 +13,13 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes, 
 no mata-mata (ENG-12..ENG-59).
 
 ### Adicionado
+- **±IC95 de Monte Carlo na probabilidade de título** (ENG-62): o resumo do console, o Markdown e
+  o HTML mostram a meia-largura do IC95 binomial (`format_engine.mc_ci95`) ao lado de cada
+  P(título) — "Espanha 60,7% ±1,4" — com o nº de sims no cabeçalho. É a resolução do instrumento:
+  variação diária menor que a barra é ruído de simulação, não mudança de cenário (o `BOLAO.md`
+  vinha narrando oscilações de ~1 p.p. como "variação de simulação" a cada rodada — agora o
+  leitor calibra sozinho). `SimulationResult`/`PredictionRun` ganham `n_sims`; sem ele (0), a
+  saída degrada para o formato antigo. Tempo do `predict` inalterado.
 - **Núcleo da eficiência promovido ao pacote** (ENG-60): a lógica de medição do
   `scripts/efficiency.py` (reconstrução as-of, pontuação, teto congelado, sondas de anomalia)
   virou `worldcup.efficiency` — sob mypy, cobertura e a rede de testes do pacote; o script ficou

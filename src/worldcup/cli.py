@@ -25,6 +25,7 @@ from pathlib import Path
 
 from .edition import EDITIONS_DIR, load_edition
 from .fetch_data import DEFAULT_CUTOFF, DEFAULT_URL, DataSourceError, NetworkError, fetch
+from .format_engine import mc_ci95
 from .pipeline import PredictionRun, ingestion_gaps, run
 from .render import CSV_COLUMNS, render_html, render_markdown
 
@@ -114,9 +115,14 @@ def print_console_summary(run: PredictionRun) -> None:
     from .teams import display
 
     champ = sorted(run.champion_prob.items(), key=lambda x: -x[1])[:5]
-    print("\n🏆 Candidatos a campeão:")
+    # ENG-62: ± = IC95 de Monte Carlo — a resolução do instrumento; variação diária menor que a
+    # barra é ruído de simulação, não mudança de cenário.
+    ci_note = f" (± = IC95 de Monte Carlo, {run.n_sims} sims)" if run.n_sims else ""
+    print(f"\n🏆 Candidatos a campeão{ci_note}:")
     for t, p in champ:
-        print(f"   {display(t):16s} {p * 100:4.1f}%")
+        ci = mc_ci95(p, run.n_sims)
+        bar = f" ±{ci * 100:.1f}" if ci else ""
+        print(f"   {display(t):16s} {p * 100:4.1f}%{bar}")
 
     # ENG-52 (INV-7): o favorito a campeão (probabilidade marginal sobre TODOS os cenários) pode não
     # ser o campeão do bracket determinístico (o caminho único mais provável) — respostas a perguntas

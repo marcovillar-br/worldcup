@@ -137,3 +137,21 @@ def test_outputs_render_for_knockout_rows():
     assert "16-avos de final" in md
     assert "Brasil" in html_out
     assert "Coreia do Sul" in html_out
+
+
+def test_champion_ci_appears_when_sims_are_known():
+    # ENG-62: com n_sims, cada linha de campeão carrega o ±IC95 (a resolução do instrumento)
+    run = _run_with([_final_row()], champion_prob={"Spain": 0.5, "Argentina": 0.5})
+    run.n_sims = 5000
+    md = render_markdown(run)
+    assert "±1.4" in md  # 1,96·√(0,25/5000) ≈ 1,39 p.p.
+    assert "5000 sims; ± = IC95" in md
+    html_out = render_html(run)
+    assert "±1.4" in html_out
+
+
+def test_champion_ci_absent_without_sims():
+    # compat: PredictionRun antigo (n_sims=0) rende exatamente o formato de antes
+    run = _run_with([_final_row()], champion_prob={"Spain": 0.5, "Argentina": 0.5})
+    md = render_markdown(run)
+    assert "±" not in md

@@ -10,6 +10,7 @@ Resultados reais já conhecidos (`fixtures.csv` preenchido) são respeitados em 
 
 from __future__ import annotations
 
+import math
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
@@ -157,6 +158,19 @@ class SimulationResult:
     advance_prob: dict[str, float] = field(default_factory=dict)  # P(passar da fase de grupos)
     rank_counts: dict[str, dict[str, Counter]] = field(default_factory=dict)  # grupo->team->rank Counter
     third_qualify: Counter = field(default_factory=Counter)
+    n_sims: int = 0  # nº de simulações que geraram as probabilidades (ENG-62; 0 = desconhecido)
+
+
+def mc_ci95(p: float, n_sims: int) -> float:
+    """Meia-largura do IC95 de Monte Carlo de uma probabilidade estimada com `n_sims` simulações.
+
+    Erro-padrão binomial `√(p(1−p)/n)` × 1,96 (ENG-62). É a resolução do instrumento: com 5000
+    sims, P(título) ~50% carrega ±~1,4 p.p. — variação diária menor que isso é ruído de simulação,
+    não sinal. `n_sims` desconhecido (≤ 0) devolve 0.0 (sem barra, comportamento antigo).
+    """
+    if n_sims <= 0:
+        return 0.0
+    return 1.96 * math.sqrt(p * (1.0 - p) / n_sims)
 
 
 def _played_group_results(edition: Edition) -> dict[str, dict[tuple[str, str], tuple[int, int]]]:
@@ -239,6 +253,7 @@ def monte_carlo(
         advance_prob={t: c / total for t, c in advanced.items()},
         rank_counts=rank_counts,
         third_qualify=third_q,
+        n_sims=n_sims,
     )
 
 

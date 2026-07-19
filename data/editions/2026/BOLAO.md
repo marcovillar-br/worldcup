@@ -12,8 +12,19 @@ Registre aqui **só o que não é rederivável** dos dados e do código:
 
 Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
-## Estado atual (atualizado em 2026-07-18)
+## Estado atual (atualizado em 2026-07-19)
 
+- **19/07: dia da FINAL (J104 Espanha × Argentina) — palpite atualizado antes do jogo.**
+  `sync-results`: +1 jogo de KO (103/104): J103 **França 4×6 Inglaterra** — Inglaterra leva o
+  bronze num jogo de 10 gols, tudo nos 90' (4×0 no intervalo, reação com 2 de Mbappé, hat-trick
+  de Saka; confirmado em ESPN/FIFA/Al Jazeera — sem prorrogação, `regulation.csv` não se aplica).
+  Palpite era França 2×1 (49%): errado no vencedor. Odds re-sincronizadas (76 jogos, 1 atualizado:
+  a final) e palpites regenerados com snapshot do dia. **Favoritos ao título:** **Espanha 61,2%**,
+  Argentina 38,8%. Palpite da final inalterado: **Espanha 1×1 Argentina** (42%/32%/26%),
+  prorrogação empatada → pênaltis → **avança Espanha**. `blend-track` (49 jogos com odds): Brier
+  blend 0,4071 vs modelo 0,4075 — blend marginalmente melhor; regime de empates z=+0,71
+  (variância, não agir). Config inalterada: `risk 0.5` + `blend 0.8`. **Pontos:** aguardando
+  atualização pós-J103 (a medir com efficiency.py quando o usuário passar os pontos).
 - **18/07: dia da disputa de 3º lugar (J103 França × Inglaterra) — palpite atualizado antes do
   jogo.** `sync-results`: +0 jogos (102/104; J103 ainda não disputado na fonte). Odds
   re-sincronizadas (76 jogos no `odds.csv`, 2 atualizados: 3º lugar e final) e palpites regenerados

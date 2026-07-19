@@ -1,22 +1,16 @@
-"""Testes da lógica pura do scripts/efficiency.py (desfecho de KO + bônus ponderado; ENG-27 parte 2)."""
+"""Testes da lógica pura de worldcup.efficiency (desfecho de KO + bônus ponderado; ENG-27/ENG-60)."""
 
 from __future__ import annotations
 
-import importlib.util
-from pathlib import Path
 from types import SimpleNamespace
+from typing import cast
 
 import pandas as pd
 
-from worldcup.edition import Fixture, ScoringConfig, load_edition
+from worldcup import efficiency
+from worldcup.edition import Edition, Fixture, ScoringConfig, load_edition
+from worldcup.fetch_data import PROJECT_ROOT
 from worldcup.scoring import Scorer
-
-_SCRIPT = Path(__file__).resolve().parent.parent / "scripts" / "efficiency.py"
-_spec = importlib.util.spec_from_file_location("efficiency", _SCRIPT)
-assert _spec is not None
-assert _spec.loader is not None
-efficiency = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(efficiency)
 
 
 def _pens(date: str, home: str, away: str, winner: str) -> dict:
@@ -123,6 +117,8 @@ def test_eng45_et_goal_scored_against_90_and_gets_bonus():
         None,
     )
     # contraste (o bug): usar o gravado (com ET) ⇒ "decidido nos 90'", sem bônus e slot pontuado errado
+    assert fx.home_goals is not None
+    assert fx.away_goals is not None
     assert efficiency._actual_ko_outcome(
         fx.home_goals, fx.away_goals, "2026-07-01", "Belgium", "Belgium", "Senegal", pens
     ) == (None, None)
@@ -257,7 +253,7 @@ def test_cross_source_ko_check_separa_latencia_de_contradicao():
         88: _score(True, "2x1", None),  # não empatou nos 90' → nem entra na conta
         1: _score(False, "1x1", None),  # jogo de grupo → irrelevante
     }
-    latency, contradiction = efficiency.cross_source_ko_check(ed, scores)
+    latency, contradiction = efficiency.cross_source_ko_check(cast("Edition", ed), scores)
     assert latency == [96]
     assert contradiction == [74, 82]
 
@@ -276,7 +272,7 @@ def test_jogo_ainda_fora_da_fonte_e_latencia_mesmo_com_a_edicao_ja_afirmando():
         99: _score(True, "1x1", None, in_source=False),  # jogado ontem; a fonte ainda não o tem
         100: _score(True, "1x1", None, in_source=False),
     }
-    latency, contradiction = efficiency.cross_source_ko_check(ed, scores)
+    latency, contradiction = efficiency.cross_source_ko_check(cast("Edition", ed), scores)
     assert contradiction == []  # nada a investigar: a fonte simplesmente não chegou lá
     assert latency == [99, 100]
 
@@ -348,12 +344,12 @@ def test_code_fingerprint_muda_com_o_conteudo(tmp_path):
 def test_code_fingerprint_cobre_o_pontuador_do_teto():
     # os arquivos vigiados existem e são os que decidem quanto vale um teto congelado
     for rel in efficiency.CEILING_CODE_FILES:
-        assert (efficiency.PROJECT_ROOT / rel).exists(), rel
-    assert efficiency.code_fingerprint(efficiency.PROJECT_ROOT)  # não explode no repo real
+        assert (PROJECT_ROOT / rel).exists(), rel
+    assert efficiency.code_fingerprint(PROJECT_ROOT)  # não explode no repo real
 
 
 def test_provenance_split_separa_desatualizado_de_desconhecido():
-    cache = {
+    cache: dict[int, dict] = {
         1: {"pts": 7.0, "code": "aaaaaaaa"},  # congelado sob o código atual
         2: {"pts": 7.0, "code": "bbbbbbbb"},  # sob código diferente → recongelar
         3: {"pts": 7.0, "code": ""},  # pré-ENG-50 → procedência desconhecida

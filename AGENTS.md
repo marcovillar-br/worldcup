@@ -138,6 +138,11 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
 - `render.py` — camada de **apresentação** (funções puras): `render_markdown`/`render_html` +
   `CSV_COLUMNS`. Geram texto a partir do `PredictionRun` (não do CSV); HTML autocontido e
   print-friendly. Sem I/O.
+- `efficiency.py` — núcleo de **medição da eficiência** (ENG-60; a CLI é o wrapper
+  `scripts/efficiency.py`): reconstrução as-of por data de jogo, pontuação do palpite do tool
+  contra o real (peso de fase + bônus de KO via fonte martj42 — ENG-27), teto **congelado** por
+  jogo (`ceiling.csv`, ENG-34), procedência por `code_fingerprint` (ENG-50) e as sondas mecânicas
+  de anomalia (ENG-49/50). Análise *read-only* a jusante — não participa do fluxo de previsão.
 - `status.py` — briefing read-only de start-of-day (ENG-31): funções puras `build_status`/
   `format_status` montam uma foto compacta do estado (disputados/total, fase, jogos de hoje,
   próximos palpites, standing, pendências, **alerta de staleness do ajuste** — ENG-43) a partir da
@@ -216,7 +221,8 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   **gitignored**, porque é regenerável sob demanda por `predict --as-of AAAA-MM-DD` — que
   reaproveita `Edition.as_of()` (descarta resultados a partir da data), grava no `history/`
   **sem tocar em `out/`** e, com a data de hoje, reproduz o run real (consistência verificável).
-- `ceiling.csv` — **cache do teto por jogo** do `scripts/efficiency.py` (ENG-34; rastreado):
+- `ceiling.csv` — **cache do teto por jogo** da eficiência (ENG-34; rastreado; núcleo em
+  `src/worldcup/efficiency.py`, CLI em `scripts/efficiency.py` — ENG-60):
   `match_id,pts,palpite,real,source,code`. **Congela** o teto do tool na 1ª medição de cada jogo —
   sem ele, a reconstrução as-of re-roda o modelo a cada rodagem (base/odds/código atuais) e o teto
   (logo a "eficiência") oscila **sem o usuário mexer em nada**, quase forçando conclusões de
@@ -225,7 +231,8 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   Rodagens seguintes reusam o congelado; divergência da reconstrução viva (só p/ `asof`) vira
   **drift reportado**, não substituição. `--reset-ceiling` recongela do zero (ex.: após um fix de
   scoring). A coluna `code` (ENG-50) guarda a **procedência**: a impressão digital do código que
-  decidiu aquele teto (`code_fingerprint` de `efficiency.py`+`scoring.py`+`knockout.py`). Mudou o
+  decidiu aquele teto (`code_fingerprint` de `worldcup/efficiency.py`+`scoring.py`+`knockout.py`;
+  o wrapper de CLI fica fora — impressão não decide teto). Mudou o
   pontuador ⇒ o script acusa "congelado sob código diferente" — o congelamento protege contra
   **drift**, não contra **bug**. E quando os pontos do usuário ou do líder passam do teto, o script
   imprime `🚨 ANOMALIA` + as **sondas mecânicas** antes de qualquer leitura estatística (ENG-49/50):

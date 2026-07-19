@@ -78,7 +78,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-60](#eng-60) | P2 | eficiência/arquitetura | ✅ | Núcleo do `efficiency.py` (682 linhas de lógica de pontuação/teto) vive fora do pacote — fora do mypy e da cobertura; foi o palco do ENG-48 |
 | [ENG-61](#eng-61) | P2 | sync/dados | ✅ | `sync-results` confia na fonte única sem portão de integridade: correção retroativa (ou linha adulterada) da base martj42 entra silenciosa no refit |
 | [ENG-62](#eng-62) | P3 | format_engine/observabilidade | 🔴 | P(título) reportada com resolução (0,1 p.p.) abaixo do ruído de Monte Carlo (~0,7 p.p. em 5000 sims) — campanha narra variação de simulação como se fosse sinal |
-| [ENG-63](#eng-63) | P2 | eficiência/dados | 🔴 | KO decidido por gol na ET com `ko_outcome` vazio: `_actual_ko_outcome` devolve "sem desfecho" quando a fonte ingere o jogo — sonda acusa contradição (J99/J100) e o bônus fica fora do teto |
+| [ENG-63](#eng-63) | P2 | eficiência/dados | ✅ | KO decidido por gol na ET com `ko_outcome` vazio: `_actual_ko_outcome` devolve "sem desfecho" quando a fonte ingere o jogo — sonda acusa contradição (J99/J100) e o bônus fica fora do teto |
 
 ---
 
@@ -2259,7 +2259,7 @@ que ~50%. `ruff`/`mypy`/`pytest` verdes.
 
 ## ENG-63
 **KO decidido por gol na ET com `ko_outcome` vazio: desfecho real invisível para a eficiência —
-sonda acusa contradição e o bônus fica fora do teto** · P2 · eficiência/dados · 🔴 todo
+sonda acusa contradição e o bônus fica fora do teto** · P2 · eficiência/dados · ✅ feito
 
 `efficiency._actual_ko_outcome` deriva o desfecho da camada de ET de um KO empatado nos 90'
 assim: shootout na fonte ⇒ pênaltis; sem shootout ⇒ vencedor = `ko_outcome` do fixture. Mas o
@@ -2285,4 +2285,11 @@ gol na ET). `Edition.score_90`/`regulation.csv` garantem os dois placares.
 **Aceite:** teste de regressão com KO de gol na ET e `ko_outcome` vazio ⇒ `("home"/"away", None)`;
 na edição 2026 real, a sonda de contradição volta a zero e o canário reporta bônus creditado em
 7 de 7 KOs empatados nos 90'. `ruff`/`mypy`/`pytest` verdes.
-**Commit:** —
+**Como fechou:** `_actual_ko_outcome` ganhou o parâmetro `consolidated` (placar gravado do
+fixture): 90' empatado + fonte sem shootout + `ko_outcome` vazio ⇒ vencedor = lado do consolidado
+(que difere do 90' exatamente por causa do gol na ET); consolidado empatado segue "sem desfecho".
+Aceite verificado na edição real: contradição 0, canário 7/7, oráculo +12 (o desfecho de ET de
+J99/J100 agora conta no teto teórico) e a tabela de pontos intacta — o tool palpitava pênaltis
+nos dois jogos, então o bônus era 0 nas duas versões e nenhum teto congelado mudou (procedência
+re-migrada sob o mesmo argumento do ENG-60).
+**Commit:** 97340d8

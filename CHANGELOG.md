@@ -19,7 +19,11 @@ no mata-mata (ENG-12..ENG-59).
   wrapper fino de CLI (argparse + impressão). Saída verificada **byte-idêntica** pré/pós-refactor
   e `ceiling.csv` intacto. O mypy pagou o ingresso na entrada: pegou um `str | None` passado a
   `knockout_bonus` que o script escondia (inócuo — `None ≡ ""` na comparação — mas agora explícito).
-  `CEILING_CODE_FILES` acompanha o move (o wrapper fica fora: impressão não decide teto).
+  `CEILING_CODE_FILES` acompanha o move (o wrapper fica fora: impressão não decide teto). A coluna
+  `code` do `ceiling.csv` foi **migrada** para a impressão nova em vez de recongelada
+  (`--reset-ceiling` perderia os valores as-of congelados): as únicas mudanças desde o
+  congelamento eram preservadoras de semântica (docstring + move), comprovado pela saída
+  byte-idêntica.
 - **Portão de integridade da base histórica** (ENG-61): antes de sobrescrever
   `data/historical_results.csv`, o `fetch` compara a base recém-baixada com a cópia local anterior
   (`fetch_data.base_diff`, chave `(data, par)` — a mesma do dedup do ajuste) e **reporta** linhas

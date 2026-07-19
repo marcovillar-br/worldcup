@@ -108,6 +108,7 @@ def _actual_ko_outcome(
     home: str,
     away: str,
     pens: dict[tuple[str, frozenset[str]], str],
+    consolidated: tuple[int, int] | None = None,
 ) -> tuple[str | None, str | None]:
     """Desfecho real (prorrogação/pênaltis) de um jogo de KO, do placar dos 90' + fonte (ENG-27 parte 2).
 
@@ -115,8 +116,13 @@ def _actual_ko_outcome(
       - placar dos 90' **decidido** (≠ empate)           → `(None, None)` — não houve ET/pênaltis;
       - 90' **empate**, na fonte **com** shootout        → `("penalties", "home"|"away")`;
       - 90' **empate**, na fonte **sem** shootout        → `("home"|"away", None)` — decidido na prorrogação
-        (vencedor = quem avançou, `ko_outcome`);
+        (vencedor = `ko_outcome` ou, na falta dele, o placar `consolidated` — ver abaixo);
       - 90' **empate**, **fora** da fonte (latência)     → `(None, None)` — não inferir, não pontuar.
+
+    `consolidated` (ENG-63) é o placar **gravado** do fixture (com ET). Num KO decidido por gol na
+    prorrogação o `sync` deixa `ko_outcome` vazio — o consolidado já diz quem avançou (só o empate
+    consolidado precisa do campo) — e é dele que o vencedor da camada de ET sai nesse caso. Sem o
+    fallback, o desfecho ficava invisível e a sonda de contradição (ENG-49) acusava J99/J100.
     """
     if hg != ag:
         return None, None  # decidido nos 90 min — sem camada de ET/pênaltis
@@ -127,9 +133,11 @@ def _actual_ko_outcome(
     if pen_winner:
         return "penalties", ("home" if pen_winner == canonical(home) else "away")
     adv = canonical(ko_outcome) if ko_outcome else None
-    if adv is None:
-        return None, None
-    return ("home" if adv == canonical(home) else "away"), None
+    if adv is not None:
+        return ("home" if adv == canonical(home) else "away"), None
+    if consolidated is not None and consolidated[0] != consolidated[1]:  # ENG-63: gol na ET decidiu
+        return ("home" if consolidated[0] > consolidated[1] else "away"), None
+    return None, None
 
 
 def tied_ko_ids(scores: dict[int, dict]) -> list[int]:
@@ -257,7 +265,14 @@ def asof_scores(edition: Edition, sims: int) -> dict[int, dict]:
             # bônus de mata-mata (prorrogação/pênaltis), ponderado, onde a fonte confirma o desfecho.
             act_et, act_pen = (None, None)
             if kp is not None:
-                act_et, act_pen = _actual_ko_outcome(actual[0], actual[1], f.date, real.ko_outcome, home, away, pens)
+                consolidated = (
+                    (real.home_goals, real.away_goals)
+                    if real.home_goals is not None and real.away_goals is not None
+                    else None
+                )
+                act_et, act_pen = _actual_ko_outcome(
+                    actual[0], actual[1], f.date, real.ko_outcome, home, away, pens, consolidated
+                )
                 if act_et is not None:
                     pts += scorer.knockout_bonus(kp.extra_time, kp.penalty_winner, act_et, act_pen) * w
             out[f.match_id] = {

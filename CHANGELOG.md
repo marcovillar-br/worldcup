@@ -43,6 +43,14 @@ no mata-mata (ENG-12..ENG-59).
   vencedor, que faltava.
 
 ### Corrigido
+- **KO decidido por gol na prorrogação ficava sem desfecho na eficiência** (ENG-63): o `sync` só
+  preenche `ko_outcome` quando o placar consolidado empata (senão o próprio placar decide), e
+  `_actual_ko_outcome` só olhava o campo — com a fonte já tendo o jogo, a sonda ENG-49 acusava
+  contradição (J99/J100) e o bônus de ET ficava fora dos tetos. Agora o vencedor sai do placar
+  **consolidado** do fixture quando `ko_outcome` está vazio. Sondas na edição 2026: contradição
+  0, bônus creditado em 7 de 7 KOs empatados nos 90'; oráculo +12 (desfecho de ET dos dois jogos
+  agora conta); tabela de pontos inalterada (o tool palpitava pênaltis — bônus 0 nas duas
+  versões). Procedência do `ceiling.csv` re-migrada (valores congelados reproduzidos idênticos).
 - **J91 da edição 2026 gravado com placar pré-correção da fonte** (achado do ENG-61): a martj42
   corrigiu Brasil × Noruega de `0×2` para `1×2` dois dias depois do jogo, e o `sync` — por design —
   não toca fixture preenchido. Corrigido via `record` após confirmação em ≥2 fontes

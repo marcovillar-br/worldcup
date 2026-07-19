@@ -40,6 +40,35 @@ def test_actual_ko_outcome_extra_time():
     )
 
 
+def test_actual_ko_outcome_extra_time_with_empty_ko_outcome_uses_consolidated():
+    # ENG-63: KO decidido por gol na ET fica com ko_outcome VAZIO (o consolidado já decide quem
+    # avança, então o sync não preenche o campo) — o vencedor sai do placar consolidado do fixture
+    pens = {("2026-07-11", frozenset({"Norway", "England"})): ""}
+    assert efficiency._actual_ko_outcome(1, 1, "2026-07-11", None, "Norway", "England", pens, consolidated=(1, 2)) == (
+        "away",
+        None,
+    )
+    assert efficiency._actual_ko_outcome(
+        1,
+        1,
+        "2026-07-11",
+        None,
+        "Argentina",
+        "Switzerland",
+        pens | {("2026-07-11", frozenset({"Argentina", "Switzerland"})): ""},
+        consolidated=(3, 1),
+    ) == ("home", None)
+
+
+def test_actual_ko_outcome_no_ko_outcome_and_tied_consolidated_stays_unknown():
+    # consolidado empatado sem shootout na fonte e sem ko_outcome: não há de onde tirar o desfecho
+    pens = {("2026-07-11", frozenset({"Norway", "England"})): ""}
+    assert efficiency._actual_ko_outcome(1, 1, "2026-07-11", None, "Norway", "England", pens, consolidated=(1, 1)) == (
+        None,
+        None,
+    )
+
+
 def test_actual_ko_outcome_latency_skips():
     # 90' empate mas o jogo ainda NÃO está na fonte (chave ausente) → não inferir (latência)
     assert efficiency._actual_ko_outcome(1, 1, "2026-06-29", "Morocco", "Netherlands", "Morocco", {}) == (

@@ -349,6 +349,7 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   **Cuidado:** o palpite jogo a jogo segue o bracket (J101 França vence Espanha) — o slot de campeão
   e os slots de placar são pontuados **separados** pelo bolão, então marcar Espanha campeã e França
   vencendo a J101 não se contradiz (apostas independentes, como no ENG-52).
+  **✅ Consumada (19/07): Espanha campeã** — o favorito por probabilidade marginal acertou o slot.
 - `risk = 0.5` **definitivo** — ótimo para a média **e** para o ranking. O botão de
   risco **não é instrumento de variância** neste sistema de pontos: subir o risco baixa o E[pts] sem
   aumentar o SD e, na simulação de campo, **reduz** P(vencer)/P(top-10) — inclusive no mata-mata
@@ -372,6 +373,9 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   (ENG-40, 02/07 à noite) já gera o empate na final (hoje 0×0 + "vai aos pênaltis" + Argentina);
   `--pool-behind zebra` mantém a política antiga para comparação. A zebra segue como referência
   histórica (entrada 01/07), mas está **superada**.
+  **✅ Encerrada (19/07):** a Copa acabou sem a re-sim da véspera — desnecessária na prática: com o
+  ENG-53 o palpite **fiel** da final já era o empate (1×1 → pênaltis → Espanha), o mesmo pick que a
+  regra pediria, e rendeu os 28 pts do teto do jogo. Fica como referência de endgame para 2030.
 - **Limiar de poder da regra de endgame — matemática da virada (03/07):** a regra do empate é
   **~grátis** quando atrás (ENG-39/40: custo ~zero de E[pts]) ⇒ **se chegar atrás na final, usar
   sempre**. Mas o **poder de virar** é limitado pelo que UMA final (×4) move em diferencial.
@@ -386,7 +390,16 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
   seguir capturando teto (eficiência 90%). Só então a final vira arma. Reavaliar o gap a cada
   rodada; jogos de maior alavancagem restantes (peso × coin-flip): **final J104 (×4)** ≫ J94/J92
   (R16), J99 (QF), J88 (R32, hoje).
-- **Palpite de 90' do mata-mata nunca sai empate (ENG-32, 01/07):** o E[pts] puro apostava 0×0/1×1
+  **✅ Encerrada (19/07):** o gap nunca erodiu (fechou em −73: 453 vs 526) e a final não foi arma
+  de virada — como o próprio limiar previa (gap > ~35 ⇒ irrelevante). O empate da final ainda
+  valeu posições (20º → 15º). A matemática do limiar fica como referência para 2030.
+- **⚠️ REVOGADA pelo ENG-53 (pós-ENG-54) — mantida como registro:** os "+70 pts realizados" que
+  sustentavam o ban eram **artefato da régua** (o backtest pontuava o KO contra o placar de 120');
+  re-medido com a régua dos 90', o ban não se distingue da política fiel (+0,23 pt/jogo, IC95
+  cruza zero) e a camada 1 voltou a ser **E[pts]-fiel com empate incluído** — foi assim que o
+  palpite da final saiu 1×1 (e pontuou 28). Ver `knockout.py` no AGENTS.md e o ENG-53 no backlog.
+  Texto original: **Palpite de 90' do mata-mata nunca sai empate (ENG-32, 01/07):** o E[pts] puro
+  apostava 0×0/1×1
   em ~25% dos KO e zerava quando o jogo era decidido no tempo normal (te custou J73 e J79). Medido
   nos backtests: a vantagem de E[pts] do empate era ~0,04/jogo
   (e apoiada em super-estimar empate no KO), contra **+70 pts realizados** trocando pelo melhor

@@ -613,12 +613,13 @@ para cá._
   `tournament.toml::[group_stage.third_allocation]` (feito em 2026 após a fase de grupos: row 67,
   grupos B/D/E/F/I/J/K/L). A tabela completa de 495 combinações segue pendente (§9.3).
   **Sempre confira os 8 confrontos dos 16-avos com o bracket oficial** após a fase de grupos.
-- **Taxa de empate acima do previsto (ENG-56, aberto)**: o modelo prevê ~23–28% de empate e os
-  empates observados vêm mais altos (grupos de 2026: 28%; KO das Copas passadas: 34,4% nos 90'
-  contra 28,2% previstos). A hipótese de que a base contaminada explicava isso foi **medida e
-  refutada** (ENG-54: a correção vale 0,5% do peso e move a base de 23,2% para 23,5%). Cada amostra
-  isolada fica dentro de ~1 erro-padrão, então **não há evidência significativa** — mas o desvio é
-  consistentemente na mesma direção e segue **sem mecanismo conhecido**.
+- **Taxa de empate — resolvido, não é limitação (ENG-56, fechado)**: a suspeita de que o modelo
+  subestimava empate **não sobreviveu ao teste com poder** (pooled 5 Copas, 360 jogos as-of,
+  z=−0,80 — se algo, superestimava de leve; `scripts/eng56_draw_pool.py`). O sintoma da campanha
+  comparava réguas diferentes. A sonda de mecanismo achou o viés real noutro eixo — total de gols
+  subestimado por mando mal especificado — corrigido no **ENG-64** (`away_pen`, §3.1); com o fix,
+  a calibração de empate poolada fica exata (z=+0,08). O monitor de regime (ENG-22) permanece
+  como sentinela por edição.
 - **Reconstrução dos 90' depende da lista de gols (ENG-54)**: `fetch_data.regulation_scores` só
   reconstrói o tempo normal quando a lista de gols do jogo **bate exatamente** com o placar
   consolidado (portão de confiança — uma lista incompleta inventaria empates). Jogos fora do portão

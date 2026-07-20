@@ -69,7 +69,7 @@ seção do SPEC ou o módulo de `src/worldcup/` que materializa o conceito.
   blend.
 - **Ataque / defesa / base** — parâmetros de força por seleção (ataque), de fragilidade (defesa) e a
   constante de escala de gols (base). `λ` (gols esperados do mandante) depende de
-  `ataque[h] − defesa[a] + base`.
+  `base + ataque[h] − defesa[a]` mais os termos de mando quando há (`+γ`/`−δ` — SPEC §3.1).
 - **λ / μ** — gols esperados do mandante (`λ`) e do visitante (`μ`); alimentam as Poisson da matriz.
 - **rho (ρ)** — parâmetro da correção Dixon–Coles que reajusta a massa dos quatro placares baixos
   (corrige a sub/superestimação de empates 0×0/1×1 do Poisson independente).
@@ -79,9 +79,11 @@ seção do SPEC ou o módulo de `src/worldcup/` que materializa o conceito.
 - **Peso de torneio** — importância da competição no treino: Copa 1,0; continentais 0,8–0,85;
   eliminatórias 0,8; Nations League 0,75; Gold Cup e não-listados 0,70; amistoso 0,5
   (`model._TOURNAMENT_WEIGHTS`).
-- **Mando (`host_away`)** — vantagem de jogar em casa, aplicada ao **anfitrião** (`neutral=false`).
-  O mando segue quem está em `tournament.toml::hosts`, mesmo que a escala oficial liste o anfitrião
-  como visitante (jogos 50/51/60 da Copa 2026).
+- **Mando (`host_away`)** — efeito de jogar em casa (`neutral=false`), em **duas partes** (ENG-64):
+  bônus do lado que joga em casa (`home_adv`/γ) **e supressão do visitante** (`away_pen`/δ — no
+  ajuste real δ supera γ). O mando segue quem está em `tournament.toml::hosts`, mesmo que a escala
+  oficial liste o anfitrião como visitante (jogos 50/51/60 da Copa 2026); bônus e supressão trocam
+  de lado juntos.
 - **Ridge / regularização** — *prior* fraco que puxa ataque/defesa para a média da liga; evita
   estimativas absurdas para seleções com poucos jogos (regressão à média).
 - **Identificabilidade** — ataque/defesa só importam pela diferença; pós-ajuste são centrados em

@@ -209,8 +209,18 @@ uv run python scripts/eng56_draw_pool.py
 Veredito: **não subestima** (z=-0,80 — se algo, superestima de leve; poder de 4,7 p.p. a 2σ), e o
 déficit aparente nos jogos equilibrados (pista de 12/07, n=8) não replica no pool. O sintoma da
 campanha comparava réguas diferentes (monitor de refit diário + blend vs as-of). A sonda de
-mecanismo achou outra coisa, real e significativa: o modelo **subestima o total de gols** em Copa
-(2,61 observados vs 2,24 previstos por jogo, z=+4,65) — aberto como ENG-64.
+mecanismo achou outra coisa, real e significativa: o modelo **subestimava o total de gols** em
+Copa (2,61 observados vs 2,24 previstos por jogo, z=+4,65) — resolvido no ENG-64.
+
+**Supressão do visitante (ENG-64)** — o déficit de gols era **mando mal especificado**: só o
+bônus do mandante no λ inflava o total dos jogos com mando, e o ajuste compensava deprimindo o
+`base` — o λ dos jogos neutros, quase toda a Copa. O parâmetro `away_pen` (δ≈0,21 no fit real,
+maior que o próprio bônus γ≈0,13) corrige a assimetria: z de gols +4,65→+1,30 e calibração de
+empate exata (z=+0,08). Métricas de matriz do A/B (rodar nos dois commits para comparar):
+
+```bash
+uv run python scripts/eng64_goals_ab.py
+```
 
 **Apresentação do projeto** — um deck HTML autocontido (tema "Placar Noturno", 16:9, navegável) que
 explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):

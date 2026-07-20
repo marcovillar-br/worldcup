@@ -58,6 +58,17 @@ no mata-mata (ENG-12..ENG-59).
   vencedor, que faltava.
 
 ### Alterado
+- **Mando em dois efeitos: bônus do mandante + supressão do visitante** (ENG-64): o Dixon–Coles
+  modelava o mando só como bônus no λ do mandante; a sonda do ENG-56 revelou o custo — o total
+  previsto dos jogos com mando saía inflado e o otimizador compensava deprimindo o `base`, o λ
+  dos jogos **neutros** (quase toda a Copa): 2,61 gols/jogo observados vs 2,24 previstos nas 5
+  Copas pooladas (z=+4,65). Novo parâmetro `away_pen` (`δ ≈ 0,21`, maior que o próprio
+  `γ ≈ 0,13`) estimado no ajuste e aplicado em `expected_goals` (troca de lado junto com o bônus
+  no `host_away`): z de gols cai a +1,30, calibração de empate exata (pooled z=+0,08), over/under
+  e log-loss de placar melhoram (t=−1,2/−1,0), Brier 1×2 estatisticamente parado (guarda de
+  não-degradação; é quase ortogonal a nível de λ). SPEC §3.1 tem a formulação; A/B reproduzível
+  em `scripts/eng64_goals_ab.py`.
+
 - **Seleção desconhecida agora é erro, não "time médio"** (ENG-57): `score_matrix`/
   `expected_goals` (e, por consequência, `MatrixCache.matrix`) levantam `KeyError` com mensagem
   clara quando o nome não está em `model.teams` — antes um slot de bracket não resolvido (`L101`)

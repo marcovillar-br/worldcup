@@ -18,19 +18,28 @@ def _synthetic_matches() -> pd.DataFrame:
 
     Os mandantes marcam consistentemente mais que os visitantes (jogos com mando,
     `neutral=False`), de modo que o fit convergido estima `home_adv > 0` — sem esse sinal,
-    o ótimo verdadeiro tem mando ~0 e os testes de mando ficariam no fio da navalha (ENG-16)."""
+    o ótimo verdadeiro tem mando ~0 e os testes de mando ficariam no fio da navalha (ENG-16).
+    As rodadas **neutras** (sem viés de mando, só a força) identificam o `base`: com a supressão
+    do visitante no vetor (ENG-64), um fixture 100% com mando deixaria `base`/`γ`/`δ` com uma
+    direção plana (só `base+γ` e `base−δ` observáveis) e as previsões neutras arbitrárias."""
     rows = []
     base = pd.Timestamp("2024-01-01")
     scripted = [
-        ("A", "B", 3, 0),  # mandante marca mais nas duas orientações de cada confronto
-        ("A", "C", 4, 0),
-        ("B", "C", 3, 0),
-        ("B", "A", 1, 2),
-        ("C", "A", 1, 3),
-        ("C", "B", 1, 1),
+        ("A", "B", 3, 0, False),  # mandante marca mais nas duas orientações de cada confronto
+        ("A", "C", 4, 0, False),
+        ("B", "C", 3, 0, False),
+        ("B", "A", 1, 2, False),
+        ("C", "A", 1, 3, False),
+        ("C", "B", 1, 1, False),
+        ("A", "B", 2, 1, True),  # rodada neutra: a força decide, sem viés pró-mandante
+        ("A", "C", 3, 1, True),
+        ("B", "C", 2, 1, True),
+        ("B", "A", 1, 2, True),
+        ("C", "A", 1, 3, True),
+        ("C", "B", 1, 1, True),
     ]
     for k in range(12):
-        for i, (h, a, hs, as_) in enumerate(scripted):
+        for i, (h, a, hs, as_, neutral) in enumerate(scripted):
             rows.append(
                 {
                     "date": base + pd.Timedelta(days=k * 30 + i),
@@ -39,7 +48,7 @@ def _synthetic_matches() -> pd.DataFrame:
                     "home_score": hs,
                     "away_score": as_,
                     "tournament": "FIFA World Cup qualification",
-                    "neutral": False,
+                    "neutral": neutral,
                 }
             )
     return pd.DataFrame(rows)
@@ -112,6 +121,17 @@ def test_host_away_gives_mando_to_visitor():
     _, _, pa_neutral = outcome_probs_from_matrix(m.score_matrix("B", "C", neutral=True))
     _, _, pa_host_away = outcome_probs_from_matrix(mat_host_away)
     assert pa_host_away >= pa_neutral
+
+
+def test_away_suppression_fitted_and_applied():
+    # ENG-64: o mando tem dois efeitos — infla o mandante (γ) e suprime o visitante (δ). Sem δ,
+    # o total dos jogos com mando saía inflado e o otimizador compensava deprimindo o `base`,
+    # que é exatamente o λ dos jogos neutros — quase toda a Copa.
+    m = DixonColesModel().fit(_synthetic_matches())
+    assert m.away_pen > 0  # no sintético o visitante marca menos sob mando que no neutro
+    _, mu_neutral = m.expected_goals("B", "C", neutral=True)
+    _, mu_home = m.expected_goals("B", "C", neutral=False)
+    assert mu_home < mu_neutral  # a supressão é aplicada ao visitante do jogo com mando
 
 
 def test_unknown_team_raises_instead_of_average_fallback():

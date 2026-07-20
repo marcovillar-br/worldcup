@@ -67,6 +67,7 @@ class DixonColesModel:
         self.attack: np.ndarray = np.array([])
         self.defense: np.ndarray = np.array([])
         self.home_adv: float = 0.0
+        self.away_pen: float = 0.0  # supressão do visitante em jogo com mando (ENG-64)
         self.rho: float = 0.0
         self.base: float = 0.0  # intercepto (média de gols em escala log)
 
@@ -121,8 +122,12 @@ class DixonColesModel:
 
         base0 = float(np.log(max(df[["home_score", "away_score"]].to_numpy().mean(), 0.3)))
 
-        # vetor de parâmetros: [attack(n), defense(n), home_adv, rho, base]
-        x0 = np.concatenate([np.zeros(n), np.zeros(n), [0.25, 0.0, base0]])
+        # vetor de parâmetros: [attack(n), defense(n), home_adv, away_pen, rho, base].
+        # `away_pen` (ENG-64): o mando não só infla o mandante — suprime o visitante. Sem ele, o
+        # modelo forçava o total dos jogos com mando para cima e o `base` compensava para baixo no
+        # ajuste (dominado por jogos com mando), deprimindo o λ dos jogos neutros — quase toda a
+        # Copa (residual +0,17 gol/jogo no neutro, -0,17 no mando; z=+6,3/-9,0 na janela 2014+).
+        x0 = np.concatenate([np.zeros(n), np.zeros(n), [0.25, 0.1, 0.0, base0]])
         ridge = self.config.ridge
         logmx = np.log(self.config.max_xg)
         # máscaras de placar baixo usadas na correção Dixon–Coles (tau) e na sua derivada
@@ -134,9 +139,9 @@ class DixonColesModel:
         def _rates(x: np.ndarray) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
             """λ/μ (pós-clip) e as máscaras da região não-clipada (onde dλ/dη = λ)."""
             att, dfn = x[:n], x[n : 2 * n]
-            home_adv, base = x[2 * n], x[2 * n + 2]
+            home_adv, away_pen, base = x[2 * n], x[2 * n + 1], x[2 * n + 3]
             eta_l = base + att[hi] - dfn[ai] + home_adv * home_flag
-            eta_m = base + att[ai] - dfn[hi]
+            eta_m = base + att[ai] - dfn[hi] - away_pen * home_flag
             lam = np.exp(np.clip(eta_l, -3, logmx))
             mu = np.exp(np.clip(eta_m, -3, logmx))
             unclipped_l = (eta_l > -3) & (eta_l < logmx)
@@ -145,7 +150,7 @@ class DixonColesModel:
 
         def neg_ll(x: np.ndarray) -> float:
             att, dfn = x[:n], x[n : 2 * n]
-            rho = x[2 * n + 1]
+            rho = x[2 * n + 2]
             lam, mu, _, _ = _rates(x)
             ll = hg * np.log(lam) - lam + ag * np.log(mu) - mu
             tau = _tau(hg, ag, lam, mu, rho)
@@ -157,7 +162,7 @@ class DixonColesModel:
             """Gradiente analítico de neg_ll. Sem ele, o gradiente numérico custa ~2n
             avaliações por iteração e esgota o maxfun do scipy antes de convergir (ENG-16)."""
             att, dfn = x[:n], x[n : 2 * n]
-            rho = x[2 * n + 1]
+            rho = x[2 * n + 2]
             lam, mu, unclipped_l, unclipped_m = _rates(x)
             tau = np.clip(_tau(hg, ag, lam, mu, rho), 1e-9, None)
             # derivadas de tau (não-nulas só nos placares baixos)
@@ -174,13 +179,14 @@ class DixonColesModel:
             np.add.at(g[n : 2 * n], ai, g_l)  # dfn entra com sinal negativo em λ/μ
             np.add.at(g[n : 2 * n], hi, g_m)
             g[2 * n] = -np.sum(g_l * home_flag)  # home_adv
-            g[2 * n + 1] = -np.sum(g_rho)  # rho
-            g[2 * n + 2] = -np.sum(g_l + g_m)  # base
+            g[2 * n + 1] = np.sum(g_m * home_flag)  # away_pen (entra com sinal negativo em η_μ)
+            g[2 * n + 2] = -np.sum(g_rho)  # rho
+            g[2 * n + 3] = -np.sum(g_l + g_m)  # base
             g[:n] += 2 * ridge * att  # derivada do ridge
             g[n : 2 * n] += 2 * ridge * dfn
             return g
 
-        bounds = [(-3, 3)] * (2 * n) + [(-1.0, 1.0), (-0.2, 0.2), (-2.0, 2.0)]
+        bounds = [(-3, 3)] * (2 * n) + [(-1.0, 1.0), (-1.0, 1.0), (-0.2, 0.2), (-2.0, 2.0)]
         res = minimize(neg_ll, x0, jac=grad, method="L-BFGS-B", bounds=bounds, options={"maxiter": self.config.maxiter})
 
         if not res.success:
@@ -197,8 +203,9 @@ class DixonColesModel:
         self.attack = att
         self.defense = x[n : 2 * n] - x[n : 2 * n].mean()
         self.home_adv = float(x[2 * n])
-        self.rho = float(x[2 * n + 1])
-        self.base = float(x[2 * n + 2]) + x[:n].mean() - x[n : 2 * n].mean()
+        self.away_pen = float(x[2 * n + 1])
+        self.rho = float(x[2 * n + 2])
+        self.base = float(x[2 * n + 3]) + x[:n].mean() - x[n : 2 * n].mean()
         return self
 
     # --------------------------------------------------------------- predição
@@ -220,10 +227,12 @@ class DixonColesModel:
         ah, dh = self._strength(home)
         aa, da = self._strength(away)
         adv = 0.0 if neutral else self.home_adv
-        # mando vai para o mandante, salvo `host_away`: o visitante (anfitrião) joga em casa.
-        home_adv, away_adv = (0.0, adv) if host_away else (adv, 0.0)
-        lam = float(np.exp(np.clip(self.base + ah - da + home_adv, -3, np.log(self.config.max_xg))))
-        mu = float(np.exp(np.clip(self.base + aa - dh + away_adv, -3, np.log(self.config.max_xg))))
+        pen = 0.0 if neutral else self.away_pen
+        # mando vai para o mandante (e a supressão ao visitante), salvo `host_away`: o visitante
+        # (anfitrião) joga em casa — bônus e penalidade trocam de lado juntos (ENG-64).
+        home_adj, away_adj = (-pen, adv) if host_away else (adv, -pen)
+        lam = float(np.exp(np.clip(self.base + ah - da + home_adj, -3, np.log(self.config.max_xg))))
+        mu = float(np.exp(np.clip(self.base + aa - dh + away_adj, -3, np.log(self.config.max_xg))))
         return lam, mu
 
     def score_matrix(

@@ -92,11 +92,18 @@ codificado por slots (§7.2).
 Para um jogo entre mandante `h` e visitante `a`, os gols `(X, Y)` seguem Poisson com médias
 
 ```
-λ = exp( base + ataque[h] − defesa[a] + γ · mando_h )
-μ = exp( base + ataque[a] − defesa[h] + γ · mando_a )
+λ = exp( base + ataque[h] − defesa[a] + γ · mando_h − δ · mando_a )
+μ = exp( base + ataque[a] − defesa[h] + γ · mando_a − δ · mando_h )
 ```
 
-onde `γ` é a vantagem de mando e `base` é o intercepto (nível médio de gols em escala log).
+onde `γ` é a vantagem de mando, `δ` a **supressão do visitante** (ENG-64) e `base` o intercepto
+(nível médio de gols em escala log). O mando tem **dois efeitos**, não um: infla quem joga em casa
+(`γ`) e suprime quem joga fora (`δ`) — no ajuste real, `δ ≈ 0,21` supera `γ ≈ 0,13`. Com `γ`
+sozinho (formulação até o ENG-64), a soma λ+μ dos jogos com mando saía inflada e o otimizador
+compensava puxando o `base` para baixo — deprimindo o λ dos jogos **neutros**, que são quase toda
+a Copa (residual de **+0,17 gol/jogo** no neutro e **−0,17** no mando, z=+6,3/−9,0 na janela
+2014+; nas 5 Copas pooladas, 2,61 gols/jogo observados vs 2,24 previstos, z=+4,65 → com `δ`,
+z=+1,30 e o residual em-amostra das Copas cai de +0,22 para −0,004).
 
 O mando vale `1` para o lado que joga em casa e `0` para o outro; em campo neutro ambos são `0`.
 Normalmente quem joga em casa é o mandante (`mando_h = 1`). **Exceção** — a escala oficial da FIFA

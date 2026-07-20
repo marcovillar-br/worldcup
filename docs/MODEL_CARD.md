@@ -22,7 +22,8 @@ limites — para uma validação de modelo. Números reproduzidos das fontes can
   estratégia (escolha do palpite) são **desacoplados**.
 - **Parâmetros de ajuste**: decaimento temporal **meia-vida 2,0 anos**, regularização
   **ridge 0,10** e mínimo **10 jogos** por seleção (`FitConfig`); pesos de torneio (Copa 1,0 …
-  amistoso 0,5 — `_TOURNAMENT_WEIGHTS`); **mando** do anfitrião (parâmetro estimado no ajuste);
+  amistoso 0,5 — `_TOURNAMENT_WEIGHTS`); **mando em dois efeitos** (ENG-64): bônus do mandante
+  (`γ`) **e** supressão do visitante (`δ`), ambos estimados no ajuste (SPEC §3.1);
   recorte de treino **≥ 2006-01-01** (`fetch_data.DEFAULT_CUTOFF`); filtra seleções não-FIFA.
 - **Blend opcional (ENG-19):** quando há `odds.csv`, funde a matriz com o mercado (des-vig → pool
   logarítmico → reescala; com totals registrados, também tilting da taxa total à linha de
@@ -91,9 +92,15 @@ acima foi re-testado pós-2026 com a régua certa (`score_90`) e poder declarado
 a 2σ): **z=-0,80** — sem subestimação de empate; a concentração aparente nos jogos equilibrados
 (pista de 12/07 da campanha, n=8) **não replica** no pool (estrato <40%: z=+0,52). Reproduzível:
 `scripts/eng56_draw_pool.py`. A sonda de mecanismo do mesmo script achou um viés real **noutro
-eixo**: o **total de gols** de Copa é subestimado (2,61 obs vs 2,24 prev/jogo, **z=+4,65**),
-consistente em todos os estratos — rastreado como ENG-64 (candidatos: peso de torneio no λ,
-decaimento, mando neutro).
+eixo**: o **total de gols** de Copa era subestimado (2,61 obs vs 2,24 prev/jogo, **z=+4,65**),
+consistente em todos os estratos — **mecanismo identificado e corrigido no ENG-64**: mando mal
+especificado (só bônus do mandante, sem a supressão do visitante), que inflava o total previsto
+dos jogos com mando e deprimia o `base` — o λ dos jogos neutros, quase toda a Copa. Com `δ` no
+vetor (SPEC §3.1), o z de gols cai para **+1,30**, a calibração de empate fica exata (pooled
+z=**+0,08**; 0×0/1×1 z=+0,08) e over/under 2,5 e log-loss de placar exato melhoram (t=−1,2/−1,0);
+o Brier 1×2 — quase ortogonal a um fix de **nível** de λ — fica estatisticamente parado
+(Δ=+0,0003, t=+0,13), dentro da guarda de não-degradação. A/B reproduzível:
+`scripts/eng64_goals_ab.py` (rodar nos dois commits).
 
 **Pontos — backtest Copa 2022 (64 jogos), régua hierárquica corrigida (ENG-23) — SPEC §9.1:**
 

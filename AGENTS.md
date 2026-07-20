@@ -258,9 +258,13 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   anfitrião. Regra centralizada em `MatrixCache._host_away` → `score_matrix(host_away=…)`.
 - **Gerados (no .gitignore)**: `out/`, `data/historical_results.csv`, caches,
   **`data/editions/*/odds.csv`** (odds reais — gitignored por ToS, ver `docs/DATA.md` §6). Versionar
-  só specs, código, testes e skill. **Exceção deliberada:** runs **reais** em
+  só specs, código, testes e skill. **Exceção deliberada (1):** runs **reais** em
   `data/editions/<ano>/history/` são versionados — snapshots imutáveis; `*.reconstruido.*` ficam em
-  `.gitignore` (regeneráveis via `--as-of`).
+  `.gitignore` (regeneráveis via `--as-of`). **Exceção deliberada (2):**
+  `data/editions/<ano>/archive/` — a **recordação** do fim da campanha (palpites em MD/HTML/PDF +
+  deck), versionada a pedido do usuário (2026-07-20). É acervo, não processo: nenhum código lê
+  esses arquivos, e eles **não** devem ser regenerados nem apagados em limpeza — ver
+  `data/editions/2026/archive/README.md`.
 - **Higiene de artefatos**: limpeza é **sob demanda** via `scripts/clean-artifacts.sh`
   (dry-run por padrão; `--force` apaga). Poda transcripts de sessão (`~/.claude/.../*.jsonl`) com
   mais de 7 dias preservando a sessão ativa, e o scratch `tmp/`. **A memória

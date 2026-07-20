@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Palpites — Copa do Mundo FIFA 2026</title>
+<style>
+:root { --ink:#1a1a1a; --muted:#6b7280; --line:#e5e7eb; --home:#2563eb;
+        --draw:#9ca3af; --away:#dc2626; --upset:#b45309; --final:#f3f4f6; }
+* { box-sizing: border-box; }
+body { font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+       color: var(--ink); margin: 0; padding: 2rem 1.25rem 4rem; line-height: 1.45;
+       max-width: 1040px; margin-inline: auto; -webkit-print-color-adjust: exact;
+       print-color-adjust: exact; }
+h1 { font-size: 1.6rem; margin: 0 0 .25rem; }
+h2 { font-size: 1.15rem; margin: 2rem 0 .6rem; padding-bottom: .3rem;
+     border-bottom: 2px solid var(--line); }
+.sub { color: var(--muted); font-size: .85rem; margin: 0 0 1.5rem; }
+.champ { display: grid; gap: .35rem; margin: .5rem 0 0; }
+.champ .row { display: grid; grid-template-columns: 11rem 1fr 3rem; align-items: center;
+              gap: .6rem; font-size: .9rem; }
+.champ .name { font-weight: 600; }
+.champ .track { background: var(--line); border-radius: 999px; height: .8rem; overflow: hidden; }
+.champ .fill { display: block; background: linear-gradient(90deg,#1d4ed8,#3b82f6); height: 100%; }
+.champ .val { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+.pick { text-align: center; padding: .5rem .75rem; background: #eff6ff;
+        border: 1px solid #bfdbfe; border-radius: 8px; margin: .75rem 0 0; font-size: .9rem; }
+.note { padding: .5rem .75rem; background: #fffbeb; border: 1px solid #fde68a;
+        border-radius: 8px; margin: .5rem 0 0; font-size: .8rem; color: #713f12; line-height: 1.5; }
+table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+th, td { padding: .4rem .55rem; text-align: left; border-bottom: 1px solid var(--line);
+         vertical-align: middle; }
+th { font-size: .72rem; text-transform: uppercase; letter-spacing: .03em; color: var(--muted);
+     background: #fafafa; }
+td.num, th.num { text-align: center; font-variant-numeric: tabular-nums; }
+.score { font-weight: 700; white-space: nowrap; }
+tr.upset td.score { color: var(--upset); }
+tr.upset .bolt { color: var(--upset); }
+tr.final { background: var(--final); color: var(--muted); }
+tr.final .score { color: var(--muted); }
+.bar { display: inline-flex; width: 90px; height: .65rem; border-radius: 999px;
+       overflow: hidden; vertical-align: middle; border: 1px solid var(--line); }
+.bar i { display: block; height: 100%; }
+.bar .h { background: var(--home); } .bar .d { background: var(--draw); } .bar .a { background: var(--away); }
+.tag { display: inline-block; font-size: .68rem; padding: .05rem .4rem; border-radius: 999px;
+       background: #fef3c7; color: var(--upset); font-weight: 600; }
+.tag.fin { background: #e5e7eb; color: var(--muted); }
+.legend { margin-top: 2.5rem; font-size: .78rem; color: var(--muted); border-top: 1px solid var(--line);
+          padding-top: 1rem; }
+.legend b { color: var(--ink); }
+@page { size: A4 landscape; margin: 1.2cm 1.5cm; }
+@media print {
+  body { padding: 0; font-size: 11px; max-width: none; }
+  h2 { break-after: avoid; }
+  section { break-inside: avoid; }
+  tr { break-inside: avoid; }
+  .pick, .champ, .note { break-inside: avoid; }
+}
+</style></head><body>
+<h1>🏆 Palpites — Copa do Mundo FIFA 2026</h1>
+<p class="sub">Sistema I (probabilístico) — placar que maximiza os pontos esperados. ⚡ marca palpites ousados (contra o favorito).</p>
+<section><h2>Probabilidade de título (Monte Carlo (5000 sims; ± = IC95))</h2>
+<div class="champ">
+<div class="row"><span class="name">Espanha</span><span class="track"><span class="fill" style="width:100.0%"></span></span><span class="val">100.0%</span></div>
+</div>
+<p class="pick">Palpite de campeão sugerido: <b>Espanha</b></p>
+</section>
+<section><h2>Fase de Grupos</h2><table>
+<thead><tr><th class='num'>Jogo</th><th>Data</th><th class='num'>Grupo</th><th>Mandante</th><th class='num'>Palpite</th><th>Visitante</th><th class='num'>M / E / V</th><th>Prob.</th><th></th></tr></thead><tbody>
+<tr class='final'><td class='num'>1</td><td>2026-06-11</td><td class='num'>A</td><td>México</td><td class='num score'>2x0</td><td>África do Sul</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>2</td><td>2026-06-11</td><td class='num'>A</td><td>Coreia do Sul</td><td class='num score'>2x1</td><td>República Tcheca</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>3</td><td>2026-06-12</td><td class='num'>B</td><td>Canadá</td><td class='num score'>1x1</td><td>Bósnia e Herzegovina</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>4</td><td>2026-06-12</td><td class='num'>D</td><td>Estados Unidos</td><td class='num score'>4x1</td><td>Paraguai</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>5</td><td>2026-06-13</td><td class='num'>D</td><td>Austrália</td><td class='num score'>2x0</td><td>Turquia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>6</td><td>2026-06-13</td><td class='num'>C</td><td>Brasil</td><td class='num score'>1x1</td><td>Marrocos</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>7</td><td>2026-06-13</td><td class='num'>C</td><td>Haiti</td><td class='num score'>0x1</td><td>Escócia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>8</td><td>2026-06-13</td><td class='num'>B</td><td>Catar</td><td class='num score'>1x1</td><td>Suíça</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>9</td><td>2026-06-14</td><td class='num'>E</td><td>Alemanha</td><td class='num score'>7x1</td><td>Curaçao</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>10</td><td>2026-06-14</td><td class='num'>E</td><td>Costa do Marfim</td><td class='num score'>1x0</td><td>Equador</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>11</td><td>2026-06-14</td><td class='num'>F</td><td>Holanda</td><td class='num score'>2x2</td><td>Japão</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>12</td><td>2026-06-14</td><td class='num'>F</td><td>Suécia</td><td class='num score'>5x1</td><td>Tunísia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>13</td><td>2026-06-15</td><td class='num'>G</td><td>Bélgica</td><td class='num score'>1x1</td><td>Egito</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>14</td><td>2026-06-15</td><td class='num'>G</td><td>Irã</td><td class='num score'>2x2</td><td>Nova Zelândia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>15</td><td>2026-06-15</td><td class='num'>H</td><td>Arábia Saudita</td><td class='num score'>1x1</td><td>Uruguai</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>16</td><td>2026-06-15</td><td class='num'>H</td><td>Espanha</td><td class='num score'>0x0</td><td>Cabo Verde</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>17</td><td>2026-06-16</td><td class='num'>J</td><td>Argentina</td><td class='num score'>3x0</td><td>Argélia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>18</td><td>2026-06-16</td><td class='num'>J</td><td>Áustria</td><td class='num score'>3x1</td><td>Jordânia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>19</td><td>2026-06-16</td><td class='num'>I</td><td>França</td><td class='num score'>3x1</td><td>Senegal</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>20</td><td>2026-06-16</td><td class='num'>I</td><td>Iraque</td><td class='num score'>1x4</td><td>Noruega</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>21</td><td>2026-06-17</td><td class='num'>L</td><td>Inglaterra</td><td class='num score'>4x2</td><td>Croácia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>22</td><td>2026-06-17</td><td class='num'>L</td><td>Gana</td><td class='num score'>1x0</td><td>Panamá</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>23</td><td>2026-06-17</td><td class='num'>K</td><td>Portugal</td><td class='num score'>1x1</td><td>RD Congo</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>24</td><td>2026-06-17</td><td class='num'>K</td><td>Uzbequistão</td><td class='num score'>1x3</td><td>Colômbia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>25</td><td>2026-06-18</td><td class='num'>B</td><td>Canadá</td><td class='num score'>6x0</td><td>Catar</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>26</td><td>2026-06-18</td><td class='num'>A</td><td>República Tcheca</td><td class='num score'>1x1</td><td>África do Sul</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>27</td><td>2026-06-18</td><td class='num'>A</td><td>México</td><td class='num score'>1x0</td><td>Coreia do Sul</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>28</td><td>2026-06-18</td><td class='num'>B</td><td>Suíça</td><td class='num score'>4x1</td><td>Bósnia e Herzegovina</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>29</td><td>2026-06-19</td><td class='num'>C</td><td>Brasil</td><td class='num score'>3x0</td><td>Haiti</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>30</td><td>2026-06-19</td><td class='num'>C</td><td>Escócia</td><td class='num score'>0x1</td><td>Marrocos</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>31</td><td>2026-06-19</td><td class='num'>D</td><td>Turquia</td><td class='num score'>0x1</td><td>Paraguai</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>32</td><td>2026-06-19</td><td class='num'>D</td><td>Estados Unidos</td><td class='num score'>2x0</td><td>Austrália</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>33</td><td>2026-06-20</td><td class='num'>E</td><td>Equador</td><td class='num score'>0x0</td><td>Curaçao</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>34</td><td>2026-06-20</td><td class='num'>E</td><td>Alemanha</td><td class='num score'>2x1</td><td>Costa do Marfim</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>35</td><td>2026-06-20</td><td class='num'>F</td><td>Holanda</td><td class='num score'>5x1</td><td>Suécia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>36</td><td>2026-06-20</td><td class='num'>F</td><td>Tunísia</td><td class='num score'>0x4</td><td>Japão</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>37</td><td>2026-06-21</td><td class='num'>G</td><td>Bélgica</td><td class='num score'>0x0</td><td>Irã</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>38</td><td>2026-06-21</td><td class='num'>G</td><td>Nova Zelândia</td><td class='num score'>1x3</td><td>Egito</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>39</td><td>2026-06-21</td><td class='num'>H</td><td>Espanha</td><td class='num score'>4x0</td><td>Arábia Saudita</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>40</td><td>2026-06-21</td><td class='num'>H</td><td>Uruguai</td><td class='num score'>2x2</td><td>Cabo Verde</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>41</td><td>2026-06-22</td><td class='num'>J</td><td>Argentina</td><td class='num score'>2x0</td><td>Áustria</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>42</td><td>2026-06-22</td><td class='num'>I</td><td>França</td><td class='num score'>3x0</td><td>Iraque</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>43</td><td>2026-06-22</td><td class='num'>J</td><td>Jordânia</td><td class='num score'>1x2</td><td>Argélia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>44</td><td>2026-06-22</td><td class='num'>I</td><td>Noruega</td><td class='num score'>3x2</td><td>Senegal</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>45</td><td>2026-06-23</td><td class='num'>K</td><td>Colômbia</td><td class='num score'>1x0</td><td>RD Congo</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>46</td><td>2026-06-23</td><td class='num'>L</td><td>Inglaterra</td><td class='num score'>0x0</td><td>Gana</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>47</td><td>2026-06-23</td><td class='num'>L</td><td>Panamá</td><td class='num score'>0x1</td><td>Croácia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>48</td><td>2026-06-23</td><td class='num'>K</td><td>Portugal</td><td class='num score'>5x0</td><td>Uzbequistão</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>49</td><td>2026-06-24</td><td class='num'>B</td><td>Bósnia e Herzegovina</td><td class='num score'>3x1</td><td>Catar</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>50</td><td>2026-06-24</td><td class='num'>B</td><td>Suíça</td><td class='num score'>2x1</td><td>Canadá</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>51</td><td>2026-06-24</td><td class='num'>A</td><td>República Tcheca</td><td class='num score'>0x3</td><td>México</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>52</td><td>2026-06-24</td><td class='num'>C</td><td>Marrocos</td><td class='num score'>4x2</td><td>Haiti</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>53</td><td>2026-06-24</td><td class='num'>C</td><td>Escócia</td><td class='num score'>0x3</td><td>Brasil</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>54</td><td>2026-06-24</td><td class='num'>A</td><td>África do Sul</td><td class='num score'>1x0</td><td>Coreia do Sul</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>55</td><td>2026-06-25</td><td class='num'>E</td><td>Curaçao</td><td class='num score'>0x2</td><td>Costa do Marfim</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>56</td><td>2026-06-25</td><td class='num'>E</td><td>Equador</td><td class='num score'>2x1</td><td>Alemanha</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>57</td><td>2026-06-25</td><td class='num'>F</td><td>Japão</td><td class='num score'>1x1</td><td>Suécia</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>58</td><td>2026-06-25</td><td class='num'>D</td><td>Paraguai</td><td class='num score'>0x0</td><td>Austrália</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>59</td><td>2026-06-25</td><td class='num'>F</td><td>Tunísia</td><td class='num score'>1x3</td><td>Holanda</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>60</td><td>2026-06-25</td><td class='num'>D</td><td>Turquia</td><td class='num score'>3x2</td><td>Estados Unidos</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>61</td><td>2026-06-26</td><td class='num'>H</td><td>Cabo Verde</td><td class='num score'>0x0</td><td>Arábia Saudita</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>62</td><td>2026-06-26</td><td class='num'>G</td><td>Egito</td><td class='num score'>1x1</td><td>Irã</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>63</td><td>2026-06-26</td><td class='num'>G</td><td>Nova Zelândia</td><td class='num score'>1x5</td><td>Bélgica</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>64</td><td>2026-06-26</td><td class='num'>I</td><td>Noruega</td><td class='num score'>1x4</td><td>França</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>65</td><td>2026-06-26</td><td class='num'>I</td><td>Senegal</td><td class='num score'>5x0</td><td>Iraque</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>66</td><td>2026-06-26</td><td class='num'>H</td><td>Uruguai</td><td class='num score'>0x1</td><td>Espanha</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>67</td><td>2026-06-27</td><td class='num'>J</td><td>Argélia</td><td class='num score'>3x3</td><td>Áustria</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>68</td><td>2026-06-27</td><td class='num'>K</td><td>Colômbia</td><td class='num score'>0x0</td><td>Portugal</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>69</td><td>2026-06-27</td><td class='num'>L</td><td>Croácia</td><td class='num score'>2x1</td><td>Gana</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>70</td><td>2026-06-27</td><td class='num'>K</td><td>RD Congo</td><td class='num score'>3x1</td><td>Uzbequistão</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>71</td><td>2026-06-27</td><td class='num'>J</td><td>Jordânia</td><td class='num score'>1x3</td><td>Argentina</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+<tr class='final'><td class='num'>72</td><td>2026-06-27</td><td class='num'>L</td><td>Panamá</td><td class='num score'>0x2</td><td>Inglaterra</td><td class='num'>—</td><td class='num'>—</td><td><span class="tag fin">final</span></td></tr>
+</tbody></table></section>
+<section><h2>16-avos de final</h2><table>
+<thead><tr><th class='num'>Jogo</th><th>Data</th><th>Confronto</th><th class='num'>Palpite (90')</th><th>Prorrogação</th><th>Pênaltis</th><th>Avança</th></tr></thead><tbody>
+<tr class='final'><td class='num'>73</td><td>2026-06-28</td><td>África do Sul × Canadá</td><td class='num score'>0x1</td><td>—</td><td>—</td><td><b>Canadá</b></td></tr>
+<tr class='final'><td class='num'>74</td><td>2026-06-29</td><td>Alemanha × Paraguai</td><td class='num score'>1x1</td><td>Vai aos pênaltis</td><td>Paraguai (3x4)</td><td><b>Paraguai</b></td></tr>
+<tr class='final'><td class='num'>75</td><td>2026-06-29</td><td>Holanda × Marrocos</td><td class='num score'>1x1</td><td>Vai aos pênaltis</td><td>Marrocos (2x3)</td><td><b>Marrocos</b></td></tr>
+<tr class='final'><td class='num'>76</td><td>2026-06-29</td><td>Brasil × Japão</td><td class='num score'>2x1</td><td>—</td><td>—</td><td><b>Brasil</b></td></tr>
+<tr class='final'><td class='num'>77</td><td>2026-06-30</td><td>França × Suécia</td><td class='num score'>3x0</td><td>—</td><td>—</td><td><b>França</b></td></tr>
+<tr class='final'><td class='num'>78</td><td>2026-06-30</td><td>Costa do Marfim × Noruega</td><td class='num score'>1x2</td><td>—</td><td>—</td><td><b>Noruega</b></td></tr>
+<tr class='final'><td class='num'>79</td><td>2026-06-30</td><td>México × Equador</td><td class='num score'>2x0</td><td>—</td><td>—</td><td><b>México</b></td></tr>
+<tr class='final'><td class='num'>80</td><td>2026-07-01</td><td>Inglaterra × RD Congo</td><td class='num score'>2x1</td><td>—</td><td>—</td><td><b>Inglaterra</b></td></tr>
+<tr class='final'><td class='num'>81</td><td>2026-07-01</td><td>Estados Unidos × Bósnia e Herzegovina</td><td class='num score'>2x0</td><td>—</td><td>—</td><td><b>Estados Unidos</b></td></tr>
+<tr class='final'><td class='num'>82</td><td>2026-07-01</td><td>Bélgica × Senegal</td><td class='num score'>2x2</td><td>Bélgica (3x2)</td><td>—</td><td><b>Bélgica</b></td></tr>
+<tr class='final'><td class='num'>83</td><td>2026-07-02</td><td>Portugal × Croácia</td><td class='num score'>2x1</td><td>—</td><td>—</td><td><b>Portugal</b></td></tr>
+<tr class='final'><td class='num'>84</td><td>2026-07-02</td><td>Espanha × Áustria</td><td class='num score'>3x0</td><td>—</td><td>—</td><td><b>Espanha</b></td></tr>
+<tr class='final'><td class='num'>85</td><td>2026-07-02</td><td>Suíça × Argélia</td><td class='num score'>2x0</td><td>—</td><td>—</td><td><b>Suíça</b></td></tr>
+<tr class='final'><td class='num'>86</td><td>2026-07-03</td><td>Argentina × Cabo Verde</td><td class='num score'>3x2</td><td>—</td><td>—</td><td><b>Argentina</b></td></tr>
+<tr class='final'><td class='num'>87</td><td>2026-07-03</td><td>Colômbia × Gana</td><td class='num score'>1x0</td><td>—</td><td>—</td><td><b>Colômbia</b></td></tr>
+<tr class='final'><td class='num'>88</td><td>2026-07-03</td><td>Austrália × Egito</td><td class='num score'>1x1</td><td>Vai aos pênaltis</td><td>Egito (2x4)</td><td><b>Egito</b></td></tr>
+</tbody></table></section>
+<section><h2>Oitavas de final</h2><table>
+<thead><tr><th class='num'>Jogo</th><th>Data</th><th>Confronto</th><th class='num'>Palpite (90')</th><th>Prorrogação</th><th>Pênaltis</th><th>Avança</th></tr></thead><tbody>
+<tr class='final'><td class='num'>89</td><td>2026-07-04</td><td>Canadá × Marrocos</td><td class='num score'>0x3</td><td>—</td><td>—</td><td><b>Marrocos</b></td></tr>
+<tr class='final'><td class='num'>90</td><td>2026-07-04</td><td>Paraguai × França</td><td class='num score'>0x1</td><td>—</td><td>—</td><td><b>França</b></td></tr>
+<tr class='final'><td class='num'>91</td><td>2026-07-05</td><td>Brasil × Noruega</td><td class='num score'>1x2</td><td>—</td><td>—</td><td><b>Noruega</b></td></tr>
+<tr class='final'><td class='num'>92</td><td>2026-07-05</td><td>México × Inglaterra</td><td class='num score'>2x3</td><td>—</td><td>—</td><td><b>Inglaterra</b></td></tr>
+<tr class='final'><td class='num'>93</td><td>2026-07-06</td><td>Portugal × Espanha</td><td class='num score'>0x1</td><td>—</td><td>—</td><td><b>Espanha</b></td></tr>
+<tr class='final'><td class='num'>94</td><td>2026-07-06</td><td>Estados Unidos × Bélgica</td><td class='num score'>1x4</td><td>—</td><td>—</td><td><b>Bélgica</b></td></tr>
+<tr class='final'><td class='num'>95</td><td>2026-07-07</td><td>Argentina × Egito</td><td class='num score'>3x2</td><td>—</td><td>—</td><td><b>Argentina</b></td></tr>
+<tr class='final'><td class='num'>96</td><td>2026-07-07</td><td>Suíça × Colômbia</td><td class='num score'>0x0</td><td>Vai aos pênaltis</td><td>Suíça (4x3)</td><td><b>Suíça</b></td></tr>
+</tbody></table></section>
+<section><h2>Quartas de final</h2><table>
+<thead><tr><th class='num'>Jogo</th><th>Data</th><th>Confronto</th><th class='num'>Palpite (90')</th><th>Prorrogação</th><th>Pênaltis</th><th>Avança</th></tr></thead><tbody>
+<tr class='final'><td class='num'>97</td><td>2026-07-09</td><td>Marrocos × França</td><td class='num score'>0x2</td><td>—</td><td>—</td><td><b>França</b></td></tr>
+<tr class='final'><td class='num'>98</td><td>2026-07-10</td><td>Espanha × Bélgica</td><td class='num score'>2x1</td><td>—</td><td>—</td><td><b>Espanha</b></td></tr>
+<tr class='final'><td class='num'>99</td><td>2026-07-11</td><td>Noruega × Inglaterra</td><td class='num score'>1x1</td><td>Inglaterra (1x2)</td><td>—</td><td><b>Inglaterra</b></td></tr>
+<tr class='final'><td class='num'>100</td><td>2026-07-11</td><td>Argentina × Suíça</td><td class='num score'>1x1</td><td>Argentina (3x1)</td><td>—</td><td><b>Argentina</b></td></tr>
+</tbody></table></section>
+<section><h2>Semifinais</h2><table>
+<thead><tr><th class='num'>Jogo</th><th>Data</th><th>Confronto</th><th class='num'>Palpite (90')</th><th>Prorrogação</th><th>Pênaltis</th><th>Avança</th></tr></thead><tbody>
+<tr class='final'><td class='num'>101</td><td>2026-07-14</td><td>França × Espanha</td><td class='num score'>0x2</td><td>—</td><td>—</td><td><b>Espanha</b></td></tr>
+<tr class='final'><td class='num'>102</td><td>2026-07-15</td><td>Inglaterra × Argentina</td><td class='num score'>1x2</td><td>—</td><td>—</td><td><b>Argentina</b></td></tr>
+</tbody></table></section>
+<section><h2>Disputa de 3º lugar</h2><table>
+<thead><tr><th class='num'>Jogo</th><th>Data</th><th>Confronto</th><th class='num'>Palpite (90')</th><th>Prorrogação</th><th>Pênaltis</th><th>Avança</th></tr></thead><tbody>
+<tr class='final'><td class='num'>103</td><td>2026-07-18</td><td>França × Inglaterra</td><td class='num score'>4x6</td><td>—</td><td>—</td><td><b>Inglaterra</b></td></tr>
+</tbody></table></section>
+<section><h2>Final</h2><table>
+<thead><tr><th class='num'>Jogo</th><th>Data</th><th>Confronto</th><th class='num'>Palpite (90')</th><th>Prorrogação</th><th>Pênaltis</th><th>Avança</th></tr></thead><tbody>
+<tr class='final'><td class='num'>104</td><td>2026-07-19</td><td>Espanha × Argentina</td><td class='num score'>0x0</td><td>Espanha (1x0)</td><td>—</td><td><b>Espanha</b></td></tr>
+</tbody></table></section>
+<p class="legend">Barra de probabilidade: <b style="color:var(--home)">■</b> mandante · <b style="color:var(--draw)">■</b> empate · <b style="color:var(--away)">■</b> visitante. Linhas em cinza são jogos já disputados (placar real, no slot de 90'). Nas colunas de prorrogação e pênaltis, o nome é de quem venceu e o placar entre parênteses vem na ordem <b>mandante × visitante</b> (como o resto da tabela) — ex.: <i>Paraguai (3x4)</i> = Alemanha 3, Paraguai 4 nos pênaltis. Cada palpite no app fecha 5 minutos antes do jogo.</p>
+</body></html>

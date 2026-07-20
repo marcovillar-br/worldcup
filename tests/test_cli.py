@@ -163,9 +163,9 @@ def test_read_standing_pega_a_entrada_mais_recente_nao_uma_do_historico():
     """
     real = cli._read_standing(2026)
     assert real is not None
-    assert "425" in real  # a entrada de 12/07, a mais recente
-    assert "19" in real
-    assert "325" not in real  # a de 03/07, que vive no histórico do mesmo bloco
+    assert "453" in real  # a manchete do fechamento (19/07), a mais recente
+    assert "15" in real
+    assert "425" not in real  # a de 12/07, que vive no histórico do mesmo bloco
 
 
 def test_read_standing_ancora_no_negrito_e_ignora_mencao_solta(tmp_path, monkeypatch):

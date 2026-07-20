@@ -85,8 +85,14 @@ def test_final_ko_layers_real_outcomes():
         "Suíça (4x3)",
         "Suíça",
     )
-    # jogo ainda não disputado → sem camadas
-    assert _final_ko_layers(e, by_id[104], "Spain", "Argentina") == ("", "", "")
+    # J104: 0×0 nos 90' (regulation.csv), 1×0 com o gol na ET → camada de prorrogação, sem pênaltis
+    assert e.score_90(by_id[104]) == (0, 0)
+    assert _final_ko_layers(e, by_id[104], "Spain", "Argentina") == ("Espanha (1x0)", "—", "Espanha")
+    # jogo ainda não disputado → sem camadas (a Copa acabou: o estado pendente vem do as_of da manhã
+    # da final — a mesma função de produção que gera a visão reconstruída, não um Fixture fabricado)
+    e_asof = e.as_of("2026-07-19")
+    pending = {f.match_id: f for f in e_asof.fixtures}[104]
+    assert _final_ko_layers(e_asof, pending, "Spain", "Argentina") == ("", "", "")
 
 
 def test_penalty_score_is_optional_in_the_layers():

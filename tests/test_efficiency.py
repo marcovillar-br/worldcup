@@ -128,8 +128,10 @@ def test_regulation_90_falls_back_to_recorded():
     ed = load_edition(2026)
     plain = next(f for f in ed.fixtures if f.played and f.match_id not in ed.regulation)
     assert efficiency.regulation_90(ed, plain) == (plain.home_goals, plain.away_goals)  # o gravado É o 90'
-    unplayed = next(f for f in ed.fixtures if not f.played)
-    assert efficiency.regulation_90(ed, unplayed) is None
+    # a Copa acabou (104/104): o estado "não disputado" vem do as_of da manhã da final
+    ed_asof = ed.as_of("2026-07-19")
+    unplayed = next(f for f in ed_asof.fixtures if not f.played)
+    assert efficiency.regulation_90(ed_asof, unplayed) is None
 
 
 def test_eng45_et_goal_scored_against_90_and_gets_bonus():

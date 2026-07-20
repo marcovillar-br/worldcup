@@ -203,9 +203,15 @@ class DixonColesModel:
 
     # --------------------------------------------------------------- predição
     def _strength(self, team: str) -> tuple[float, float]:
+        # Nome fora do ajuste levanta em vez de cair no "time médio" (ENG-57): a fallback
+        # silenciosa transformava slot não resolvido (`L101`) ou typo em previsão plausível
+        # e errada — a mesma classe de falha do ENG-48 (valor plausível, chamada silenciosa).
         i = self._idx.get(canonical(team))
-        if i is None:  # seleção sem histórico no período -> média
-            return 0.0, 0.0
+        if i is None:
+            raise KeyError(
+                f"seleção desconhecida para o modelo: {team!r} não está em `model.teams` "
+                "(slot de bracket não resolvido? typo no nome canônico? filtrada no ajuste?)"
+            )
         return float(self.attack[i]), float(self.defense[i])
 
     def expected_goals(

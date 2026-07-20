@@ -83,7 +83,8 @@ testes ficam no CI. Convenções de código que ferramenta não pega ficam aqui 
   O `sync` (que preenche o `fixtures.csv`) usa a base **crua**; ninguém lê `reg_*` na mão.
 - `model.py` — `DixonColesModel`: ajuste ponderado (decaimento temporal + peso de torneio + mando),
   filtra seleções não-FIFA; `score_matrix(home, away, neutral, host_away=…)`
-  (mando do anfitrião via `host_away`, ver *Mando* abaixo).
+  (mando do anfitrião via `host_away`, ver *Mando* abaixo). Nome fora de `model.teams` (slot
+  não resolvido, typo) levanta `KeyError` — sem fallback silenciosa de "time médio" (ENG-57).
 - `scoring.py` — `Scorer`: pontos do Sistema I + `best_prediction()` (maximiza pontos esperados);
   `risk` controla a ousadia (0.5 = fiel; >0.5 arrisca mais zebras).
 - `knockout.py` — `predict_knockout()`: 3 camadas (placar 90', prorrogação, pênaltis) + quem avança.

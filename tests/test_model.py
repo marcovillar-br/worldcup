@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from worldcup.model import DixonColesModel, FitConfig, tournament_weight
 from worldcup.scoring import outcome_probs_from_matrix
@@ -113,11 +114,14 @@ def test_host_away_gives_mando_to_visitor():
     assert pa_host_away >= pa_neutral
 
 
-def test_unknown_team_falls_back_to_average():
+def test_unknown_team_raises_instead_of_average_fallback():
+    # ENG-57: nome fora do ajuste (typo, slot `L101` não resolvido) levantava a matriz do
+    # "time médio" em silêncio — previsão plausível e errada. Agora é erro explícito.
     m = DixonColesModel().fit(_synthetic_matches())
-    lam, mu = m.expected_goals("A", "__desconhecido__", neutral=True)
-    assert lam > 0  # não quebra com time fora do treino
-    assert mu > 0
+    with pytest.raises(KeyError, match="__desconhecido__"):
+        m.score_matrix("A", "__desconhecido__", neutral=True)
+    with pytest.raises(KeyError, match="L101"):
+        m.expected_goals("L101", "A", neutral=True)
 
 
 def test_tournament_weight_ordering():

@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 import numpy as np
+import pytest
 
 from conftest import make_model
 from worldcup.edition import Edition, Fixture, GroupStageSpec, ScoringConfig, TournamentSpec
@@ -255,3 +256,12 @@ def test_mc_ci95_is_the_binomial_half_width():
     assert abs(mc_ci95(0.5, 5000) - 0.01386) < 1e-4
     assert mc_ci95(0.0, 5000) == 0.0  # p degenerado: sem variância
     assert mc_ci95(0.5, 0) == 0.0  # sims desconhecidas → sem barra (compat)
+
+
+def test_matrix_cache_raises_on_unresolved_slot():
+    # ENG-57: um slot de bracket não resolvido (`W102`, `L101`) chegava ao cache e voltava como
+    # a matriz do "time médio" — plausível, simétrica e errada. Agora o contrato levanta.
+    model = make_model({"A": 0.4, "B": 0.0})
+    cache = MatrixCache(model)
+    with pytest.raises(KeyError, match="W102"):
+        cache.matrix("W102", "A", neutral=True)

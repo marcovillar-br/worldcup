@@ -9,16 +9,18 @@ from worldcup.edition import load_edition
 from worldcup.model import DixonColesModel
 
 
-def mini_historical(n_teams: int = 14) -> pd.DataFrame:
+def mini_historical(n_teams: int | None = None) -> pd.DataFrame:
     """Histórico **sintético** mínimo para exercitar o pipeline real no CI (ENG-20).
 
-    Round-robin ida/volta entre as `n_teams` primeiras seleções da edição 2026 (nomes canônicos
-    reais), com o time mais forte (índice menor) sempre vencendo — cada uma joga ≥10 vezes
-    (passa o `min_matches=10` do fit). As demais seleções caem no baseline. Não é realista (não é
-    pra ser): serve para o `pipeline.run` rodar de ponta a ponta sem depender do
-    `historical_results.csv` (gerado, gitignored, ausente no CI).
+    Round-robin ida/volta entre **todas** as seleções da edição 2026 (nomes canônicos reais),
+    com o time mais forte (índice menor) sempre vencendo — cada uma joga ≥10 vezes
+    (passa o `min_matches=10` do fit). Precisa cobrir a edição inteira: seleção fora do ajuste
+    levanta `KeyError` (ENG-57) — era exatamente aqui que o harness dependia da fallback
+    silenciosa do "time médio". Não é realista (não é pra ser): serve para o `pipeline.run`
+    rodar de ponta a ponta sem depender do `historical_results.csv` (gerado, gitignored,
+    ausente no CI).
     """
-    teams = load_edition(2026).teams[:n_teams]
+    teams = load_edition(2026).teams[:n_teams] if n_teams else load_edition(2026).teams
     base = pd.Timestamp("2024-01-01")
     rows = []
     day = 0

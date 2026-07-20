@@ -49,6 +49,14 @@ no mata-mata (ENG-12..ENG-59).
   Marrocos · J88 Austrália 2×4 Egito · J96 Suíça 4×3 Colômbia — este último também ganhou a linha de
   vencedor, que faltava.
 
+### Alterado
+- **Seleção desconhecida agora é erro, não "time médio"** (ENG-57): `score_matrix`/
+  `expected_goals` (e, por consequência, `MatrixCache.matrix`) levantam `KeyError` com mensagem
+  clara quando o nome não está em `model.teams` — antes um slot de bracket não resolvido (`L101`)
+  ou um typo devolviam em silêncio a matriz do time médio, plausível e errada (mesma classe do
+  ENG-48). Nenhum consumidor de produção dependia da fallback; o harness de teste (que dependia,
+  via `mini_historical`) passou a cobrir todas as seleções da edição.
+
 ### Corrigido
 - **KO decidido por gol na prorrogação ficava sem desfecho na eficiência** (ENG-63): o `sync` só
   preenche `ko_outcome` quando o placar consolidado empata (senão o próprio placar decide), e

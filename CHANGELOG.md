@@ -9,8 +9,14 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 ## [Não lançado]
 
-Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes, e a régua dos 90'
-no mata-mata (ENG-12..ENG-59).
+## [1.0.0] - 2026-07-19
+
+**A campanha completa da Copa 2026, de ponta a ponta** — o release cobre tudo entre o pontapé
+inicial e o fechamento (ENG-12..ENG-64): acurácia (blend com odds + totals, sweeps de calibração),
+a régua dos 90' no mata-mata, a medição de eficiência com teto congelado e sondas de anomalia,
+endurecimento do motor e da rede de testes, e a calibração pós-Copa validada em 5 Copas pooladas
+(supressão do visitante no mando). Operado em produção durante os 104 jogos; backlog zerado
+(64 itens fechados). O 1.0 declara a interface estável: a edição 2030 reusa o código sem mudá-lo.
 
 ### Adicionado
 - **Teste poolado de calibração de empate** (ENG-56): `scripts/eng56_draw_pool.py` poola os 90'

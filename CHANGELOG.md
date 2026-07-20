@@ -9,6 +9,20 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 
 ## [Não lançado]
 
+### Adicionado
+- **Preparação da edição 2030** (`data/editions/2030/README.md`): esqueleto **sem**
+  `tournament.toml`/`groups.csv`/`fixtures.csv` — deliberado, porque o **formato do torneio ainda
+  não foi definido pela FIFA** (nº de seleções TBA; a CONMEBOL propôs 64 em caráter único), e
+  chutá-lo produziria simulação plausível e errada. O arquivo registra o que está confirmado
+  (sedes Marrocos/Portugal/Espanha; jogos do centenário no Uruguai/Argentina/Paraguai, com as três
+  já classificadas; janela 8/6–21/7/2030), o que bloqueia cada arquivo, a ordem de preenchimento e
+  os cuidados de mando com 6 sedes. O esqueleto é inerte: `load_edition(2030)` falha alto e o
+  guardrail de tradução só enumera edições com `groups.csv`.
+- **Auditoria do agnosticismo à edição** — o princípio "o código não muda" vale para o motor, com
+  dois resíduos verificados e agora rastreados: default `2026` do `--edition` na CLI (**ENG-65**)
+  e rótulos de ano em código no `build_presentation.py` (**ENG-66**). `AGENTS.md` passa a declarar
+  os resíduos em vez de afirmar agnosticismo absoluto.
+
 ## [1.0.0] - 2026-07-19
 
 **A campanha completa da Copa 2026, de ponta a ponta** — o release cobre tudo entre o pontapé

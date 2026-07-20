@@ -27,7 +27,13 @@ em vez de concordância ou elogio:
 ## Princípio central: agnóstico à edição
 
 Nada específico de um ano fica no código. Cada edição é descrita por **dados** em
-`data/editions/<ano>/`. Para uma Copa futura, adicione `data/editions/<ano>/` — o código não muda.
+`data/editions/<ano>/`. Para uma Copa futura, adicione `data/editions/<ano>/` — o **motor**
+(modelo, simulação, pontuação, sync) não muda. Auditado em 2026-07-20: valem dois resíduos
+conhecidos e rastreados — o default `2026` do `--edition` na CLI (**ENG-65**) e os rótulos de ano
+em código no `build_presentation.py` (**ENG-66**); acrescentar aliases PT de seleções novas em
+`teams._PT_DISPLAY` é esperado (o guardrail `tests/test_teams.py` cobra). A preparação da próxima
+edição, com o que já é conhecido e o que ainda bloqueia, vive em
+[`data/editions/2030/README.md`](data/editions/2030/README.md).
 
 ## Comandos (sempre via uv)
 

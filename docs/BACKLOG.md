@@ -80,6 +80,8 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-62](#eng-62) | P3 | format_engine/observabilidade | ✅ | P(título) reportada com resolução (0,1 p.p.) abaixo do ruído de Monte Carlo (~0,7 p.p. em 5000 sims) — campanha narra variação de simulação como se fosse sinal |
 | [ENG-63](#eng-63) | P2 | eficiência/dados | ✅ | KO decidido por gol na ET com `ko_outcome` vazio: `_actual_ko_outcome` devolve "sem desfecho" quando a fonte ingere o jogo — sonda acusa contradição (J99/J100) e o bônus fica fora do teto |
 | [ENG-64](#eng-64) | P2 | model/calibração | ✅ | Modelo subestima o **total de gols** em Copas: 2,61 obs vs 2,24 prev/jogo (z=+4,65, 5 Copas pooladas) — achado da sonda de mecanismo do ENG-56 |
+| [ENG-65](#eng-65) | P3 | cli | 🔴 | `--edition` tem default `2026` **em código** (5 subcomandos) — resíduo de ano no código que o princípio de agnosticismo diz não existir |
+| [ENG-66](#eng-66) | P3 | apresentação | 🔴 | `build_presentation.py` rotula slides com "2026" em código, apesar de declarar agnosticismo à edição (dados vêm do `presentation.toml`) |
 
 ---
 
@@ -2368,3 +2370,45 @@ funcionaram como **guarda de não-degradação**, e seguraram. A/B reproduzível
 `test_away_suppression_fitted_and_applied`; fixture sintética ganhou rodadas neutras (sem elas,
 `base`/γ/δ teriam direção plana com o δ novo).
 **Commit:** 8068250
+
+
+## ENG-65
+**`--edition` tem default `2026` em código (5 subcomandos)** · P3 · cli · 🔴 todo
+
+O princípio central do repo (`AGENTS.md`) afirma "nada específico de um ano fica no código". Há
+uma exceção viva: `cli.py` fixa `default=2026` no `--edition` de `predict`, `record`,
+`sync-results`, `status` e `blend-track`. Enquanto 2026 era a edição viva isso era conveniência;
+com a Copa encerrada e o esqueleto de 2030 criado, virou resíduo — operar 2030 exige repetir
+`--edition 2030` em todo comando (inclusive no alias `ws`, cuja graça é ser curto).
+
+**Refs:** `cli.py:439,478,486,526,541` (os cinco `add_argument("--edition", ..., default=2026)`);
+`data/editions/2030/README.md` (seção *Acoplamentos residuais*).
+**Escopo:** resolver a edição default a partir do **disco**, não de uma constante — a mais recente
+que esteja **completa** (isto é, que `load_edition` consiga carregar: `tournament.toml`,
+`scoring.toml`, `groups.csv`, `fixtures.csv`).
+⚠️ **A condição de completude não é opcional:** um "pegue o maior ano em `data/editions/`" ingênuo
+faria o **esqueleto de 2030** (só `README.md`) sequestrar o default e quebrar `ws`/`status` para a
+edição 2026, que segue sendo a única com dados. O esqueleto é o caso de teste, não um detalhe.
+**Aceite:** com só 2026 completa, o comportamento é idêntico ao de hoje **mesmo existindo**
+`data/editions/2030/` incompleta; ao completar 2030, ela vira o default sem tocar em código;
+`--edition` explícito sempre vence. Teste com `tmp_path` cobrindo os três casos.
+**Commit:** —
+
+
+## ENG-66
+**`build_presentation.py` rotula slides com "2026" em código** · P3 · apresentação · 🔴 todo
+
+O script declara no próprio cabeçalho que os números "vivem em `data/editions/<edição>/
+presentation.toml` — agnóstico à edição, como o resto dos dados", e aceita `--edition`. Mas os
+**rótulos** dos slides trazem o ano fixo em código ("Resultados · campanha 2026", "A campanha 2026
+— {fase}", "Evolução & lições · Copa 2026"). Gerar o deck de outra edição produziria títulos
+mentindo o ano, com os dados certos por baixo — divergência silenciosa entre rótulo e conteúdo.
+
+**Refs:** `scripts/build_presentation.py:410,413,519,522` (rótulos), `:16,19-20` (a declaração de
+agnosticismo e o `--edition`).
+**Escopo:** derivar o ano dos rótulos da edição recebida (ou de um campo do `presentation.toml`),
+como já se faz com `as_of`/`fase`.
+**Aceite:** `build_presentation.py --edition <ano>` produz um deck sem nenhum "2026" hardcoded;
+uma varredura por `2026` no arquivo não acha rótulo de saída (só, no máximo, comentários/exemplos
+de uso). O deck de 2026 continua idêntico ao atual.
+**Commit:** —

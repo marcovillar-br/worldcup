@@ -71,7 +71,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-53](#eng-53) | P1 | knockout | ✅ | Empate proibido no 90' do KO (ENG-32) custa E[pts] justamente na final: as duas premissas do ban são falsas e a evidência que o sustentava é inválida |
 | [ENG-54](#eng-54) | P1 | dados/model | ✅ | A base martj42 grava o placar COM prorrogação ⇒ o **modelo treinava em placar de 120'**; os 90' são reconstruídos do `goalscorers.csv` (`minute > 90`), o que também devolve validade ao backtest de KO |
 | [ENG-55](#eng-55) | P1 | pipeline/edition | ✅ | `build_training_frame` alimentava o ajuste com o placar consolidado da edição viva, tendo o 90' em `regulation.csv` |
-| [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,5% do peso): mecanismo desconhecido, sem significância estatística |
+| [ENG-56](#eng-56) | P2 | model | ✅ | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,5% do peso): mecanismo desconhecido, sem significância estatística |
 | [ENG-57](#eng-57) | P2 | model/format_engine | ✅ | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
 | [ENG-58](#eng-58) | P1 | pipeline/apresentação | ✅ | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
 | [ENG-59](#eng-59) | P3 | dados/apresentação | ✅ | O relatório não mostrava o **placar da disputa de pênaltis** (a fonte martj42 só publica o vencedor): colunas opcionais `pen_home,pen_away` no `shootouts.csv`, por captura manual |
@@ -1985,7 +1985,7 @@ base→bônus de KO, ambas consumindo `fetch_data.score_90` em vez de fabricar a
 
 ## ENG-56
 **O modelo subestima empate — e a base contaminada NÃO era a explicação** · P2 · model ·
-🔴 todo
+✅ feito
 
 Sobra do ENG-54. Os empates observados vêm sistematicamente acima do previsto:
 
@@ -2040,6 +2040,21 @@ de calibração, não de pontos (com 84 de gap, ~5 pp na taxa de empate não vir
 de bug segue permitida** (foi o caso de ENG-53/54); o que está vedado é *tunar* o modelo com o
 torneio em andamento — e este item, por construção, exige poolar **várias** Copas, o que a de 2026
 só vai poder alimentar depois de encerrada. Ver `data/editions/2026/BOLAO.md` (Estado atual).
+**Como fechou (19/07, pós-Copa): hipótese (a) — ruído. O aceite rodou e a premissa não
+sobreviveu.** `scripts/eng56_draw_pool.py` poola os 90' das 5 Copas (2010–2026, **360 jogos**,
+protocolo as-of do backtest, gatilho |z|≥2 declarado a priori; poder: detecta viés ≥4,7 pp):
+**pooled z=-0,80** — o modelo **não** subestima empate; se algo, superestima de leve (obs 25,8%
+vs esp 27,7%), coerente com o veredito das 4 Copas no MODEL_CARD §7. A pista de 12/07 **não
+replica**: o estrato equilibrado (<40%) dá z=+0,52; o único estrato ≥2σ é o intermediário
+(z=-2,39), **na direção oposta à premissa** e pós-hoc entre 3 comparações (≈α após Bonferroni) —
+ruído. O sintoma da campanha ("previsto ~23,5% vs real 28%") comparava réguas diferentes: o
+monitor usa o modelo de refit diário (e a pista de 12/07, snapshots com blend, n=8 no bucket
+crítico); na régua as-of consistente entre Copas o esperado dos grupos 2026 é 25,4% (z=+0,47).
+Sem correção de calibração a fazer no empate; o monitor ENG-22 permanece. **Rendimento
+colateral:** a sonda de mecanismo (c) achou viés real no **total de gols** (2,61 obs vs 2,24
+prev/jogo, z=+4,65, todos os estratos) → aberto como [ENG-64](#eng-64). Lição de método
+reafirmada: a mesma do ENG-54 — medir a magnitude (e o poder) antes de atribuir a causa.
+**Commit:** 20ae7aa
 
 
 ## ENG-55

@@ -102,4 +102,4 @@ match_id,stage,group,date,home,away,neutral,third_groups,home_goals,away_goals,k
 101,SF,,2026-07-14,W97,W98,True,,0,2,Spain
 102,SF,,2026-07-15,W99,W100,True,,1,2,Argentina
 103,3rd_place,,2026-07-18,L101,L102,True,,4,6,England
-104,final,,2026-07-19,W101,W102,True,,,,
+104,final,,2026-07-19,W101,W102,True,,1,0,Spain

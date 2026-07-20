@@ -14,6 +14,17 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Estado atual (atualizado em 2026-07-19)
 
+- **19/07 (3ª entrada): COPA ENCERRADA — Espanha campeã (J104 Espanha 1×0 Argentina, gol na
+  prorrogação). 104/104 jogos.** Nos 90' foi **0×0**; Ferran Torres decidiu aos **106'**
+  (confirmado em Yahoo/MPR/amNY + martj42, ≥2 fontes) → `regulation.csv` ganhou `104,0,0`
+  (o fixture guarda o consolidado 1×0, ENG-45/55). O palpite da manhã (preservado no snapshot,
+  ENG-33) era **Espanha 1×1 → pênaltis → Espanha**: acertou o **empate nos 90'** (28 pts,
+  base ×4) e **quem avança**; errou a camada de desfecho (palpitou pênaltis, foi gol na ET).
+  **Placar final da campanha: 453 pts, 15º** (líder **526**) — a final rendeu exatamente os
+  28 pts do teto do jogo (execução 100% no jogo de maior peso). `blend-track` final (49 jogos
+  com odds): Brier blend **0,4074** vs modelo 0,4094 — **blend melhor**; regime de empates
+  z=+0,71 (variância). Eficiência final **90,6%** (ver Histórico 19/07, 3ª medição).
+
 - **19/07 (2ª entrada): J91 corrigido — Brasil 1×2 Noruega (era 0×2).** O portão de integridade
   novo (ENG-61) acusou no 1º disparo que a fonte corrigiu o placar em 07/07 (pênalti de Neymar
   aos 90+10') e o `sync` — por design — nunca sobrescreve fixture preenchido. Confirmado em
@@ -389,6 +400,19 @@ Use datas absolutas (AAAA-MM-DD). Entradas novas no topo do histórico.
 
 ## Histórico
 
+- 2026-07-19 (3ª medição, pós-final — **fechamento da campanha**)
+  — **Eficiência final (104 jogos): 90,6% do teto do tool** (seus **453** / teto **500**, as-of
+  risk 0.5 + blend 0.8; teto congelado ENG-34, 74 jogos de snapshot real). **15º** (subiu de 20º —
+  os 28 pts do empate da final valeram posições; muita gente palpitou vencedor). Oráculo 1294;
+  captura do tool 38,6%; sua captura do oráculo 35,0%. **Líder 526 ACIMA do teto (500)** — sondas
+  ENG-50 rodadas antes de interpretar: (a) bônus de KO **8/8 creditado** (após `fetch-data` trazer
+  a final; J104 decidido por gol na ET, palpite dizia pênaltis ⇒ camada errada, bônus zero — igual
+  J99/J100); (b) **30 jogos só reconstruídos seguem sujos**, e o argumento de 17/07 ("reconstrução
+  superestima, subestimação improvável") **enfraqueceu**: no subconjunto verificável o sinal virou
+  para **-19** (a reconstrução as-of do J104 palpitava 1×0 ⇒ 0 pts vs 28 do snapshot real).
+  Com 1 sonda estrutural suja, os +26 do líder sobre o teto **não** permitem concluir que alguém
+  superou o tool — teto possivelmente subestimado nos 30 jogos de junho sem arquivo. Lição p/
+  2030: `predict --archive` desde o jogo 1. Drift reportado (J80 +2, J90 -8): não recongelado.
 - 2026-07-19
   — **Eficiência (103 jogos): 90,0% do teto do tool** (seus 425 / teto 472, as-of risk 0.5 +
   blend 0.8; teto congelado ENG-34, 73 jogos de snapshot real). **20º** (caiu de 19º sem perder

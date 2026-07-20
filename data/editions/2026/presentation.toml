@@ -9,21 +9,18 @@
 as_of = "19 jul 2026"
 
 [campanha]
-jogos_disputados = 103
-pontos = 425
-eficiencia_pct = 90.0
-fase = "final"
+jogos_disputados = 104
+pontos = 453
+eficiencia_pct = 90.6
+fase = "encerrada"
 
 [[campanha.favoritos]]
 nome = "Espanha"
-pct = 60.7
-[[campanha.favoritos]]
-nome = "Argentina"
-pct = 39.3
+pct = 100.0
 
 [bracket_destaque]
 selecao = "Argentina"
-jogos_para_ficar_de_olho = "<b>Espanha × Argentina</b> (final, 19/07)."
+jogos_para_ficar_de_olho = "<b>Espanha 1×0 Argentina</b> (final, 19/07, gol na prorrogação) — Espanha campeã."
 
 [[bracket_destaque.passos]]
 fase = "SF"
@@ -43,4 +40,4 @@ brier_blend_width_pct = 99
 jogos_rastreados = 49
 
 [evolucao]
-melhorias_entregues = 122
+melhorias_entregues = 128

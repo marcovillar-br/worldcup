@@ -79,6 +79,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-61](#eng-61) | P2 | sync/dados | ✅ | `sync-results` confia na fonte única sem portão de integridade: correção retroativa (ou linha adulterada) da base martj42 entra silenciosa no refit |
 | [ENG-62](#eng-62) | P3 | format_engine/observabilidade | ✅ | P(título) reportada com resolução (0,1 p.p.) abaixo do ruído de Monte Carlo (~0,7 p.p. em 5000 sims) — campanha narra variação de simulação como se fosse sinal |
 | [ENG-63](#eng-63) | P2 | eficiência/dados | ✅ | KO decidido por gol na ET com `ko_outcome` vazio: `_actual_ko_outcome` devolve "sem desfecho" quando a fonte ingere o jogo — sonda acusa contradição (J99/J100) e o bônus fica fora do teto |
+| [ENG-64](#eng-64) | P2 | model/calibração | 🔴 | Modelo subestima o **total de gols** em Copas: 2,61 obs vs 2,24 prev/jogo (z=+4,65, 5 Copas pooladas) — achado da sonda de mecanismo do ENG-56 |
 
 ---
 
@@ -2307,3 +2308,31 @@ J99/J100 agora conta no teto teórico) e a tabela de pontos intacta — o tool p
 nos dois jogos, então o bônus era 0 nas duas versões e nenhum teto congelado mudou (procedência
 re-migrada sob o mesmo argumento do ENG-60).
 **Commit:** 97340d8
+
+
+## ENG-64
+**Modelo subestima o total de gols em Copas: 2,61 observados vs 2,24 previstos por jogo
+(z=+4,65, 5 Copas pooladas)** · P2 · model/calibração · 🔴 todo
+
+Achado colateral da sonda de mecanismo do [ENG-56](#eng-56) (`scripts/eng56_draw_pool.py`):
+no protocolo as-of do backtest (treino só com jogos anteriores ao início de cada Copa), o
+E[gols totais 90'] da matriz fica sistematicamente **abaixo** do observado nas 5 Copas
+2010–2026 (360 jogos): 2,24 previstos vs 2,61 observados, **z=+4,65** pela variância prevista
+por jogo — e o desvio é consistente em **todos** os estratos de equilíbrio (equilibrado +2,14;
+intermediário +4,32; favorito claro +2,07). Não é ruído. É também o mecanismo provável do leve
+**excesso** de empate previsto (pooled z=-0,80 do ENG-56): λ baixo demais ⇒ placares baixos ⇒
+mais massa em empate.
+
+**Hipóteses (nenhuma medida):** (i) decaimento/base — o intercepto (`base`) é dominado por
+eliminatórias e amistosos, possivelmente menos ofensivos que jogo de Copa do ciclo recente;
+(ii) peso de torneio atua no **peso da amostra**, não no **nível** do λ — pode faltar um efeito
+de nível por competição; (iii) mando neutro — a Copa é quase toda neutra e o `base` pode estar
+calibrado num mix com mando; (iv) truncamento/max_xg — improvável (checar por completude).
+**Refs:** `scripts/eng56_draw_pool.py` (sonda c), `model.DixonColesModel.fit` (`base`),
+`docs/MODEL_CARD.md` §7.
+**Critério de aceite:** mecanismo identificado com magnitude medida (qual hipótese explica os
+~0,37 gol/jogo) e correção na calibração **somente se** melhorar o Brier multiclasse no pool
+as-of das 5 Copas (out-of-sample, mesmo protocolo do ENG-56); senão, documentar como limitação
+conhecida no MODEL_CARD/SPEC §9.2. Cuidado com o trade-off: subir λ derruba P(empate) — validar
+que a calibração de empate (hoje limpa) não degrada.
+**Commit:** —

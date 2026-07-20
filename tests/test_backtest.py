@@ -279,3 +279,10 @@ def test_knockout_bonus_awarded_on_a_goal_in_extra_time():
     et_away = _ko_row(1, 2, [("Brazil", 30), ("Argentina", 70), ("Argentina", 113)])
     assert et_away["et_outcome"] == "away"
     assert bt._knockout_bonus_for(et_away, mat, award) == 0.0
+
+
+def test_world_cup_registry_includes_2026():
+    # ENG-56: com a 2026 encerrada e ingerida na fonte, ela entra no protocolo as-of do backtest
+    # (pool de calibração, `backtest --edition 2026`) — anfitriões tratados como em produção.
+    assert bt._WORLD_CUP_START[2026] == "2026-06-11"
+    assert set(bt._WORLD_CUP_HOSTS[2026]) == {"United States", "Canada", "Mexico"}

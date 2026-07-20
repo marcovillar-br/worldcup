@@ -68,6 +68,8 @@ Separa **métricas de modelo** (probabilísticas, independentes de `risk`) de **
 
 - **Backtest:** Copas **2010/2014/2018/2022** (256 jogos), treinando **só** com jogos anteriores ao
   início de cada Copa (sem vazamento). Mando tratado como em produção (`_WORLD_CUP_HOSTS`).
+  Com a edição 2026 encerrada e ingerida na fonte, **2026 também é elegível** (`--edition 2026`,
+  104 jogos; cadastro em `_WORLD_CUP_START`/`_WORLD_CUP_HOSTS`).
 - **Calibração agregada:** `pooled_draw_calibration` sobre as 4 Copas.
 
 ## 6. Dados de treino
@@ -83,6 +85,15 @@ Resultados de jogos internacionais de seleções (dataset martj42), normalizados
 - **P(empate) prevista média 27,9% vs. real 22,3%** ⇒ o modelo **não subestima** empates; se algo,
   os **superestima** levemente (o `rho` do Dixon–Coles já puxa para cima). O baixo acerto de empates
   num punhado de jogos é **variância**, não miscalibração — sem ajuste de modelo a fazer.
+
+**Calibração de empate poolada, régua dos 90' (ENG-56; 360 jogos, 5 Copas 2010–2026):** o veredito
+acima foi re-testado pós-2026 com a régua certa (`score_90`) e poder declarado (detecta ≥4,7 p.p.
+a 2σ): **z=-0,80** — sem subestimação de empate; a concentração aparente nos jogos equilibrados
+(pista de 12/07 da campanha, n=8) **não replica** no pool (estrato <40%: z=+0,52). Reproduzível:
+`scripts/eng56_draw_pool.py`. A sonda de mecanismo do mesmo script achou um viés real **noutro
+eixo**: o **total de gols** de Copa é subestimado (2,61 obs vs 2,24 prev/jogo, **z=+4,65**),
+consistente em todos os estratos — rastreado como ENG-64 (candidatos: peso de torneio no λ,
+decaimento, mando neutro).
 
 **Pontos — backtest Copa 2022 (64 jogos), régua hierárquica corrigida (ENG-23) — SPEC §9.1:**
 

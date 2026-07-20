@@ -199,6 +199,19 @@ intervalo cruza o zero, ou seja, o backtest **não distingue** as duas política
 atual (ENG-53) é a **E[pts]-fiel**, com empate liberado — ela se sustenta no argumento de pontos
 esperados, que vale por construção.
 
+**Calibração de empate poolada (ENG-56)** — "o modelo subestima empate?" foi testado com poder
+estatístico, poolando os 90' de **5 Copas** (2010–2026, 360 jogos, as-of o início de cada uma):
+
+```bash
+uv run python scripts/eng56_draw_pool.py
+```
+
+Veredito: **não subestima** (z=-0,80 — se algo, superestima de leve; poder de 4,7 p.p. a 2σ), e o
+déficit aparente nos jogos equilibrados (pista de 12/07, n=8) não replica no pool. O sintoma da
+campanha comparava réguas diferentes (monitor de refit diário + blend vs as-of). A sonda de
+mecanismo achou outra coisa, real e significativa: o modelo **subestima o total de gols** em Copa
+(2,61 observados vs 2,24 previstos por jogo, z=+4,65) — aberto como ENG-64.
+
 **Apresentação do projeto** — um deck HTML autocontido (tema "Placar Noturno", 16:9, navegável) que
 explica o projeto para leigos (conceitos, diferenciais, resultados e futuro):
 

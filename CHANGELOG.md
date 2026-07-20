@@ -13,6 +13,14 @@ Leva de acurácia (blend com odds), endurecimento do motor e da rede de testes, 
 no mata-mata (ENG-12..ENG-59).
 
 ### Adicionado
+- **Teste poolado de calibração de empate** (ENG-56): `scripts/eng56_draw_pool.py` poola os 90'
+  de 5 Copas (2010–2026, 360 jogos, protocolo as-of do backtest) e decide com poder declarado
+  (≥4,7 p.p. a 2σ) se o modelo subestima empate. Veredito: **não** (z=-0,80; se algo, superestima
+  de leve), e a pista dos "jogos equilibrados" (12/07, n=8) não replica no pool — o sintoma da
+  campanha comparava réguas diferentes. A sonda de mecanismo achou um viés real noutro eixo — o
+  total de gols de Copa é subestimado (z=+4,65) — registrado como ENG-64. A Copa 2026 entrou no
+  cadastro do backtest (`backtest --edition 2026`, 104 jogos).
+
 - **±IC95 de Monte Carlo na probabilidade de título** (ENG-62): o resumo do console, o Markdown e
   o HTML mostram a meia-largura do IC95 binomial (`format_engine.mc_ci95`) ao lado de cada
   P(título) — "Espanha 60,7% ±1,4" — com o nº de sims no cabeçalho. É a resolução do instrumento:

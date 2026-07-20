@@ -36,12 +36,24 @@ if TYPE_CHECKING:
     from .edition import Edition, Fixture
 
 # Início aproximado de cada Copa (para cortar o treino antes do torneio).
-_WORLD_CUP_START = {2010: "2010-06-11", 2014: "2014-06-12", 2018: "2018-06-14", 2022: "2022-11-20"}
+_WORLD_CUP_START = {
+    2010: "2010-06-11",
+    2014: "2014-06-12",
+    2018: "2018-06-14",
+    2022: "2022-11-20",
+    2026: "2026-06-11",
+}
 
 # Anfitrião de cada Copa (nome canônico). O mando é aplicado como na produção, via MatrixCache:
 # jogos não-neutros do país-sede recebem vantagem, mesmo quando a fonte lista o anfitrião como
 # visitante. Sem isso, o backtest pontuava esses jogos diferente do caminho real do app.
-_WORLD_CUP_HOSTS = {2010: ("South Africa",), 2014: ("Brazil",), 2018: ("Russia",), 2022: ("Qatar",)}
+_WORLD_CUP_HOSTS = {
+    2010: ("South Africa",),
+    2014: ("Brazil",),
+    2018: ("Russia",),
+    2022: ("Qatar",),
+    2026: ("United States", "Canada", "Mexico"),
+}
 
 
 @dataclass

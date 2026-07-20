@@ -72,7 +72,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-54](#eng-54) | P1 | dados/model | ✅ | A base martj42 grava o placar COM prorrogação ⇒ o **modelo treinava em placar de 120'**; os 90' são reconstruídos do `goalscorers.csv` (`minute > 90`), o que também devolve validade ao backtest de KO |
 | [ENG-55](#eng-55) | P1 | pipeline/edition | ✅ | `build_training_frame` alimentava o ajuste com o placar consolidado da edição viva, tendo o 90' em `regulation.csv` |
 | [ENG-56](#eng-56) | P2 | model | 🔴 | O modelo subestima empate (real 28–34% vs ~23–28% previsto) e a base contaminada **não** era a explicação (ENG-54 valia 0,5% do peso): mecanismo desconhecido, sem significância estatística |
-| [ENG-57](#eng-57) | P2 | model/format_engine | 🔴 | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
+| [ENG-57](#eng-57) | P2 | model/format_engine | ✅ | `MatrixCache.matrix` aceita **nome de seleção inexistente** e devolve, em silêncio, a matriz do "time médio" — um slot não resolvido (`L101`) ou um typo viram previsão plausível e errada |
 | [ENG-58](#eng-58) | P1 | pipeline/apresentação | ✅ | A tabela exibia o placar de **120'** na coluna "Palpite (90')" e `—`/`—` nas camadas dos KO decididos na prorrogação: o display lia `home_goals`/`away_goals` crus, sem passar por `Edition.score_90` |
 | [ENG-59](#eng-59) | P3 | dados/apresentação | ✅ | O relatório não mostrava o **placar da disputa de pênaltis** (a fonte martj42 só publica o vencedor): colunas opcionais `pen_home,pen_away` no `shootouts.csv`, por captura manual |
 | [ENG-60](#eng-60) | P2 | eficiência/arquitetura | ✅ | Núcleo do `efficiency.py` (682 linhas de lógica de pontuação/teto) vive fora do pacote — fora do mypy e da cobertura; foi o palco do ENG-48 |
@@ -2074,7 +2074,7 @@ base (ENG-54), e cresceria numa edição com `edition_boost > 1`.
 
 ## ENG-57
 **`MatrixCache.matrix` aceita seleção inexistente e devolve o "time médio" em silêncio** · P2 ·
-model/format_engine · 🔴 todo
+model/format_engine · ✅ feito
 
 `MatrixCache.matrix("Atlantida", "Narnia", neutral=True)` **não levanta erro**: devolve uma matriz
 normalizada, plausível, do time médio contra o time médio (1×2 = 34,3%/31,4%/34,3%). O mesmo vale
@@ -2098,6 +2098,15 @@ alguém quer) pede explicitamente.
 **Aceite:** um teste que passa um nome inexistente e espera exceção; a suíte segue verde (nenhum
 consumidor de produção dependia da fallback). ⚠️ **Não mexer antes da final (19/07)** — é mudança
 de comportamento no caminho do palpite; ver a decisão de campanha em `data/editions/2026/BOLAO.md`.
+**Como fechou (19/07, pós-final — o embargo caducou com a Copa):** `_strength` levanta `KeyError`
+com mensagem clara (nome, hipóteses: slot não resolvido/typo/filtrada no ajuste), cobrindo
+`expected_goals`, `score_matrix` e `MatrixCache.matrix`. A premissa do aceite se confirmou com uma
+ressalva instrutiva: produção não dependia da fallback, mas o **harness de teste sim** —
+`mini_historical` (CI) cobria 14 seleções e documentava "as demais caem no baseline"; passou a
+cobrir a edição inteira. Regressões: `test_unknown_team_raises_instead_of_average_fallback`
+(model) e `test_matrix_cache_raises_on_unresolved_slot` (format_engine). Suíte verde com e sem
+`historical_results.csv` (condição do CI).
+**Commit:** 7d6a20b
 
 ## ENG-58
 **O display do KO disputado lia o placar cru: 120' na coluna dos 90' e camadas de ET apagadas** ·

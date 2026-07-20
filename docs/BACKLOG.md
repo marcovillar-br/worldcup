@@ -79,7 +79,7 @@ Semeado em 2026-06-13 a partir da avaliação de engenharia do projeto.
 | [ENG-61](#eng-61) | P2 | sync/dados | ✅ | `sync-results` confia na fonte única sem portão de integridade: correção retroativa (ou linha adulterada) da base martj42 entra silenciosa no refit |
 | [ENG-62](#eng-62) | P3 | format_engine/observabilidade | ✅ | P(título) reportada com resolução (0,1 p.p.) abaixo do ruído de Monte Carlo (~0,7 p.p. em 5000 sims) — campanha narra variação de simulação como se fosse sinal |
 | [ENG-63](#eng-63) | P2 | eficiência/dados | ✅ | KO decidido por gol na ET com `ko_outcome` vazio: `_actual_ko_outcome` devolve "sem desfecho" quando a fonte ingere o jogo — sonda acusa contradição (J99/J100) e o bônus fica fora do teto |
-| [ENG-64](#eng-64) | P2 | model/calibração | 🔴 | Modelo subestima o **total de gols** em Copas: 2,61 obs vs 2,24 prev/jogo (z=+4,65, 5 Copas pooladas) — achado da sonda de mecanismo do ENG-56 |
+| [ENG-64](#eng-64) | P2 | model/calibração | ✅ | Modelo subestima o **total de gols** em Copas: 2,61 obs vs 2,24 prev/jogo (z=+4,65, 5 Copas pooladas) — achado da sonda de mecanismo do ENG-56 |
 
 ---
 
@@ -2327,7 +2327,7 @@ re-migrada sob o mesmo argumento do ENG-60).
 
 ## ENG-64
 **Modelo subestima o total de gols em Copas: 2,61 observados vs 2,24 previstos por jogo
-(z=+4,65, 5 Copas pooladas)** · P2 · model/calibração · 🔴 todo
+(z=+4,65, 5 Copas pooladas)** · P2 · model/calibração · ✅ feito
 
 Achado colateral da sonda de mecanismo do [ENG-56](#eng-56) (`scripts/eng56_draw_pool.py`):
 no protocolo as-of do backtest (treino só com jogos anteriores ao início de cada Copa), o
@@ -2350,4 +2350,21 @@ calibrado num mix com mando; (iv) truncamento/max_xg — improvável (checar por
 as-of das 5 Copas (out-of-sample, mesmo protocolo do ENG-56); senão, documentar como limitação
 conhecida no MODEL_CARD/SPEC §9.2. Cuidado com o trade-off: subir λ derruba P(empate) — validar
 que a calibração de empate (hoje limpa) não degrada.
-**Commit:** —
+**Como fechou (19/07):** o mecanismo **não era nenhuma das hipóteses listadas** — era **mando mal
+especificado** (variante não prevista da iii): o residual por neutralidade é quase espelhado
+(+0,17 gol/jogo no neutro, −0,17 no mando; z=+6,3/−9,0, janela 2014+, n=11.397), assinatura de
+que só o bônus do mandante inflava o total dos jogos com mando e o `base` compensava para baixo —
+deprimindo o λ neutro, quase toda a Copa. Fix: parâmetro `away_pen` (δ) no vetor do fit, aplicado
+em `expected_goals` (δ≈0,21 > γ≈0,13 no ajuste real; SPEC §3.1). Resultado no pool: z de gols
++4,65→**+1,30**; residual em-amostra das Copas +0,22→**−0,004**; calibração de empate **exata**
+(pooled z=+0,08; 0×0/1×1 z=+0,08); over/under 2,5 e log-loss de placar melhoram (t=−1,2/−1,0).
+⚠️ **Desvio declarado do aceite:** o Brier 1×2 ficou estatisticamente **parado** (0,56390→0,56419,
+t=+0,13), não "melhor" — o aceite escolheu mal a métrica de decisão: um fix de **nível** de λ é
+quase ortogonal ao 1×2 (o nível cancela na comparação entre lados). Adotado mesmo assim porque
+(1) o mecanismo é de especificação, com magnitude medida e altamente significativa; (2) as
+métricas que o fix mira (totais, placar — o que o bolão pontua) melhoram; (3) o 1×2 e o empate
+funcionaram como **guarda de não-degradação**, e seguraram. A/B reproduzível:
+`scripts/eng64_goals_ab.py` (antes = commit daace91). Regressão:
+`test_away_suppression_fitted_and_applied`; fixture sintética ganhou rodadas neutras (sem elas,
+`base`/γ/δ teriam direção plana com o δ novo).
+**Commit:** 8068250

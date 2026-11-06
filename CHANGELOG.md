@@ -10,6 +10,7 @@ mantida em `pyproject.toml` e `src/worldcup/__init__.py` (bump manual nos dois).
 ## [Não lançado]
 
 ### Adicionado
+- **`.python-version` em `3.14.7`**: fixa o interpretador do `uv` neste repositório, para valer também em outra máquina, sem depender do pin global. O piso `requires-python = ">=3.11"` e a matriz do CI (3.11 e 3.13) não mudam: o 3.14.7 vale para o ambiente local. A suíte (244 testes), o `ruff` e o `mypy` passaram no 3.14.7 antes do commit.
 - **Preparação da edição 2030** (`data/editions/2030/README.md`): esqueleto **sem**
   `tournament.toml`/`groups.csv`/`fixtures.csv` — deliberado, porque o **formato do torneio ainda
   não foi definido pela FIFA** (nº de seleções TBA; a CONMEBOL propôs 64 em caráter único), e
